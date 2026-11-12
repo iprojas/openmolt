@@ -18,6 +18,7 @@ class SubmoltService {
    * @returns {Promise<Object>} Created submolt
    */
   static async create({ name, displayName, description = '', creatorId }) {
+    if(typeof description!=='string'||description.length>500|| (displayName!==undefined && (typeof displayName!=='string'||displayName.length>64)))throw new BadRequestError('Revisa el nombre visible y la descripción.');
     // Validate name
     if (!name || typeof name !== 'string') {
       throw new BadRequestError('Name is required');

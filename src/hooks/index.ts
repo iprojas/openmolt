@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import useSWR, { SWRConfiguration } from 'swr';
+import useSWR, { SWRConfiguration, useSWRConfig } from 'swr';
 import { useInView } from 'react-intersection-observer';
 import { api, ApiError } from '@/lib/api';
 import { useAuthStore, useFeedStore, useUIStore, useSubscriptionStore } from '@/store';
@@ -34,7 +34,8 @@ export function useAuth() {
 
 // Post hooks
 export function usePost(postId: string, config?: SWRConfiguration) {
-  return useSWR<Post>(postId ? ['post', postId] : null, () => api.getPost(postId), config);
+  const {apiKey}=useAuth();
+  return useSWR<Post>(postId&&apiKey ? ['post', postId, apiKey] : null, () => api.getPost(postId), config);
 }
 
 export function usePosts(options: { sort?: PostSort; submolt?: string } = {}, config?: SWRConfiguration) {
@@ -44,6 +45,7 @@ export function usePosts(options: { sort?: PostSort; submolt?: string } = {}, co
 
 export function usePostVote(postId: string) {
   const [isVoting, setIsVoting] = useState(false);
+  const {mutate}=useSWRConfig();
   const updatePostVote = useFeedStore(s => s.updatePostVote);
   
   const vote = useCallback(async (direction: 'up' | 'down') => {
@@ -51,24 +53,26 @@ export function usePostVote(postId: string) {
     setIsVoting(true);
     try {
       const result = direction === 'up' ? await api.upvotePost(postId) : await api.downvotePost(postId);
-      const scoreDiff = result.action === 'upvoted' ? 1 : result.action === 'downvoted' ? -1 : 0;
-      updatePostVote(postId, result.action === 'removed' ? null : direction, scoreDiff);
+      updatePostVote(postId,result.user_vote,result.scoreDelta);
+      await mutate(key=>Array.isArray(key)&&['post','agent'].includes(key[0]));
     } catch (err) {
       console.error('Vote failed:', err);
     } finally {
       setIsVoting(false);
     }
-  }, [postId, isVoting, updatePostVote]);
+  }, [postId, isVoting, updatePostVote, mutate]);
   
   return { vote, isVoting };
 }
 
 // Comment hooks
 export function useComments(postId: string, options: { sort?: CommentSort } = {}, config?: SWRConfiguration) {
-  return useSWR<Comment[]>(postId ? ['comments', postId, options.sort || 'top'] : null, () => api.getComments(postId, options), config);
+  const {apiKey}=useAuth();
+  return useSWR<Comment[]>(postId&&apiKey ? ['comments', postId, options.sort || 'top',apiKey] : null, () => api.getComments(postId, options), config);
 }
 
 export function useCommentVote(commentId: string) {
+  const {mutate}=useSWRConfig();
   const [isVoting, setIsVoting] = useState(false);
   
   const vote = useCallback(async (direction: 'up' | 'down') => {
@@ -76,43 +80,48 @@ export function useCommentVote(commentId: string) {
     setIsVoting(true);
     try {
       direction === 'up' ? await api.upvoteComment(commentId) : await api.downvoteComment(commentId);
+      await mutate(key=>Array.isArray(key)&&key[0]==='comments');
     } catch (err) {
       console.error('Vote failed:', err);
     } finally {
       setIsVoting(false);
     }
-  }, [commentId, isVoting]);
+  }, [commentId, isVoting, mutate]);
   
   return { vote, isVoting };
 }
 
 // Agent hooks
 export function useAgent(name: string, config?: SWRConfiguration) {
+  const {apiKey}=useAuth();
   return useSWR<{ agent: Agent; isFollowing: boolean; recentPosts: Post[] }>(
-    name ? ['agent', name] : null, () => api.getAgent(name), config
+    name ? ['agent', name,apiKey] : null, () => api.getAgent(name), config
   );
 }
 
 export function useCurrentAgent() {
-  const { agent, isAuthenticated, isUnclaimed } = useAuth();
+  const { agent, isAuthenticated, isUnclaimed,apiKey } = useAuth();
   // Only fetch if authenticated and claimed (not unclaimed)
-  return useSWR<Agent>(isAuthenticated && !isUnclaimed ? ['me'] : null, () => api.getMe(), { fallbackData: agent || undefined });
+  return useSWR<Agent>(isAuthenticated ? ['me',apiKey] : null, () => api.getMe(), { fallbackData: agent || undefined });
 }
 
 // Submolt hooks
 export function useSubmolt(name: string, config?: SWRConfiguration) {
-  return useSWR<Submolt>(name ? ['submolt', name] : null, () => api.getSubmolt(name), config);
+  const {apiKey}=useAuth();
+  return useSWR<Submolt>(name&&apiKey ? ['submolt', name,apiKey] : null, () => api.getSubmolt(name), config);
 }
 
 export function useSubmolts(config?: SWRConfiguration) {
-  return useSWR<{ data: Submolt[] }>(['submolts'], () => api.getSubmolts(), config);
+  const {apiKey}=useAuth();
+  return useSWR<{ data: Submolt[] }>(['submolts',apiKey], () => api.getSubmolts(), config);
 }
 
 // Search hook
 export function useSearch(query: string, config?: SWRConfiguration) {
+  const {apiKey}=useAuth();
   const debouncedQuery = useDebounce(query, 300);
   return useSWR(
-    debouncedQuery.length >= 2 ? ['search', debouncedQuery] : null,
+    debouncedQuery.length >= 2 ? ['search', debouncedQuery,apiKey] : null,
     () => api.search(debouncedQuery), config
   );
 }

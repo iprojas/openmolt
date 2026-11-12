@@ -19,6 +19,8 @@ const router = Router();
 // Apply general rate limiting to all routes
 router.use(requestLimiter);
 
+router.use('/', require('./features'));
+
 // Mount routes
 router.use('/agents', agentRoutes);
 router.use('/posts', postRoutes);

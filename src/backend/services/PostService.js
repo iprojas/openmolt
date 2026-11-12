@@ -20,7 +20,10 @@ class PostService {
    */
   static async create({ authorId, submolt, title, content, url }) {
     // Validate
-    if (!title || title.trim().length === 0) {
+    if(content!==undefined && content!==null && typeof content!=='string')throw new BadRequestError('El contenido debe ser texto.');
+    if(url!==undefined && url!==null && typeof url!=='string')throw new BadRequestError('El enlace debe ser texto.');
+    if (typeof submolt !== 'string') throw new BadRequestError('Elige un Subchile.');
+    if (typeof title !== 'string' || title.trim().length === 0) {
       throw new BadRequestError('Title is required');
     }
     
@@ -43,7 +46,7 @@ class PostService {
     // Validate URL if provided
     if (url) {
       try {
-        new URL(url);
+        if (!['http:','https:'].includes(new URL(url).protocol)) throw new Error('protocol');
       } catch {
         throw new BadRequestError('Invalid URL format');
       }
@@ -75,6 +78,8 @@ class PostService {
       ]
     );
     
+    await queryOne('UPDATE submolts SET post_count=post_count+1 WHERE id=$1', [submoltRecord.id]);
+    await require('./NotificationService').mentions(content || '', authorId, `/post/${post.id}`, post.id);
     return post;
   }
   
@@ -89,7 +94,7 @@ class PostService {
       `SELECT p.*, a.name as author_name, a.display_name as author_display_name
        FROM posts p
        JOIN agents a ON p.author_id = a.id
-       WHERE p.id = $1`,
+       WHERE p.id = $1 AND p.is_deleted=false`,
       [id]
     );
     
@@ -110,92 +115,29 @@ class PostService {
    * @param {string} options.submolt - Filter by submolt
    * @returns {Promise<Array>} Posts
    */
-  static async getFeed({ sort = 'hot', limit = 25, offset = 0, submolt = null }) {
-    let orderBy;
-    
-    switch (sort) {
-      case 'new':
-        orderBy = 'p.created_at DESC';
-        break;
-      case 'top':
-        orderBy = 'p.score DESC, p.created_at DESC';
-        break;
-      case 'rising':
-        orderBy = `(p.score + 1) / POWER(EXTRACT(EPOCH FROM (NOW() - p.created_at)) / 3600 + 2, 1.5) DESC`;
-        break;
-      case 'hot':
-      default:
-        // Reddit-style hot algorithm
-        orderBy = `LOG(GREATEST(ABS(p.score), 1)) * SIGN(p.score) + EXTRACT(EPOCH FROM p.created_at) / 45000 DESC`;
-        break;
-    }
-    
-    let whereClause = 'WHERE 1=1';
-    const params = [limit, offset];
-    let paramIndex = 3;
-    
-    if (submolt) {
-      whereClause += ` AND p.submolt = $${paramIndex}`;
-      params.push(submolt.toLowerCase());
-      paramIndex++;
-    }
-    
-    const posts = await queryAll(
-      `SELECT p.id, p.title, p.content, p.url, p.submolt, p.post_type,
-              p.score, p.comment_count, p.created_at,
-              a.name as author_name, a.display_name as author_display_name
-       FROM posts p
-       JOIN agents a ON p.author_id = a.id
-       ${whereClause}
-       ORDER BY ${orderBy}
-       LIMIT $1 OFFSET $2`,
-      params
-    );
-    
-    return posts;
+  static async getFeed({ sort = 'hot', limit = 25, offset = 0, submolt = null, agentId = null, view = null, seed = '', timeRange = 'all', personalized = false }) {
+    const order = { new:'p.created_at DESC, p.id', top:'p.score DESC, p.created_at DESC, p.id', discussed:'p.comment_count DESC,p.created_at DESC,p.id',
+      random:'md5(p.id || $4::text)', rising:'(p.score + 1) / POWER(EXTRACT(EPOCH FROM (NOW() - p.created_at)) / 3600 + 2, 1.5) DESC,p.id',
+      hot:'LOG(GREATEST(ABS(p.score), 1)) * SIGN(p.score) + EXTRACT(EPOCH FROM p.created_at) / 45000 DESC,p.id' };
+    const params = [agentId,Math.max(1,Math.min(100,Number(limit)||25)),Math.max(0,Number(offset)||0),String(seed).slice(0,100)];
+    const clauses=['p.is_deleted=false', '$4::text IS NOT NULL'];
+    if(view==='hidden') clauses.push('COALESCE(pref.hidden,false)=true');
+    else clauses.push('COALESCE(pref.hidden,false)=false');
+    if(view==='saved') clauses.push('COALESCE(pref.saved,false)=true');
+    if(submolt) { params.push(submolt.toLowerCase()); clauses.push(`p.submolt=$${params.length}`); }
+    const periods={hour:'1 hour',day:'1 day',week:'7 days',month:'1 month',year:'1 year'};
+    if(periods[timeRange]) { params.push(periods[timeRange]); clauses.push(`p.created_at>=NOW()-$${params.length}::interval`); }
+    if(personalized) clauses.push('(EXISTS(SELECT 1 FROM subscriptions s WHERE s.submolt_id=p.submolt_id AND s.agent_id=$1) OR EXISTS(SELECT 1 FROM follows f WHERE f.followed_id=p.author_id AND f.follower_id=$1))');
+    return queryAll(`SELECT p.*, a.name AS author_name,a.display_name AS author_display_name,a.avatar_url AS author_avatar_url,v.value AS user_vote,
+      COALESCE(pref.saved,false) AS is_saved,COALESCE(pref.hidden,false) AS is_hidden
+      FROM posts p JOIN agents a ON a.id=p.author_id
+      LEFT JOIN votes v ON v.post_id=p.id AND v.agent_id=$1
+      LEFT JOIN post_preferences pref ON pref.post_id=p.id AND pref.agent_id=$1
+      WHERE ${clauses.join(' AND ')} ORDER BY ${order[sort]||order.hot} LIMIT $2 OFFSET $3`,params);
   }
-  
-  /**
-   * Get personalized feed for agent
-   * Posts from subscribed submolts and followed agents
-   * 
-   * @param {string} agentId - Agent ID
-   * @param {Object} options - Query options
-   * @returns {Promise<Array>} Posts
-   */
-  static async getPersonalizedFeed(agentId, { sort = 'hot', limit = 25, offset = 0 }) {
-    let orderBy;
-    
-    switch (sort) {
-      case 'new':
-        orderBy = 'p.created_at DESC';
-        break;
-      case 'top':
-        orderBy = 'p.score DESC';
-        break;
-      case 'hot':
-      default:
-        orderBy = `LOG(GREATEST(ABS(p.score), 1)) * SIGN(p.score) + EXTRACT(EPOCH FROM p.created_at) / 45000 DESC`;
-        break;
-    }
-    
-    const posts = await queryAll(
-      `SELECT DISTINCT p.id, p.title, p.content, p.url, p.submolt, p.post_type,
-              p.score, p.comment_count, p.created_at,
-              a.name as author_name, a.display_name as author_display_name
-       FROM posts p
-       JOIN agents a ON p.author_id = a.id
-       LEFT JOIN subscriptions s ON p.submolt_id = s.submolt_id AND s.agent_id = $1
-       LEFT JOIN follows f ON p.author_id = f.followed_id AND f.follower_id = $1
-       WHERE s.id IS NOT NULL OR f.id IS NOT NULL
-       ORDER BY ${orderBy}
-       LIMIT $2 OFFSET $3`,
-      [agentId, limit, offset]
-    );
-    
-    return posts;
-  }
-  
+
+  static async getPersonalizedFeed(agentId, options) { return this.getFeed({...options,agentId,personalized:true}); }
+
   /**
    * Delete a post
    * 
@@ -217,7 +159,7 @@ class PostService {
       throw new ForbiddenError('You can only delete your own posts');
     }
     
-    await queryOne('DELETE FROM posts WHERE id = $1', [postId]);
+    await queryOne('UPDATE posts SET is_deleted=true WHERE id = $1', [postId]);
   }
   
   /**

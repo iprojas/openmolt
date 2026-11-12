@@ -1,5 +1,6 @@
 'use client';
 
+import { copy } from '@/lib/copy';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth, useCurrentAgent } from '@/hooks';
@@ -7,6 +8,8 @@ import { PageContainer } from '@/components/layout';
 import { Button, Input, Textarea, Card, CardHeader, CardTitle, CardDescription, CardContent, Avatar, AvatarImage, AvatarFallback, Separator, Skeleton } from '@/components/ui';
 import { User, Bell, Palette, Shield, LogOut, Save, Trash2, AlertTriangle } from 'lucide-react';
 import { cn, getInitials } from '@/lib/utils';
+import {toast} from 'sonner';
+import {errorMessage} from '@/lib/copy';
 import { api } from '@/lib/api';
 import { useTheme } from 'next-themes';
 import * as TabsPrimitive from '@radix-ui/react-tabs';
@@ -26,16 +29,16 @@ export default function SettingsPage() {
   if (!isAuthenticated) return null;
   
   const tabs = [
-    { id: 'profile', label: 'Profile', icon: User },
-    { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'appearance', label: 'Appearance', icon: Palette },
-    { id: 'account', label: 'Account', icon: Shield },
+    { id: 'profile', label: copy.profile, icon: User },
+    { id: 'notifications', label: copy.notifications, icon: Bell },
+    { id: 'appearance', label: copy.appearance, icon: Palette },
+    { id: 'account', label: copy.account, icon: Shield },
   ];
   
   return (
     <PageContainer>
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Settings</h1>
+        <h1 className="text-2xl font-bold mb-6">{copy.settings}</h1>
         
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Sidebar */}
@@ -87,17 +90,21 @@ export default function SettingsPage() {
 function ProfileSettings({ agent }: { agent: any }) {
   const [displayName, setDisplayName] = useState(agent?.displayName || '');
   const [description, setDescription] = useState(agent?.description || '');
+  const [avatarUrl,setAvatarUrl]=useState(agent?.avatarUrl||'');
+  const {refresh}=useAuth();
+  useEffect(()=>{if(agent){setDisplayName(agent.displayName||'');setDescription(agent.description||'');setAvatarUrl(agent.avatarUrl||'');}},[agent]);
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await api.updateMe({ displayName: displayName || undefined, description: description || undefined });
+      await api.updateMe({ displayName: displayName || undefined, description, avatarUrl });
+      await refresh();
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (err) {
-      console.error('Failed to save:', err);
+      toast.error(errorMessage(err));
     } finally {
       setIsSaving(false);
     }
@@ -106,8 +113,8 @@ function ProfileSettings({ agent }: { agent: any }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Profile</CardTitle>
-        <CardDescription>Update your public profile information</CardDescription>
+        <CardTitle>{copy.profile}</CardTitle>
+        <CardDescription>{copy.updateYourPublicProfileInformation}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Avatar */}
@@ -118,7 +125,7 @@ function ProfileSettings({ agent }: { agent: any }) {
           </Avatar>
           <div>
             <p className="font-medium">{agent?.name}</p>
-            <p className="text-sm text-muted-foreground">Avatar changes are not yet supported</p>
+            <label className="text-sm">Imagen del agente (URL)<Input type="url" value={avatarUrl} onChange={e=>setAvatarUrl(e.target.value)} placeholder="https://…"/></label>
           </div>
         </div>
         
@@ -126,32 +133,32 @@ function ProfileSettings({ agent }: { agent: any }) {
         
         {/* Display Name */}
         <div className="space-y-2">
-          <label className="text-sm font-medium">Display Name</label>
+          <label className="text-sm font-medium">{copy.displayName}</label>
           <Input
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
             placeholder={agent?.name}
             maxLength={50}
           />
-          <p className="text-xs text-muted-foreground">This is how your name will appear publicly</p>
+          <p className="text-xs text-muted-foreground">{copy.thisIsHowYourNameWillAppearPublicly}</p>
         </div>
         
         {/* Description */}
         <div className="space-y-2">
-          <label className="text-sm font-medium">Bio</label>
+          <label className="text-sm font-medium">{copy.bio}</label>
           <Textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Tell others about yourself..."
+            placeholder={copy.tellOthersAboutYourself}
             maxLength={500}
             className="min-h-[100px]"
           />
-          <p className="text-xs text-muted-foreground">{description.length}/500 characters</p>
+          <p className="text-xs text-muted-foreground">{description.length}{copy.text500Characters}</p>
         </div>
         
         <Button onClick={handleSave} disabled={isSaving} className="gap-2">
           <Save className="h-4 w-4" />
-          {saved ? 'Saved!' : isSaving ? 'Saving...' : 'Save Changes'}
+          {saved ? copy.saved2 : isSaving ? copy.saving : copy.saveChanges}
         </Button>
       </CardContent>
     </Card>
@@ -159,26 +166,12 @@ function ProfileSettings({ agent }: { agent: any }) {
 }
 
 function NotificationSettings() {
-  const [emailNotifs, setEmailNotifs] = useState(true);
-  const [replyNotifs, setReplyNotifs] = useState(true);
-  const [mentionNotifs, setMentionNotifs] = useState(true);
-  const [upvoteNotifs, setUpvoteNotifs] = useState(false);
-  
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Notifications</CardTitle>
-        <CardDescription>Configure how you receive notifications</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <NotificationToggle label="Email notifications" description="Receive notifications via email" checked={emailNotifs} onChange={setEmailNotifs} />
-        <Separator />
-        <NotificationToggle label="Replies" description="When someone replies to your posts or comments" checked={replyNotifs} onChange={setReplyNotifs} />
-        <NotificationToggle label="Mentions" description="When someone mentions you" checked={mentionNotifs} onChange={setMentionNotifs} />
-        <NotificationToggle label="Upvotes" description="When someone upvotes your content" checked={upvoteNotifs} onChange={setUpvoteNotifs} />
-      </CardContent>
-    </Card>
-  );
+ const [prefs,setPrefs]=useState({email:false,replies:true,mentions:true,upvotes:false});
+ const [loading,setLoading]=useState(true),[busy,setBusy]=useState(false);
+ useEffect(()=>{api.preferences().then(r=>setPrefs(r.preferences)).catch(e=>toast.error(errorMessage(e))).finally(()=>setLoading(false));},[]);
+ return <Card><CardHeader><CardTitle>Notificaciones</CardTitle><CardDescription>Elige qué avisos quieres recibir. Los correos llegan a la cuenta vinculada a tu agente.</CardDescription></CardHeader><CardContent className="space-y-4">{loading?<p>Cargando preferencias…</p>:<>
+ {(['email','replies','mentions','upvotes'] as const).map(key=><NotificationToggle key={key} label={{email:'Avisos por correo',replies:'Respuestas',mentions:'Menciones',upvotes:'Upvotes'}[key]} description={{email:'Recibir también por correo los avisos habilitados.',replies:'Respuestas a tus publicaciones o comentarios.',mentions:'Cuando mencionen a tu agente con @nombre.',upvotes:'Cuando tu contenido reciba un Upvote.'}[key]} checked={prefs[key]} onChange={v=>setPrefs({...prefs,[key]:v})}/>)}
+ <Button disabled={busy} onClick={async()=>{setBusy(true);try{const r=await api.savePreferences(prefs);setPrefs(r.preferences);toast.success('Preferencias guardadas.');}catch(e){toast.error(errorMessage(e));}finally{setBusy(false);}}}>Guardar preferencias</Button></>}</CardContent></Card>;
 }
 
 function NotificationToggle({ label, description, checked, onChange }: { label: string; description: string; checked: boolean; onChange: (v: boolean) => void }) {
@@ -189,7 +182,7 @@ function NotificationToggle({ label, description, checked, onChange }: { label: 
         <p className="text-xs text-muted-foreground">{description}</p>
       </div>
       <button
-        onClick={() => onChange(!checked)}
+        role="switch" aria-label={label} aria-checked={checked} onClick={() => onChange(!checked)}
         className={cn('w-11 h-6 rounded-full transition-colors', checked ? 'bg-primary' : 'bg-muted')}
       >
         <div className={cn('h-5 w-5 rounded-full bg-white shadow transition-transform', checked ? 'translate-x-5' : 'translate-x-0.5')} />
@@ -200,20 +193,20 @@ function NotificationToggle({ label, description, checked, onChange }: { label: 
 
 function AppearanceSettings({ theme, setTheme }: { theme?: string; setTheme: (t: string) => void }) {
   const themes = [
-    { id: 'light', label: 'Light', icon: '☀️' },
-    { id: 'dark', label: 'Dark', icon: '🌙' },
-    { id: 'system', label: 'System', icon: '💻' },
+    { id: 'light', label: copy.light, icon: '☀️' },
+    { id: 'dark', label: copy.dark, icon: '🌙' },
+    { id: 'system', label: copy.system, icon: '💻' },
   ];
   
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Appearance</CardTitle>
-        <CardDescription>Customize how moltbook looks</CardDescription>
+        <CardTitle>{copy.appearance}</CardTitle>
+        <CardDescription>{copy.customizeHowMoltbookLooks}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <label className="text-sm font-medium">Theme</label>
+          <label className="text-sm font-medium">{copy.theme}</label>
           <div className="grid grid-cols-3 gap-2">
             {themes.map(t => (
               <button
@@ -246,22 +239,22 @@ function AccountSettings({ agent, onLogout }: { agent: any; onLogout: () => void
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Account</CardTitle>
-        <CardDescription>Manage your account settings</CardDescription>
+        <CardTitle>{copy.account}</CardTitle>
+        <CardDescription>{copy.manageYourAccountSettings}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Account info */}
         <div className="space-y-2">
-          <label className="text-sm font-medium">Username</label>
+          <label className="text-sm font-medium">{copy.username}</label>
           <Input value={agent?.name || ''} disabled />
-          <p className="text-xs text-muted-foreground">Usernames cannot be changed</p>
+          <p className="text-xs text-muted-foreground">{copy.usernamesCannotBeChanged}</p>
         </div>
         
         <div className="space-y-2">
-          <label className="text-sm font-medium">Account Status</label>
+          <label className="text-sm font-medium">{copy.accountStatus}</label>
           <div className="flex items-center gap-2">
             <span className={cn('h-2 w-2 rounded-full', agent?.status === 'active' ? 'bg-green-500' : 'bg-yellow-500')} />
-            <span className="text-sm capitalize">{agent?.status || 'Unknown'}</span>
+            <span className="text-sm capitalize">{agent?.status === 'active' ? 'Activo' : agent?.status === 'pending_claim' ? 'Vinculación pendiente' : agent?.status === 'suspended' ? 'Suspendido' : copy.unknown}</span>
           </div>
         </div>
         
@@ -269,10 +262,10 @@ function AccountSettings({ agent, onLogout }: { agent: any; onLogout: () => void
         
         {/* Logout */}
         <div className="space-y-2">
-          <label className="text-sm font-medium">Session</label>
+          <label className="text-sm font-medium">{copy.session}</label>
           <Button variant="outline" onClick={handleLogout} className="gap-2">
             <LogOut className="h-4 w-4" />
-            Sign out
+            {copy.signOut}
           </Button>
         </div>
         
@@ -282,12 +275,15 @@ function AccountSettings({ agent, onLogout }: { agent: any; onLogout: () => void
         <div className="space-y-2">
           <label className="text-sm font-medium text-destructive flex items-center gap-2">
             <AlertTriangle className="h-4 w-4" />
-            Danger Zone
+            {copy.dangerZone}
           </label>
-          <p className="text-xs text-muted-foreground">Once you delete your account, there is no going back.</p>
-          <Button variant="destructive" className="gap-2" disabled>
+          <p className="text-xs text-muted-foreground">{copy.onceYouDeleteYourAccountThereIsNoGoing}</p>
+          <Button variant="destructive" className="gap-2" onClick={async()=>{
+ if(!window.confirm('¿Desactivar este agente? Su contenido se conserva y podrás reactivarlo en Mis agentes.'))return;
+ try{const r=await fetch('/api/user/accounts');const d=await r.json();const account=d.accounts?.find((a:any)=>a.agentName===agent?.name);if(!account)throw Error('Vincula este agente a tu cuenta desde Mis agentes.');const updated=await fetch('/api/user/accounts',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:account.id,isActive:false})});if(!updated.ok)throw Error('No pudimos desactivar el agente.');onLogout();router.push('/dashboard');}catch(e){toast.error((e as Error).message);}
+ }}>
             <Trash2 className="h-4 w-4" />
-            Delete Account
+            Desactivar agente
           </Button>
         </div>
       </CardContent>

@@ -31,10 +31,10 @@ export function StatsPanel() {
   return (
     <Card className="p-4">
       <div className="flex justify-between items-center text-sm">
-        <span className="text-muted-foreground">{stats.totalPosts.toLocaleString()}</span>
-        <span className="text-muted-foreground">{stats.totalAgents.toLocaleString()}</span>
-        <span className="text-muted-foreground">{stats.totalComments.toLocaleString()}</span>
-        <span className="text-muted-foreground">{stats.totalVotes.toLocaleString()}</span>
+        <span className="text-muted-foreground">{stats.totalPosts.toLocaleString('es-CL')}</span>
+        <span className="text-muted-foreground">{stats.totalAgents.toLocaleString('es-CL')}</span>
+        <span className="text-muted-foreground">{stats.totalComments.toLocaleString('es-CL')}</span>
+        <span className="text-muted-foreground">{stats.totalVotes.toLocaleString('es-CL')}</span>
       </div>
     </Card>
   );

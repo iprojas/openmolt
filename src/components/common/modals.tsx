@@ -1,5 +1,6 @@
 'use client';
 
+import { copy } from '@/lib/copy';
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -10,15 +11,18 @@ import { useAuth, useSubmolts } from '@/hooks';
 import { api } from '@/lib/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, Button, Input, Textarea, Card } from '@/components/ui';
 import { FileText, Link as LinkIcon, X, Image, ChevronDown } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import {toast} from 'sonner';
+import {errorMessage} from '@/lib/copy';
 import { cn } from '@/lib/utils';
 
 const postSchema = z.object({
-  submolt: z.string().min(1, 'Please select a community'),
-  title: z.string().min(1, 'Title is required').max(300, 'Title too long'),
-  content: z.string().max(40000, 'Content too long').optional(),
-  url: z.string().url('Invalid URL').optional().or(z.literal('')),
+  submolt: z.string().min(1, copy.pleaseSelectACommunity),
+  title: z.string().min(1, copy.titleIsRequired).max(300, copy.titleTooLong),
+  content: z.string().max(40000, copy.contentTooLong).optional(),
+  url: z.string().url(copy.invalidURL).optional().or(z.literal('')),
 }).refine(data => data.content || data.url, {
-  message: 'Either content or URL is required',
+  message: copy.eitherContentOrURLIsRequired,
   path: ['content'],
 });
 
@@ -39,6 +43,7 @@ export function CreatePostModal() {
   });
 
   const selectedSubmolt = watch('submolt');
+  React.useEffect(()=>{if(createPostOpen){const match=window.location.pathname.match(/^\/m\/([^/]+)/);if(match)setValue('submolt',decodeURIComponent(match[1]));}},[createPostOpen,setValue]);
 
   const onSubmit = async (data: PostForm) => {
     if (!isAuthenticated || isSubmitting) return;
@@ -57,7 +62,7 @@ export function CreatePostModal() {
       reset();
       router.push(`/post/${post.id}`);
     } catch (err) {
-      console.error('Failed to create post:', err);
+      toast.error(errorMessage(err));
     } finally {
       setIsSubmitting(false);
     }
@@ -69,7 +74,7 @@ export function CreatePostModal() {
     <Dialog open={createPostOpen} onOpenChange={closeCreatePost}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create a post</DialogTitle>
+          <DialogTitle>{copy.createAPost}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -81,7 +86,7 @@ export function CreatePostModal() {
               className="w-full flex items-center justify-between px-3 py-2 border rounded-md hover:bg-muted transition-colors"
             >
               <span className={selectedSubmolt ? 'text-foreground' : 'text-muted-foreground'}>
-                {selectedSubmolt ? `m/${selectedSubmolt}` : 'Choose a community'}
+                {selectedSubmolt ? `m/${selectedSubmolt}` : copy.chooseACommunity}
               </span>
               <ChevronDown className="h-4 w-4" />
             </button>
@@ -115,7 +120,7 @@ export function CreatePostModal() {
               className={cn('flex items-center gap-2 px-4 py-2 rounded-md transition-colors flex-1 justify-center', postType === 'text' ? 'bg-background shadow' : 'hover:bg-background/50')}
             >
               <FileText className="h-4 w-4" />
-              <span>Text</span>
+              <span>{copy.text}</span>
             </button>
             <button
               type="button"
@@ -123,7 +128,7 @@ export function CreatePostModal() {
               className={cn('flex items-center gap-2 px-4 py-2 rounded-md transition-colors flex-1 justify-center', postType === 'link' ? 'bg-background shadow' : 'hover:bg-background/50')}
             >
               <LinkIcon className="h-4 w-4" />
-              <span>Link</span>
+              <span>{copy.link}</span>
             </button>
           </div>
 
@@ -131,7 +136,7 @@ export function CreatePostModal() {
           <div>
             <Input
               {...register('title')}
-              placeholder="Title"
+              placeholder={copy.title}
               maxLength={300}
               className="text-lg"
             />
@@ -143,7 +148,7 @@ export function CreatePostModal() {
             <div>
               <Textarea
                 {...register('content')}
-                placeholder="Text (optional)"
+                placeholder={copy.textOptional}
                 rows={8}
                 maxLength={40000}
               />
@@ -153,7 +158,7 @@ export function CreatePostModal() {
             <div>
               <Input
                 {...register('url')}
-                placeholder="URL"
+                placeholder={copy.uRL}
                 type="url"
               />
               {errors.url && <p className="text-xs text-destructive mt-1">{errors.url.message}</p>}
@@ -162,8 +167,8 @@ export function CreatePostModal() {
 
           {/* Actions */}
           <div className="flex justify-end gap-2 pt-4 border-t">
-            <Button type="button" variant="ghost" onClick={closeCreatePost}>Cancel</Button>
-            <Button type="submit" isLoading={isSubmitting}>Post</Button>
+            <Button type="button" variant="ghost" onClick={closeCreatePost}>{copy.cancel}</Button>
+            <Button type="submit" isLoading={isSubmitting}>{copy.post}</Button>
           </div>
         </form>
       </DialogContent>
@@ -192,19 +197,19 @@ export function SearchModal() {
     <Dialog open={searchOpen} onOpenChange={closeSearch}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Search Moltbook</DialogTitle>
+          <DialogTitle>{copy.searchMoltbook2}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSearch}>
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search posts, agents, communities..."
+            placeholder={copy.searchPostsAgentsCommunities}
             autoFocus
             className="text-lg"
           />
           <div className="flex justify-end gap-2 mt-4">
-            <Button type="button" variant="ghost" onClick={closeSearch}>Cancel</Button>
-            <Button type="submit" disabled={!query.trim()}>Search</Button>
+            <Button type="button" variant="ghost" onClick={closeSearch}>{copy.cancel}</Button>
+            <Button type="submit" disabled={!query.trim()}>{copy.search}</Button>
           </div>
         </form>
       </DialogContent>

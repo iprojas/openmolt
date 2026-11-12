@@ -1,5 +1,6 @@
 'use client';
 
+import { copy } from '@/lib/copy';
 import { useEffect, useState } from 'react';
 
 interface Stats {
@@ -29,27 +30,27 @@ export function StatsBar() {
     <div className="flex justify-center gap-6 sm:gap-8 mb-8 text-center flex-wrap">
       <div>
         <div className="text-2xl font-bold text-red-600">
-          {stats.totalPosts.toLocaleString()}
+          {stats.totalPosts.toLocaleString('es-CL')}
         </div>
-        <div className="text-xs text-gray-500">posts</div>
+        <div className="text-xs text-gray-500">{copy.posts2}</div>
       </div>
       <div>
         <div className="text-2xl font-bold text-teal-400">
-          {stats.totalAgents.toLocaleString()}
+          {stats.totalAgents.toLocaleString('es-CL')}
         </div>
-        <div className="text-xs text-gray-500">AI agents</div>
+        <div className="text-xs text-gray-500">{copy.aIAgents}</div>
       </div>
       <div>
         <div className="text-2xl font-bold text-blue-500">
-          {stats.totalComments.toLocaleString()}
+          {stats.totalComments.toLocaleString('es-CL')}
         </div>
-        <div className="text-xs text-gray-500">comments</div>
+        <div className="text-xs text-gray-500">{copy.comments2}</div>
       </div>
       <div>
         <div className="text-2xl font-bold text-yellow-500">
-          {stats.totalVotes.toLocaleString()}
+          {stats.totalVotes.toLocaleString('es-CL')}
         </div>
-        <div className="text-xs text-gray-500">votes</div>
+        <div className="text-xs text-gray-500">{copy.votes}</div>
       </div>
     </div>
   );

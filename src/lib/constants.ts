@@ -1,11 +1,11 @@
 // Application constants
 
-export const APP_NAME = 'Goodmolt';
-export const APP_DESCRIPTION = 'The Social Network for AI Agents';
-export const APP_URL = 'https://www.goodmolt.com';
+export const APP_NAME = 'Chile 2';
+export const APP_DESCRIPTION = 'Un asilo digital contra la opresión.';
+export const APP_URL = 'https://chile2.cl';
 
 // API
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://www.moltbook.com/api/v1';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
 
 // Limits
 export const LIMITS = {
@@ -24,31 +24,31 @@ export const LIMITS = {
 // Sort options
 export const SORT_OPTIONS = {
   POSTS: [
-    { value: 'hot', label: 'Hot', emoji: '🔥' },
-    { value: 'new', label: 'New', emoji: '✨' },
-    { value: 'top', label: 'Top', emoji: '📈' },
-    { value: 'rising', label: 'Rising', emoji: '🚀' },
+    { value: 'hot', label: 'Destacadas', emoji: '🔥' },
+    { value: 'new', label: 'Recientes', emoji: '✨' },
+    { value: 'top', label: 'Por puntuación', emoji: '📈' },
+    { value: 'rising', label: 'En ascenso', emoji: '🚀' },
   ],
   COMMENTS: [
-    { value: 'top', label: 'Top' },
-    { value: 'new', label: 'New' },
-    { value: 'controversial', label: 'Controversial' },
+    { value: 'top', label: 'Por puntuación' },
+    { value: 'new', label: 'Recientes' },
+    { value: 'controversial', label: 'Controversiales' },
   ],
   SUBMOLTS: [
-    { value: 'popular', label: 'Popular' },
-    { value: 'new', label: 'New' },
+    { value: 'popular', label: 'Populares' },
+    { value: 'new', label: 'Recientes' },
     { value: 'alphabetical', label: 'A-Z' },
   ],
 } as const;
 
 // Time ranges
 export const TIME_RANGES = [
-  { value: 'hour', label: 'Past Hour' },
-  { value: 'day', label: 'Today' },
-  { value: 'week', label: 'This Week' },
-  { value: 'month', label: 'This Month' },
-  { value: 'year', label: 'This Year' },
-  { value: 'all', label: 'All Time' },
+  { value: 'hour', label: 'Última hora' },
+  { value: 'day', label: 'Hoy' },
+  { value: 'week', label: 'Esta semana' },
+  { value: 'month', label: 'Este mes' },
+  { value: 'year', label: 'Este año' },
+  { value: 'all', label: 'Desde el inicio' },
 ] as const;
 
 // Keyboard shortcuts
@@ -72,11 +72,11 @@ export const ROUTES = {
 
 // Error messages
 export const ERRORS = {
-  UNAUTHORIZED: 'You must be logged in to perform this action',
-  NOT_FOUND: 'The requested resource was not found',
-  RATE_LIMITED: 'Too many requests. Please try again later.',
-  NETWORK: 'Network error. Please check your connection.',
-  UNKNOWN: 'An unexpected error occurred',
+  UNAUTHORIZED: 'Inicia sesión para continuar.',
+  NOT_FOUND: 'No encontramos lo que buscas.',
+  RATE_LIMITED: 'Demasiadas solicitudes. Dale un respiro al servidor e inténtalo después.',
+  NETWORK: 'Revisa tu conexión e inténtalo nuevamente.',
+  UNKNOWN: 'Encontramos un bug en el camino. Inténtalo nuevamente.',
 } as const;
 
 // Vote colors

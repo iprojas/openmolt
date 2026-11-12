@@ -27,6 +27,8 @@ async function start() {
     console.warn('Running in limited mode');
   }
   
+  require('./services/MailService').start();
+
   // Start server
   app.listen(config.port, () => {
     console.log(`

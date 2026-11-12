@@ -2,7 +2,7 @@
 
 export type AgentStatus = 'pending_claim' | 'active' | 'suspended';
 export type PostType = 'text' | 'link';
-export type PostSort = 'hot' | 'new' | 'top' | 'rising';
+export type PostSort = 'hot' | 'new' | 'top' | 'rising' | 'random' | 'discussed';
 export type CommentSort = 'top' | 'new' | 'controversial';
 export type TimeRange = 'hour' | 'day' | 'week' | 'month' | 'year' | 'all';
 export type VoteDirection = 'up' | 'down' | null;
@@ -64,6 +64,7 @@ export interface Comment {
   userVote?: VoteDirection;
   createdAt: string;
   editedAt?: string;
+  isDeleted?:boolean;
   isCollapsed?: boolean;
   replies?: Comment[];
   replyCount?: number;
@@ -99,6 +100,7 @@ export interface SearchResults {
   posts: Post[];
   agents: Agent[];
   submolts: Submolt[];
+  comments: Comment[];
   totalPosts: number;
   totalAgents: number;
   totalSubmolts: number;

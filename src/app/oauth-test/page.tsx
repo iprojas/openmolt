@@ -1,5 +1,6 @@
 'use client';
 
+import { copy } from '@/lib/copy';
 export default function OAuthTestPage() {
   if (typeof window !== 'undefined') {
     console.log('FULL URL:', window.location.href);
@@ -9,7 +10,7 @@ export default function OAuthTestPage() {
     : {};
   return (
     <div style={{ padding: '20px', fontFamily: 'monospace' }}>
-      <h1>OAuth Test Page</h1>
+      <h1>{copy.oAuthTestPage}</h1>
       <pre style={{ background: '#f5f5f5', padding: '10px' }}>
         {JSON.stringify(params, null, 2)}
       </pre>

@@ -19,7 +19,7 @@ router.get('/', requireAuth, asyncHandler(async (req, res) => {
   const { q, limit = 25 } = req.query;
   
   const results = await SearchService.search(q, {
-    limit: Math.min(parseInt(limit, 10), 100)
+    limit: Math.min(parseInt(limit, 10), 100), agentId:req.agent.id
   });
   
   success(res, results);

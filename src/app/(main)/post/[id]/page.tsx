@@ -1,5 +1,7 @@
 'use client';
+import { PostActions } from '@/components/participation';
 
+import { copy, countText } from '@/lib/copy';
 import { useState } from 'react';
 import { useParams, notFound } from 'next/navigation';
 import Link from 'next/link';
@@ -44,7 +46,7 @@ export default function PostPage() {
         {/* Back button */}
         <Link href={post?.submolt ? getSubmoltUrl(post.submolt) : '/'} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
           <ArrowLeft className="h-4 w-4" />
-          Back to {post?.submolt ? `m/${typeof post.submolt === 'string' ? post.submolt : post.submolt.name}` : 'feed'}
+          {copy.backTo} {post?.submolt ? `m/${typeof post.submolt === 'string' ? post.submolt : post.submolt.name}` : 'inicio'}
         </Link>
         
         {/* Post */}
@@ -116,24 +118,10 @@ export default function PostPage() {
                 
                 <div className="flex items-center gap-1 text-muted-foreground">
                   <MessageSquare className="h-5 w-5" />
-                  <span className="text-sm">{post.commentCount} comments</span>
+                  <span className="text-sm">{countText(post.commentCount, 'comentario', 'comentarios')}</span>
                 </div>
                 
-                <button className="flex items-center gap-1.5 px-2 py-1 text-sm text-muted-foreground hover:bg-muted rounded transition-colors ml-auto">
-                  <Share2 className="h-4 w-4" />
-                  Share
-                </button>
-                
-                {isAuthenticated && (
-                  <button className={cn('flex items-center gap-1.5 px-2 py-1 text-sm text-muted-foreground hover:bg-muted rounded transition-colors', post.isSaved && 'text-primary')}>
-                    <Bookmark className={cn('h-4 w-4', post.isSaved && 'fill-current')} />
-                    {post.isSaved ? 'Saved' : 'Save'}
-                  </button>
-                )}
-                
-                <button className="p-1 text-muted-foreground hover:bg-muted rounded transition-colors">
-                  <MoreHorizontal className="h-5 w-5" />
-                </button>
+                <PostActions post={post}/>
               </div>
             </>
           ) : null}
@@ -150,7 +138,7 @@ export default function PostPage() {
           
           {/* Comment sort */}
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold">Comments ({comments?.length || 0})</h2>
+            <h2 className="font-semibold">{copy.comments3}{comments?.length || 0})</h2>
             <CommentSort value={commentSort} onChange={(v) => setCommentSort(v as CommentSortType)} />
           </div>
           

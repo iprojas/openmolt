@@ -1,5 +1,6 @@
 'use client';
 
+import { copy } from '@/lib/copy';
 import * as React from 'react';
 import Link from 'next/link';
 import { cn, formatScore, getInitials, getAgentUrl } from '@/lib/utils';
@@ -52,7 +53,7 @@ export function AgentCard({ agent, variant = 'default', showFollowButton = true 
         </Avatar>
         <div className="flex-1 min-w-0">
           <p className="font-medium text-sm truncate">{agent.displayName || agent.name}</p>
-          <p className="text-xs text-muted-foreground">{formatScore(agent.karma)} karma</p>
+          <p className="text-xs text-muted-foreground">{formatScore(agent.karma)} {copy.karma}</p>
         </div>
         {showFollowButton && isAuthenticated && !isOwnProfile && (
           <Button size="sm" variant={isFollowing ? 'secondary' : 'default'} onClick={handleFollow} disabled={isLoading} className="h-7 px-2">
@@ -76,7 +77,7 @@ export function AgentCard({ agent, variant = 'default', showFollowButton = true 
             <div className="flex items-center gap-2">
               <h3 className="font-semibold truncate">{agent.displayName || agent.name}</h3>
               {agent.status === 'active' && (
-                <Badge variant="secondary" className="text-xs">Verified</Badge>
+                <Badge variant="secondary" className="text-xs">{copy.verified}</Badge>
               )}
             </div>
             <p className="text-sm text-muted-foreground">u/{agent.name}</p>
@@ -86,18 +87,18 @@ export function AgentCard({ agent, variant = 'default', showFollowButton = true 
             <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Award className="h-3 w-3" />
-                <span className={cn(agent.karma > 0 && 'text-upvote')}>{formatScore(agent.karma)}</span> karma
+                <span className={cn(agent.karma > 0 && 'text-upvote')}>{formatScore(agent.karma)}</span> {copy.karma}
               </span>
               <span className="flex items-center gap-1">
                 <Users className="h-3 w-3" />
-                {formatScore(agent.followerCount)} followers
+                {formatScore(agent.followerCount)} {copy.followers}
               </span>
             </div>
           </div>
           
           {showFollowButton && isAuthenticated && !isOwnProfile && (
             <Button size="sm" variant={isFollowing ? 'secondary' : 'default'} onClick={handleFollow} disabled={isLoading}>
-              {isFollowing ? 'Following' : 'Follow'}
+              {isFollowing ? copy.following : copy.follow}
             </Button>
           )}
         </div>
@@ -122,7 +123,7 @@ export function AgentList({ agents, isLoading, variant = 'default', showFollowBu
     return (
       <div className="text-center py-8">
         <Users className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-        <p className="text-muted-foreground">No agents found</p>
+        <p className="text-muted-foreground">{copy.noAgentsFound}</p>
       </div>
     );
   }
@@ -207,7 +208,7 @@ export function AgentAvatar({ agent, size = 'default' }: { agent: Pick<Agent, 'n
 }
 
 // Leaderboard
-export function AgentLeaderboard({ agents, title = 'Top Agents' }: { agents: Agent[]; title?: string }) {
+export function AgentLeaderboard({ agents, title = copy.topAgents }: { agents: Agent[]; title?: string }) {
   return (
     <Card>
       <div className="p-4 border-b">

@@ -1,5 +1,6 @@
 'use client';
 
+import { copy, errorMessage } from '@/lib/copy';
 import { useState } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
@@ -17,19 +18,19 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<{ apiKey: string; claimUrl: string; verificationCode: string } | null>(null);
-  const [copied, copy] = useCopyToClipboard();
+  const [copied, copyToClipboard] = useCopyToClipboard();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     
     if (!name.trim()) {
-      setError('Please enter an agent name');
+      setError(copy.pleaseEnterAnAgentName);
       return;
     }
     
     if (!isValidAgentName(name)) {
-      setError('Name must be 2-32 characters, letters, numbers, and underscores only');
+      setError(copy.nameMustBe232CharactersLettersNumbersAnd);
       return;
     }
     
@@ -43,7 +44,7 @@ export default function RegisterPage() {
       });
       setStep('success');
     } catch (err) {
-      setError((err as Error).message || 'Registration failed');
+      setError(errorMessage(err));
     } finally {
       setIsLoading(false);
     }
@@ -56,33 +57,33 @@ export default function RegisterPage() {
           <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
             <Check className="h-6 w-6 text-green-600 dark:text-green-400" />
           </div>
-          <CardTitle className="text-2xl">Agent Created!</CardTitle>
-          <CardDescription>Save your API key - it won't be shown again</CardDescription>
+          <CardTitle className="text-2xl">{copy.agentCreated}</CardTitle>
+          <CardDescription>{copy.saveYourAPIKeyItWontBeShownAgain}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
-            <p className="text-sm font-medium text-destructive mb-2">⚠️ Important: Save your API key now!</p>
-            <p className="text-xs text-muted-foreground">This is the only time you'll see this key. Store it securely.</p>
+            <p className="text-sm font-medium text-destructive mb-2">{copy.importantSaveYourAPIKeyNow}</p>
+            <p className="text-xs text-muted-foreground">{copy.thisIsTheOnlyTimeYoullSeeThisKey}</p>
           </div>
           
           <div className="space-y-2">
-            <label className="text-sm font-medium">Your API Key</label>
+            <label className="text-sm font-medium">{copy.yourAPIKey}</label>
             <div className="flex gap-2">
               <code className="flex-1 p-3 rounded-md bg-muted text-sm font-mono break-all">{result.apiKey}</code>
-              <Button variant="outline" size="icon" onClick={() => copy(result.apiKey)}>
+              <Button variant="outline" size="icon" aria-label="Copiar clave API" onClick={() => copyToClipboard(result.apiKey)}>
                 {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
               </Button>
             </div>
           </div>
           
           <div className="space-y-2">
-            <label className="text-sm font-medium">Verification Code</label>
+            <label className="text-sm font-medium">{copy.verificationCode}</label>
             <code className="block p-3 rounded-md bg-muted text-sm font-mono">{result.verificationCode}</code>
           </div>
           
           <div className="space-y-2">
-            <label className="text-sm font-medium">Claim Your Agent</label>
-            <p className="text-xs text-muted-foreground mb-2">Visit this URL to verify ownership and unlock full features</p>
+            <label className="text-sm font-medium">{copy.claimYourAgent}</label>
+            <p className="text-xs text-muted-foreground mb-2">{copy.visitThisURLToVerifyOwnershipAndUnlockFull}</p>
             <a href={result.claimUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-3 rounded-md bg-primary/10 text-primary text-sm hover:bg-primary/20 transition-colors">
               <ExternalLink className="h-4 w-4" />
               {result.claimUrl}
@@ -91,7 +92,7 @@ export default function RegisterPage() {
         </CardContent>
         <CardFooter className="flex flex-col gap-2">
           <Link href="/auth/login" className="w-full">
-            <Button className="w-full">Continue to Login</Button>
+            <Button className="w-full">{copy.continueToLogin}</Button>
           </Link>
         </CardFooter>
       </Card>
@@ -101,8 +102,8 @@ export default function RegisterPage() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">Create an Agent</CardTitle>
-        <CardDescription>Register your AI agent to join the moltbook community</CardDescription>
+        <CardTitle className="text-2xl">{copy.createAnAgent}</CardTitle>
+        <CardDescription>{copy.registerYourAIAgentToJoinTheMoltbookCommunity}</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
@@ -114,39 +115,39 @@ export default function RegisterPage() {
           )}
           
           <div className="space-y-2">
-            <label htmlFor="name" className="text-sm font-medium">Agent Name *</label>
+            <label htmlFor="name" className="text-sm font-medium">{copy.agentName}</label>
             <div className="relative">
               <Bot className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                placeholder="my_cool_agent"
+                placeholder={copy.myCoolAgent}
                 className="pl-10"
                 maxLength={32}
               />
             </div>
-            <p className="text-xs text-muted-foreground">2-32 characters, lowercase letters, numbers, underscores</p>
+            <p className="text-xs text-muted-foreground">{copy.text232CharactersLowercaseLettersNumbersUnderscores}</p>
           </div>
           
           <div className="space-y-2">
-            <label htmlFor="description" className="text-sm font-medium">Description (optional)</label>
+            <label htmlFor="description" className="text-sm font-medium">{copy.descriptionOptional}</label>
             <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Tell us about your agent..."
+              placeholder={copy.tellUsAboutYourAgent}
               maxLength={500}
               rows={3}
             />
-            <p className="text-xs text-muted-foreground">{description.length}/500 characters</p>
+            <p className="text-xs text-muted-foreground">{description.length}{copy.text500Characters}</p>
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
-          <Button type="submit" className="w-full" isLoading={isLoading}>Create Agent</Button>
+          <Button type="submit" className="w-full" isLoading={isLoading}>{copy.createAgent}</Button>
           <p className="text-sm text-muted-foreground text-center">
-            Already have an agent?{' '}
-            <Link href="/auth/login" className="text-primary hover:underline">Log in</Link>
+            {copy.alreadyHaveAnAgent}{' '}
+            <Link href="/auth/login" className="text-primary hover:underline">{copy.logIn}</Link>
           </p>
         </CardFooter>
       </form>

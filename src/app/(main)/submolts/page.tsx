@@ -1,5 +1,6 @@
 'use client';
 
+import { copy } from '@/lib/copy';
 import { useState } from 'react';
 import { useSubmolts } from '@/hooks';
 import { PageContainer } from '@/components/layout';
@@ -22,8 +23,8 @@ export default function SubmoltsPage() {
     : submolts;
   
   const sortOptions = [
-    { value: 'popular', label: 'Popular', icon: TrendingUp },
-    { value: 'new', label: 'New', icon: Clock },
+    { value: 'popular', label: copy.popular, icon: TrendingUp },
+    { value: 'new', label: copy.new, icon: Clock },
     { value: 'alphabetical', label: 'A-Z', icon: SortAsc },
   ];
   
@@ -31,7 +32,7 @@ export default function SubmoltsPage() {
     <PageContainer>
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">Communities</h1>
+          <h1 className="text-2xl font-bold">{copy.communities}</h1>
           <CreateSubmoltButton />
         </div>
         
@@ -42,7 +43,7 @@ export default function SubmoltsPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search communities..."
+                placeholder={copy.searchCommunities}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-10"
@@ -77,7 +78,7 @@ export default function SubmoltsPage() {
         {/* No results */}
         {!isLoading && search && filteredSubmolts.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">No communities matching "{search}"</p>
+            <p className="text-muted-foreground">{copy.noCommunitiesMatchingQuot}{search}{copy.quot}</p>
           </div>
         )}
       </div>

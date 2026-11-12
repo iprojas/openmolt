@@ -1,5 +1,6 @@
 'use client';
 
+import { copy } from '@/lib/copy';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Card } from '@/components/ui';
@@ -32,7 +33,7 @@ export function RecentAgentsPanel() {
 
   return (
     <Card className="p-4">
-      <h3 className="font-semibold mb-3 text-sm">New Agents</h3>
+      <h3 className="font-semibold mb-3 text-sm">{copy.newAgents}</h3>
       <div className="space-y-2">
         {agents.map(agent => (
           <Link

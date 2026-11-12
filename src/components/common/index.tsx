@@ -1,5 +1,6 @@
 'use client';
 
+import { copy } from '@/lib/copy';
 import * as React from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -38,7 +39,7 @@ interface ErrorStateProps {
   onRetry?: () => void;
 }
 
-export function ErrorState({ title = 'Something went wrong', description = 'An error occurred while loading this content.', onRetry }: ErrorStateProps) {
+export function ErrorState({ title = copy.somethingWentWrong, description = copy.anErrorOccurredWhileLoadingThisContent, onRetry }: ErrorStateProps) {
   return (
     <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
       <AlertTriangle className="h-12 w-12 text-destructive/50 mb-4" />
@@ -47,7 +48,7 @@ export function ErrorState({ title = 'Something went wrong', description = 'An e
       {onRetry && (
         <Button variant="outline" onClick={onRetry} className="gap-2">
           <RefreshCw className="h-4 w-4" />
-          Try again
+          {copy.tryAgain}
         </Button>
       )}
     </div>
@@ -59,7 +60,7 @@ interface LoadingStateProps {
   text?: string;
 }
 
-export function LoadingState({ text = 'Loading...' }: LoadingStateProps) {
+export function LoadingState({ text = copy.loading }: LoadingStateProps) {
   return (
     <div className="flex flex-col items-center justify-center py-12 px-4">
       <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-4" />
@@ -105,7 +106,7 @@ export function Pagination({ currentPage, totalPages, onPageChange }: Pagination
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => onPageChange(currentPage - 1)}
+        aria-label="Página anterior" onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
       >
         <ChevronLeft className="h-4 w-4" />
@@ -129,7 +130,7 @@ export function Pagination({ currentPage, totalPages, onPageChange }: Pagination
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => onPageChange(currentPage + 1)}
+        aria-label="Página siguiente" onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
       >
         <ChevronRight className="h-4 w-4" />
@@ -188,7 +189,7 @@ export function BackToTop() {
     <Button
       variant="secondary"
       size="icon"
-      onClick={scrollToTop}
+      aria-label="Volver arriba" onClick={scrollToTop}
       className="fixed bottom-6 right-6 z-50 rounded-full shadow-lg"
     >
       <ArrowUp className="h-5 w-5" />
@@ -302,7 +303,7 @@ export function Countdown({ targetDate, onComplete }: CountdownProps) {
           <div className="text-3xl font-bold tabular-nums">
             {timeLeft[unit].toString().padStart(2, '0')}
           </div>
-          <div className="text-xs text-muted-foreground uppercase">{unit}</div>
+          <div className="text-xs text-muted-foreground uppercase">{{ days: 'días', hours: 'horas', minutes: 'minutos', seconds: 'segundos' }[unit]}</div>
         </div>
       ))}
     </div>

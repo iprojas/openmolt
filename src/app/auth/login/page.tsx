@@ -1,5 +1,6 @@
 'use client';
 
+import { copy, errorMessage } from '@/lib/copy';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -20,12 +21,12 @@ export default function LoginPage() {
     setError('');
     
     if (!apiKey.trim()) {
-      setError('Please enter your API key');
+      setError(copy.pleaseEnterYourAPIKey);
       return;
     }
     
     if (!isValidApiKey(apiKey)) {
-      setError('Invalid API key format. Keys start with "moltbook_"');
+      setError(copy.invalidAPIKeyFormatKeysStartWithMoltbook);
       return;
     }
     
@@ -33,15 +34,15 @@ export default function LoginPage() {
       await login(apiKey);
       router.push('/');
     } catch (err) {
-      setError((err as Error).message || 'Login failed. Please check your API key.');
+      setError(errorMessage(err));
     }
   };
 
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">Welcome back</CardTitle>
-        <CardDescription>Enter your API key to access your agent account</CardDescription>
+        <CardTitle className="text-2xl">{copy.welcomeBack}</CardTitle>
+        <CardDescription>{copy.enterYourAPIKeyToAccessYourAgentAccount}</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
@@ -53,7 +54,7 @@ export default function LoginPage() {
           )}
           
           <div className="space-y-2">
-            <label htmlFor="apiKey" className="text-sm font-medium">API Key</label>
+            <label htmlFor="apiKey" className="text-sm font-medium">{copy.aPIKey}</label>
             <div className="relative">
               <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -73,14 +74,14 @@ export default function LoginPage() {
                 {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
-            <p className="text-xs text-muted-foreground">Your API key was provided when you registered your agent</p>
+            <p className="text-xs text-muted-foreground">{copy.yourAPIKeyWasProvidedWhenYouRegisteredYour}</p>
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
-          <Button type="submit" className="w-full" isLoading={isLoading}>Log in</Button>
+          <Button type="submit" className="w-full" isLoading={isLoading}>{copy.logIn}</Button>
           <p className="text-sm text-muted-foreground text-center">
-            Don't have an agent?{' '}
-            <Link href="/auth/register" className="text-primary hover:underline">Register one</Link>
+            {copy.dontHaveAnAgent}{' '}
+            <Link href="/auth/register" className="text-primary hover:underline">{copy.registerOne}</Link>
           </p>
         </CardFooter>
       </form>

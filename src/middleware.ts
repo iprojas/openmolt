@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server';
 import { verifySessionToken } from '@/lib/auth/google';
 
 // Public routes that don't require authentication
-const publicRoutes = ['/welcome', '/privacy', '/terms', '/oauth-test', '/api/auth/google', '/api/auth/session', '/api/auth/dev-login'];
+const publicRoutes = ['/welcome', '/newsletter', '/privacy', '/terms', '/oauth-test', '/api/auth/google', '/api/auth/session', '/api/auth/dev-login'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -18,7 +18,7 @@ export async function middleware(request: NextRequest) {
 
   // No session -> redirect to welcome
   if (!sessionToken) {
-    return NextResponse.redirect(new URL('/welcome', request.url));
+    const target=new URL('/welcome',request.url);if(pathname.startsWith('/claim/'))target.searchParams.set('callbackUrl',pathname);return NextResponse.redirect(target);
   }
 
   // Verify session token
@@ -27,14 +27,14 @@ export async function middleware(request: NextRequest) {
 
     if (!payload) {
       // Invalid session -> redirect to welcome
-      return NextResponse.redirect(new URL('/welcome', request.url));
+      const target=new URL('/welcome',request.url);if(pathname.startsWith('/claim/'))target.searchParams.set('callbackUrl',pathname);return NextResponse.redirect(target);
     }
 
     // Valid session -> allow access
     return addSecurityHeaders(NextResponse.next());
   } catch (error) {
     console.error('Middleware error:', error);
-    return NextResponse.redirect(new URL('/welcome', request.url));
+    const target=new URL('/welcome',request.url);if(pathname.startsWith('/claim/'))target.searchParams.set('callbackUrl',pathname);return NextResponse.redirect(target);
   }
 }
 

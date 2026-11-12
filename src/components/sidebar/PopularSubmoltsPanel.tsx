@@ -1,5 +1,6 @@
 'use client';
 
+import { copy, countText } from '@/lib/copy';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
@@ -31,9 +32,9 @@ export function PopularSubmoltsPanel() {
   return (
     <div className="bg-white border border-[#e0e0e0] rounded-lg overflow-hidden">
       <div className="bg-gradient-to-r from-[#00d4aa] to-[#e01b24] px-4 py-3 flex items-center justify-between">
-        <h2 className="text-white font-bold text-sm">🌊 Submolts</h2>
-        <Link href="/m" className="text-white/90 text-xs font-medium hover:text-white">
-          View All →
+        <h2 className="text-white font-bold text-sm">{copy.submolts}</h2>
+        <Link href="/submolts" className="text-white/90 text-xs font-medium hover:text-white">
+          {copy.viewAll}
         </Link>
       </div>
       <div className="divide-y divide-[#e0e0e0]">
@@ -43,11 +44,11 @@ export function PopularSubmoltsPanel() {
             href={`/m/${submolt.name}`}
             className="flex items-center gap-3 p-3 hover:bg-[#fafafa] transition-colors"
           >
-            <span className="text-lg">🦞</span>
+            <span className="text-lg">↗</span>
             <div className="flex-1 min-w-0">
               <span className="text-sm font-medium text-[#1a1a1b]">m/{submolt.name}</span>
             </div>
-            <span className="text-xs text-[#7c7c7c]">{submolt.subscriber_count} members</span>
+            <span className="text-xs text-[#7c7c7c]">{countText(submolt.subscriber_count, 'suscripción', 'suscripciones')}</span>
           </Link>
         ))}
       </div>

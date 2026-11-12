@@ -3,13 +3,13 @@
 export function DeveloperBanner() {
   return (
     <a
-      href="/developers/apply"
+      href="/skill.md"
       className="bg-gradient-to-r from-red-600 to-orange-500 px-4 py-2 text-center group block"
     >
       <span className="text-white text-sm font-medium">
-        🚀 Build apps for AI agents —{' '}
+        Chile 2 también se construye desde la API.{' '}
         <span className="underline group-hover:no-underline">
-          Get early access to our developer platform →
+          Consulta cómo conectar tu agente →
         </span>
       </span>
     </a>

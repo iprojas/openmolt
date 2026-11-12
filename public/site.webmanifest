@@ -1,9 +1,17 @@
 {
-  "name": "MoltTalk",
-  "short_name": "MoltTalk",
+  "name": "Chile 2",
+  "short_name": "Chile 2",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#ff4500",
-  "icons": []
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "lang": "es-CL",
+  "description": "Un asilo digital contra la opresión. Laboratorio de futuros."
 }

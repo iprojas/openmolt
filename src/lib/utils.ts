@@ -1,6 +1,8 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { formatDistanceToNow, format, parseISO } from 'date-fns';
+import { formatDistanceToNow, parseISO } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { LOCALE } from './copy';
 
 // Class name utility
 export function cn(...inputs: ClassValue[]) {
@@ -10,21 +12,17 @@ export function cn(...inputs: ClassValue[]) {
 // Format score (e.g., 1.2K, 3.5M)
 export function formatScore(score: number | undefined | null): string {
   if (score === undefined || score === null) return '0';
-  const abs = Math.abs(score);
-  const sign = score < 0 ? '-' : '';
-  if (abs >= 1000000) return sign + (abs / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
-  if (abs >= 1000) return sign + (abs / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
-  return score.toString();
+  return new Intl.NumberFormat(LOCALE, { notation: 'compact', maximumFractionDigits: 1 }).format(score);
 }
 
 // Format relative time
 export function formatRelativeTime(date: string | Date | undefined | null): string {
-  if (!date) return 'just now';
+  if (!date) return 'ahora mismo';
   try {
     const d = typeof date === 'string' ? parseISO(date) : date;
-    return formatDistanceToNow(d, { addSuffix: true });
+    return formatDistanceToNow(d, { addSuffix: true, locale: es });
   } catch {
-    return 'recently';
+    return 'hace poco';
   }
 }
 
@@ -33,7 +31,7 @@ export function formatDate(date: string | Date | undefined | null): string {
   if (!date) return '-';
   try {
     const d = typeof date === 'string' ? parseISO(date) : date;
-    return format(d, 'MMM d, yyyy');
+    return new Intl.DateTimeFormat(LOCALE, { dateStyle: 'medium' }).format(d);
   } catch {
     return '-';
   }
@@ -44,7 +42,7 @@ export function formatDateTime(date: string | Date | undefined | null): string {
   if (!date) return '-';
   try {
     const d = typeof date === 'string' ? parseISO(date) : date;
-    return format(d, 'MMM d, yyyy h:mm a');
+    return new Intl.DateTimeFormat(LOCALE, { dateStyle: 'medium', timeStyle: 'short' }).format(d);
   } catch {
     return '-';
   }

@@ -16,7 +16,7 @@ const router = Router();
  * GET /submolts
  * List all submolts (public endpoint)
  */
-router.get('/', asyncHandler(async (req, res) => {
+router.get('/', optionalAuth, asyncHandler(async (req, res) => {
   const { limit = 50, offset = 0, sort = 'popular' } = req.query;
   
   const submolts = await SubmoltService.list({
@@ -25,7 +25,8 @@ router.get('/', asyncHandler(async (req, res) => {
     sort
   });
   
-  paginated(res, submolts, { limit: parseInt(limit, 10), offset: parseInt(offset, 10) || 0 });
+  const subscribed=req.agent?await require('../config/database').queryAll('SELECT submolt_id FROM subscriptions WHERE agent_id=$1',[req.agent.id]):[];
+  paginated(res, submolts.map(s=>({...s,isSubscribed:subscribed.some(x=>x.submolt_id===s.id)})), { limit: parseInt(limit, 10), offset: parseInt(offset, 10) || 0 });
 }));
 
 /**
@@ -37,7 +38,7 @@ router.post('/', requireAuth, asyncHandler(async (req, res) => {
   
   const submolt = await SubmoltService.create({
     name,
-    displayName: display_name,
+    displayName: display_name || req.body.displayName,
     description,
     creatorId: req.agent.id
   });
@@ -56,6 +57,7 @@ router.get('/:name', requireAuth, asyncHandler(async (req, res) => {
   success(res, { 
     submolt: {
       ...submolt,
+      moderators: await SubmoltService.getModerators(submolt.id),
       isSubscribed
     }
   });
@@ -89,7 +91,7 @@ router.get('/:name/feed', requireAuth, asyncHandler(async (req, res) => {
   const posts = await PostService.getBySubmolt(req.params.name, {
     sort,
     limit: Math.min(parseInt(limit, 10), 100),
-    offset: parseInt(offset, 10) || 0
+    offset: parseInt(offset, 10) || 0, agentId:req.agent.id, seed:req.query.seed
   });
   
   paginated(res, posts, { limit: parseInt(limit, 10), offset: parseInt(offset, 10) || 0 });

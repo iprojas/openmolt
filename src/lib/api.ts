@@ -3,9 +3,9 @@
 import type { Agent, Post, Comment, Submolt, SearchResults, PaginatedResponse, CreatePostForm, CreateCommentForm, RegisterAgentForm, PostSort, CommentSort, TimeRange } from '@/types';
 
 // API base URL configuration
-// Use direct API calls by default, set NEXT_PUBLIC_USE_DIRECT_API=false to use backend proxy
-const USE_DIRECT_API = process.env.NEXT_PUBLIC_USE_DIRECT_API !== 'false';
-const DIRECT_API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://www.moltbook.com/api/v1';
+// Use the same-origin backend proxy by default; direct reads require explicit opt-in.
+const USE_DIRECT_API = process.env.NEXT_PUBLIC_USE_DIRECT_API === 'true';
+const DIRECT_API_URL = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
 const PROXY_API_URL = '/api';
 
 // Request timeout in milliseconds (30 seconds)
@@ -31,15 +31,15 @@ class ApiClient {
       submolt: apiPost.submolt?.name || apiPost.submolt,
       submoltDisplayName: apiPost.submolt?.display_name,
       postType: apiPost.url ? 'link' : 'text',
-      score: (apiPost.upvotes || 0) - (apiPost.downvotes || 0),
+      score: apiPost.score ?? ((apiPost.upvotes || 0) - (apiPost.downvotes || 0)),
       upvotes: apiPost.upvotes,
       downvotes: apiPost.downvotes,
       commentCount: apiPost.comment_count || 0,
       authorId: apiPost.author?.id || apiPost.author_id || apiPost.agent_id,
-      authorName: apiPost.author?.name || apiPost.author_name || apiPost.agent_name || apiPost.agent?.name || 'Unknown',
+      authorName: apiPost.author?.name || apiPost.author_name || apiPost.agent_name || apiPost.agent?.name || 'Sin nombre',
       authorDisplayName: apiPost.author?.display_name || apiPost.author_display_name || apiPost.agent?.display_name,
       authorAvatarUrl: apiPost.author?.avatar_url || apiPost.author_avatar_url || apiPost.agent?.avatar_url,
-      userVote: apiPost.user_vote,
+      userVote: this.voteDirection(apiPost.user_vote ?? apiPost.userVote),
       isSaved: apiPost.is_saved,
       isHidden: apiPost.is_hidden,
       createdAt: apiPost.created_at,
@@ -52,16 +52,17 @@ class ApiClient {
       id: apiComment.id,
       postId: apiComment.post_id,
       content: apiComment.content,
-      score: (apiComment.upvotes || 0) - (apiComment.downvotes || 0),
+      isDeleted:!!apiComment.is_deleted,
+      score: apiComment.score ?? ((apiComment.upvotes || 0) - (apiComment.downvotes || 0)),
       upvotes: apiComment.upvotes || 0,
       downvotes: apiComment.downvotes || 0,
       parentId: apiComment.parent_id || null,
       depth: apiComment.depth || 0,
       authorId: apiComment.author?.id || apiComment.author_id || apiComment.agent_id,
-      authorName: apiComment.author?.name || apiComment.author_name || apiComment.agent_name || apiComment.agent?.name || 'Unknown',
+      authorName: apiComment.author?.name || apiComment.author_name || apiComment.agent_name || apiComment.agent?.name || 'Sin nombre',
       authorDisplayName: apiComment.author?.display_name || apiComment.author_display_name || apiComment.agent?.display_name,
       authorAvatarUrl: apiComment.author?.avatar_url || apiComment.author_avatar_url || apiComment.agent?.avatar_url,
-      userVote: apiComment.user_vote,
+      userVote: this.voteDirection(apiComment.user_vote ?? apiComment.userVote),
       createdAt: apiComment.created_at,
       editedAt: apiComment.edited_at,
       replies: apiComment.replies ? apiComment.replies.map((r: any) => this.transformComment(r)) : undefined,
@@ -73,20 +74,23 @@ class ApiClient {
     return {
       id: apiAgent.id,
       name: apiAgent.name,
-      displayName: apiAgent.display_name,
+      displayName: apiAgent.display_name ?? apiAgent.displayName,
       description: apiAgent.description,
       avatarUrl: apiAgent.avatar_url,
       karma: apiAgent.karma || 0,
-      status: apiAgent.is_active ? 'active' : 'pending_claim',
-      isClaimed: apiAgent.is_claimed || false,
-      followerCount: apiAgent.follower_count || 0,
-      followingCount: apiAgent.following_count || 0,
+      status: apiAgent.status === 'suspended' ? 'suspended' : (apiAgent.is_claimed || apiAgent.isClaimed) ? 'active' : 'pending_claim',
+      isClaimed: apiAgent.is_claimed ?? apiAgent.isClaimed ?? false,
+      followerCount: apiAgent.follower_count ?? apiAgent.followerCount ?? 0,
+      followingCount: apiAgent.following_count ?? apiAgent.followingCount ?? 0,
       postCount: apiAgent.post_count,
       commentCount: apiAgent.comment_count,
-      createdAt: apiAgent.created_at,
+      createdAt: apiAgent.created_at ?? apiAgent.createdAt,
       lastActive: apiAgent.last_active,
     };
   }
+
+  private voteDirection(value:any): 'up'|'down'|null {return value===1||value==='up'?'up':value===-1||value==='down'?'down':null;}
+  private transformSubmolt(s:any):Submolt {return {...s,displayName:s.display_name??s.displayName,subscriberCount:s.subscriber_count??s.subscriberCount??0,postCount:s.post_count??s.postCount??0,createdAt:s.created_at??s.createdAt,iconUrl:s.avatar_url??s.iconUrl,creatorId:s.creator_id??s.creatorId,yourRole:s.your_role??s.yourRole,moderators:(s.moderators||[]).map((a:any)=>this.transformAgent(a))};}
 
   setApiKey(key: string | null) {
     this.apiKey = key;
@@ -150,6 +154,7 @@ class ApiClient {
         throw new ApiError(response.status, error.error || 'Request failed', error.code, error.hint);
       }
 
+      if(response.status===204)return {success:true} as T;
       return response.json();
     } catch (error) {
       clearTimeout(timeoutId);
@@ -188,7 +193,7 @@ class ApiClient {
     return this.transformAgent(result.agent || result);
   }
 
-  async updateMe(data: { displayName?: string; description?: string }) {
+  async updateMe(data: { displayName?: string; description?: string; avatarUrl?:string }) {
     const result = await this.request<any>('PATCH', '/agents/me', data);
     return this.transformAgent(result.agent || result);
   }
@@ -213,13 +218,13 @@ class ApiClient {
   }
 
   // Post endpoints
-  async getPosts(options: { sort?: PostSort; timeRange?: TimeRange; limit?: number; offset?: number; submolt?: string } = {}) {
+  async getPosts(options: { sort?: PostSort; timeRange?: TimeRange; limit?: number; offset?: number; submolt?: string; view?:string; seed?:string } = {}) {
     const result = await this.request<any>('GET', '/posts', undefined, {
       sort: options.sort || 'hot',
       t: options.timeRange,
       limit: options.limit || 25,
       offset: options.offset || 0,
-      submolt: options.submolt,
+      submolt: options.submolt, view:options.view, seed:options.seed,
     });
 
     // Adapt production API response to expected format
@@ -255,11 +260,11 @@ class ApiClient {
   }
 
   async upvotePost(id: string) {
-    return this.request<{ success: boolean; action: string }>('POST', `/posts/${id}/upvote`);
+    return this.request<{ success: boolean; action: string; scoreDelta:number; user_vote:'up'|'down'|null; score:number }>('POST', `/posts/${id}/upvote`);
   }
 
   async downvotePost(id: string) {
-    return this.request<{ success: boolean; action: string }>('POST', `/posts/${id}/downvote`);
+    return this.request<{ success: boolean; action: string; scoreDelta:number; user_vote:'up'|'down'|null; score:number }>('POST', `/posts/${id}/downvote`);
   }
 
   // Comment endpoints
@@ -282,11 +287,11 @@ class ApiClient {
   }
 
   async upvoteComment(id: string) {
-    return this.request<{ success: boolean; action: string }>('POST', `/comments/${id}/upvote`);
+    return this.request<{ success: boolean; action: string; scoreDelta:number; user_vote:'up'|'down'|null; score:number }>('POST', `/comments/${id}/upvote`);
   }
 
   async downvoteComment(id: string) {
-    return this.request<{ success: boolean; action: string }>('POST', `/comments/${id}/downvote`);
+    return this.request<{ success: boolean; action: string; scoreDelta:number; user_vote:'up'|'down'|null; score:number }>('POST', `/comments/${id}/downvote`);
   }
 
   // Submolt endpoints
@@ -294,11 +299,11 @@ class ApiClient {
     const result = await this.request<any>('GET', '/submolts', undefined, {
       sort: options.sort || 'popular',
       limit: options.limit || 50,
-      offset: options.offset || 0,
+      offset: options.offset || 0, seed:(options as any).seed,
     });
 
     // 转换 API 返回格式
-    const submolts = result.submolts || result.data || [];
+    const submolts = (result.submolts || result.data || []).map((s:any)=>this.transformSubmolt(s));
     return {
       data: submolts,
       pagination: {
@@ -310,11 +315,11 @@ class ApiClient {
   }
 
   async getSubmolt(name: string) {
-    return this.request<{ submolt: Submolt }>('GET', `/submolts/${name}`).then(r => r.submolt);
+    return this.request<{ submolt: Submolt }>('GET', `/submolts/${name}`).then(r => this.transformSubmolt(r.submolt));
   }
 
   async createSubmolt(data: { name: string; displayName?: string; description?: string }) {
-    return this.request<{ submolt: Submolt }>('POST', '/submolts', data).then(r => r.submolt);
+    return this.request<{ submolt: Submolt }>('POST', '/submolts', data).then(r => this.transformSubmolt(r.submolt));
   }
 
   async subscribeSubmolt(name: string) {
@@ -325,11 +330,11 @@ class ApiClient {
     return this.request<{ success: boolean }>('DELETE', `/submolts/${name}/subscribe`);
   }
 
-  async getSubmoltFeed(name: string, options: { sort?: PostSort; limit?: number; offset?: number } = {}) {
+  async getSubmoltFeed(name: string, options: { sort?: PostSort; limit?: number; offset?: number; seed?:string } = {}) {
     const result = await this.request<any>('GET', `/submolts/${name}/feed`, undefined, {
       sort: options.sort || 'hot',
       limit: options.limit || 25,
-      offset: options.offset || 0,
+      offset: options.offset || 0, seed:(options as any).seed,
     });
 
     // Adapt production API response to expected format
@@ -354,7 +359,7 @@ class ApiClient {
     const result = await this.request<any>('GET', '/feed', undefined, {
       sort: options.sort || 'hot',
       limit: options.limit || 25,
-      offset: options.offset || 0,
+      offset: options.offset || 0, seed:(options as any).seed,
     });
 
     // Adapt production API response to expected format
@@ -374,9 +379,24 @@ class ApiClient {
     };
   }
 
+  async savePost(id:string,value:boolean){return this.request('POST',`/posts/${id}/save`,{value});}
+  async hidePost(id:string,value:boolean){return this.request('POST',`/posts/${id}/hide`,{value});}
+  async report(data:{postId?:string;commentId?:string;reason:string}){return this.request('POST','/reports',data);}
+  async moderation(){return this.request<any>('GET','/moderation/reports');}
+  async reviewReport(id:string,action:string){return this.request('PATCH',`/moderation/reports/${id}`,{action});}
+  async notifications(){return this.request<any>('GET','/notifications');}
+  async readNotifications(id?:string){return this.request('PATCH','/notifications',{id});}
+  async preferences(){return this.request<any>('GET','/notifications/preferences');}
+  async savePreferences(data:any){return this.request<any>('PATCH','/notifications/preferences',data);}
+  async listAgents(offset=0){const r=await this.request<any>('GET','/agents',undefined,{offset,limit:25});return r.agents.map((a:any)=>this.transformAgent(a)) as Agent[];}
+  async agentComments(name:string){const r=await this.request<any>('GET',`/agents/${encodeURIComponent(name)}/comments`);return r.comments.map((c:any)=>this.transformComment(c)) as Comment[];}
+  async restoreComment(id:string){return this.request('PATCH',`/comments/${id}`,{restore:true});}
+  async editComment(id:string,content:string){return this.request('PATCH',`/comments/${id}`,{content});}
+
   // Search endpoints
   async search(query: string, options: { limit?: number } = {}) {
-    return this.request<SearchResults>('GET', '/search', undefined, { q: query, limit: options.limit || 25 });
+    const r=await this.request<any>('GET','/search',undefined,{q:query,limit:options.limit||25});
+    return {...r,posts:(r.posts||[]).map((p:any)=>this.transformPost(p)),agents:(r.agents||[]).map((a:any)=>this.transformAgent(a)),submolts:(r.submolts||[]).map((s:any)=>this.transformSubmolt(s)),comments:(r.comments||[]).map((c:any)=>this.transformComment(c)),totalPosts:r.posts?.length||0,totalAgents:r.agents?.length||0,totalSubmolts:r.submolts?.length||0} as SearchResults;
   }
 }
 

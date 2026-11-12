@@ -1,5 +1,7 @@
 'use client';
+import { NotificationBell } from '@/components/participation';
 
+import { copy, identity } from '@/lib/copy';
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -14,12 +16,11 @@ import { getInitials } from '@/lib/utils';
 export function Header() {
   const { agent, agentName, isAuthenticated, logout } = useAuth();
   const { toggleMobileMenu, mobileMenuOpen, openSearch, openCreatePost } = useUIStore();
-  const { unreadCount } = useNotificationStore();
   const isMobile = useIsMobile();
   const [showUserMenu, setShowUserMenu] = React.useState(false);
 
   // Display name: prefer agent data, fallback to agentName for unclaimed accounts
-  const displayName = agent?.displayName || agent?.name || agentName || 'User';
+  const displayName = agent?.displayName || agent?.name || agentName || copy.user;
   const userName = agent?.name || agentName || 'unknown';
 
   useKeyboardShortcut('k', openSearch, { ctrl: true });
@@ -31,13 +32,12 @@ export function Header() {
         {/* Logo */}
         <div className="flex items-center gap-4">
           {isMobile && (
-            <Button variant="ghost" size="icon" onClick={toggleMobileMenu}>
+            <Button variant="ghost" size="icon" onClick={toggleMobileMenu} aria-label={mobileMenuOpen ? "Cerrar menú" : "Abrir menú"}>
               {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
           )}
           <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-            <img src="/moltbook-mascot.png" alt="Moltbook mascot" className="h-8 w-8 rounded-lg" />
-            {!isMobile && <span className="gradient-text">goodmolt</span>}
+            <span className="gradient-text tracking-tight whitespace-nowrap">{identity.name}</span>
           </Link>
         </div>
         
@@ -46,7 +46,7 @@ export function Header() {
           <div className="flex-1 max-w-md">
             <button onClick={openSearch} className="w-full flex items-center gap-2 px-3 py-2 rounded-md border bg-muted/50 text-muted-foreground text-sm hover:bg-muted transition-colors">
               <Search className="h-4 w-4" />
-              <span>Search goodmolt...</span>
+              <span>{copy.searchGoodmolt}</span>
               <kbd className="ml-auto text-xs bg-background px-1.5 py-0.5 rounded border">⌘K</kbd>
             </button>
           </div>
@@ -55,29 +55,22 @@ export function Header() {
         {/* Actions */}
         <div className="flex items-center gap-2">
           {isMobile && (
-            <Button variant="ghost" size="icon" onClick={openSearch}>
+            <Button variant="ghost" size="icon" onClick={openSearch} aria-label="Buscar">
               <Search className="h-5 w-5" />
             </Button>
           )}
           
           {isAuthenticated ? (
             <>
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-destructive text-destructive-foreground text-[10px] flex items-center justify-center">
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </span>
-                )}
-              </Button>
+              <NotificationBell />
               
               <Button onClick={openCreatePost} size="sm" className="gap-1">
                 <Plus className="h-4 w-4" />
-                {!isMobile && 'Create'}
+                {!isMobile && copy.create}
               </Button>
               
               <div className="relative">
-                <button onClick={() => setShowUserMenu(!showUserMenu)} className="flex items-center gap-2 p-1 rounded-md hover:bg-muted transition-colors">
+                <button aria-label="Menú de la cuenta" onClick={() => setShowUserMenu(!showUserMenu)} className="flex items-center gap-2 p-1 rounded-md hover:bg-muted transition-colors">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={agent?.avatarUrl} />
                     <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
@@ -92,16 +85,21 @@ export function Header() {
                       <p className="text-xs text-muted-foreground">u/{userName}</p>
                     </div>
                     <Link href={`/u/${userName}`} className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted" onClick={() => setShowUserMenu(false)}>
-                      <User className="h-4 w-4" /> Profile
+                      <User className="h-4 w-4" /> {copy.profile}
                     </Link>
                     <Link href="/dashboard" className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted" onClick={() => setShowUserMenu(false)}>
-                      <UserCog className="h-4 w-4" /> Account Management
+                      <UserCog className="h-4 w-4" /> {copy.accountManagement}
                     </Link>
+                    <Link href="/submolts" className="block px-3 py-2 text-sm hover:bg-muted">Subchiles</Link>
+                    <Link href="/agents" className="block px-3 py-2 text-sm hover:bg-muted">Agentes</Link>
+                    <Link href="/?view=saved" className="block px-3 py-2 text-sm hover:bg-muted">Guardadas</Link>
+                    <Link href="/?view=hidden" className="block px-3 py-2 text-sm hover:bg-muted">Ocultas</Link>
+                    <Link href="/moderation" className="block px-3 py-2 text-sm hover:bg-muted">Moderación</Link>
                     <Link href="/settings" className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted" onClick={() => setShowUserMenu(false)}>
-                      <Settings className="h-4 w-4" /> Settings
+                      <Settings className="h-4 w-4" /> {copy.settings}
                     </Link>
                     <button onClick={() => { logout(); setShowUserMenu(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted text-destructive">
-                      <LogOut className="h-4 w-4" /> Log out
+                      <LogOut className="h-4 w-4" /> {copy.logOut}
                     </button>
                   </div>
                 )}
@@ -110,10 +108,10 @@ export function Header() {
           ) : (
             <div className="flex items-center gap-2">
               <Link href="/auth/login">
-                <Button variant="ghost" size="sm">Log in</Button>
+                <Button variant="ghost" size="sm">{copy.logIn}</Button>
               </Link>
               <Link href="/auth/register">
-                <Button size="sm">Sign up</Button>
+                <Button size="sm">{copy.signUp}</Button>
               </Link>
             </div>
           )}
@@ -130,19 +128,19 @@ export function Sidebar() {
   const { isAuthenticated } = useAuth();
   
   const mainLinks = [
-    { href: '/', label: 'Home', icon: Home },
-    { href: '/?sort=hot', label: 'Hot', icon: Flame },
-    { href: '/?sort=new', label: 'New', icon: Clock },
-    { href: '/?sort=rising', label: 'Rising', icon: TrendingUp },
-    { href: '/?sort=top', label: 'Top', icon: Zap },
+    { href: '/', label: copy.home, icon: Home },
+    { href: '/?sort=hot', label: copy.hot, icon: Flame },
+    { href: '/?sort=new', label: copy.new, icon: Clock },
+    { href: '/?sort=rising', label: copy.rising, icon: TrendingUp },
+    { href: '/?sort=top', label: copy.top, icon: Zap },
   ];
   
   const popularSubmolts = [
-    { name: 'general', displayName: 'General' },
-    { name: 'announcements', displayName: 'Announcements' },
-    { name: 'showcase', displayName: 'Showcase' },
-    { name: 'help', displayName: 'Help' },
-    { name: 'meta', displayName: 'Meta' },
+    { name: 'general', displayName: copy.general },
+    { name: 'announcements', displayName: copy.announcements },
+    { name: 'showcase', displayName: copy.showcase },
+    { name: 'help', displayName: copy.help },
+    { name: 'meta', displayName: copy.meta },
   ];
   
   if (!sidebarOpen) return null;
@@ -166,7 +164,7 @@ export function Sidebar() {
         
         {/* Popular Submolts */}
         <div>
-          <h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Popular Submolts</h3>
+          <h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{copy.popularSubmolts}</h3>
           <div className="space-y-1">
             {popularSubmolts.map(submolt => (
               <Link key={submolt.name} href={`/m/${submolt.name}`} className={cn('flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors', pathname === `/m/${submolt.name}` ? 'bg-muted font-medium' : 'hover:bg-muted')}>
@@ -179,15 +177,15 @@ export function Sidebar() {
         
         {/* Explore */}
         <div>
-          <h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Explore</h3>
+          <h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{copy.explore}</h3>
           <div className="space-y-1">
             <Link href="/submolts" className="flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors">
               <Hash className="h-4 w-4" />
-              All Submolts
+              {copy.allSubmolts}
             </Link>
             <Link href="/agents" className="flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors">
               <Users className="h-4 w-4" />
-              Agents
+              {copy.agents}
             </Link>
           </div>
         </div>
@@ -218,7 +216,7 @@ export function MobileMenu() {
                 </Avatar>
                 <div>
                   <p className="font-medium">{agent.displayName || agent.name}</p>
-                  <p className="text-xs text-muted-foreground">{agent.karma} karma</p>
+                  <p className="text-xs text-muted-foreground">{agent.karma} {copy.karma}</p>
                 </div>
               </div>
             </div>
@@ -226,10 +224,10 @@ export function MobileMenu() {
           
           <div className="space-y-1">
             <Link href="/" onClick={toggleMobileMenu} className={cn('flex items-center gap-3 px-3 py-2 rounded-md', pathname === '/' && 'bg-muted font-medium')}>
-              <Home className="h-4 w-4" /> Home
+              <Home className="h-4 w-4" /> {copy.home}
             </Link>
             <Link href="/search" onClick={toggleMobileMenu} className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted">
-              <Search className="h-4 w-4" /> Search
+              <Search className="h-4 w-4" /> {copy.search}
             </Link>
           </div>
         </nav>
@@ -246,15 +244,15 @@ export function Footer() {
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
             <div className="h-6 w-6 rounded bg-gradient-to-br from-primary to-moltbook-400 flex items-center justify-center">
-              <span className="text-white text-xs font-bold">M</span>
+              <span className="text-white text-xs font-bold">2</span>
             </div>
-            <span className="text-sm text-muted-foreground">© 2025 Goodmolt. The social network for AI agents.</span>
+            <span className="text-sm text-muted-foreground">{copy.text2025GoodmoltTheSocialNetworkForAIAgents}</span>
           </div>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <Link href="/about" className="hover:text-foreground transition-colors">About</Link>
-            <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>
-            <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
-            <Link href="/api" className="hover:text-foreground transition-colors">API</Link>
+            <Link href="/welcome" className="hover:text-foreground transition-colors">{copy.about}</Link>
+            <Link href="/terms" className="hover:text-foreground transition-colors">{copy.terms}</Link>
+            <Link href="/privacy" className="hover:text-foreground transition-colors">{copy.privacy}</Link>
+            <Link href="/skill.md" className="hover:text-foreground transition-colors">{copy.aPI}</Link>
           </div>
         </div>
       </div>

@@ -1,5 +1,6 @@
 'use client';
 
+import { copy } from '@/lib/copy';
 import * as React from 'react';
 import Link from 'next/link';
 import { cn, formatScore, formatRelativeTime, getInitials } from '@/lib/utils';
@@ -31,7 +32,7 @@ export function Feed() {
       
       {!hasMore && posts.length > 0 && (
         <div className="text-center py-8">
-          <p className="text-muted-foreground">You've reached the end 🎉</p>
+          <p className="text-muted-foreground">{copy.youveReachedTheEnd}</p>
         </div>
       )}
     </div>
@@ -46,7 +47,7 @@ export function TrendingPosts({ posts }: { posts: Post[] }) {
     <Card className="p-4">
       <div className="flex items-center gap-2 mb-3">
         <TrendingUp className="h-5 w-5 text-primary" />
-        <h3 className="font-semibold">Trending Today</h3>
+        <h3 className="font-semibold">{copy.trendingToday}</h3>
       </div>
       <div className="space-y-3">
         {posts.slice(0, 5).map((post, i) => (
@@ -54,7 +55,7 @@ export function TrendingPosts({ posts }: { posts: Post[] }) {
             <span className="text-2xl font-bold text-muted-foreground/50 w-6">{i + 1}</span>
             <div className="flex-1 min-w-0">
               <p className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors">{post.title}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{formatScore(post.score)} points • m/{typeof post.submolt === 'string' ? post.submolt : post.submolt.name}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{formatScore(post.score)} {copy.pointsM}{typeof post.submolt === 'string' ? post.submolt : post.submolt.name}</p>
             </div>
           </Link>
         ))}
@@ -72,9 +73,9 @@ export function PopularSubmolts({ submolts }: { submolts: Submolt[] }) {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Users className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold">Popular Communities</h3>
+          <h3 className="font-semibold">{copy.popularCommunities}</h3>
         </div>
-        <Link href="/submolts" className="text-xs text-primary hover:underline">See all</Link>
+        <Link href="/submolts" className="text-xs text-primary hover:underline">{copy.seeAll}</Link>
       </div>
       <div className="space-y-2">
         {submolts.slice(0, 5).map((submolt, i) => (
@@ -85,7 +86,7 @@ export function PopularSubmolts({ submolts }: { submolts: Submolt[] }) {
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="font-medium text-sm">m/{submolt.name}</p>
-              <p className="text-xs text-muted-foreground">{formatScore(submolt.subscriberCount)} members</p>
+              <p className="text-xs text-muted-foreground">{formatScore(submolt.subscriberCount)} {copy.members}</p>
             </div>
           </Link>
         ))}
@@ -102,7 +103,7 @@ export function ActiveAgents({ agents }: { agents: Agent[] }) {
     <Card className="p-4">
       <div className="flex items-center gap-2 mb-3">
         <Zap className="h-5 w-5 text-primary" />
-        <h3 className="font-semibold">Active Agents</h3>
+        <h3 className="font-semibold">{copy.activeAgents}</h3>
       </div>
       <div className="space-y-2">
         {agents.slice(0, 5).map(agent => (
@@ -112,7 +113,7 @@ export function ActiveAgents({ agents }: { agents: Agent[] }) {
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="font-medium text-sm">u/{agent.name}</p>
-              <p className="text-xs text-muted-foreground">{formatScore(agent.karma)} karma</p>
+              <p className="text-xs text-muted-foreground">{formatScore(agent.karma)} {copy.karma}</p>
             </div>
           </Link>
         ))}
@@ -136,15 +137,15 @@ export function FeedSidebar({ trendingPosts, popularSubmolts, activeAgents }: {
       {/* Footer links */}
       <Card className="p-4">
         <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-          <Link href="/about" className="hover:text-foreground">About</Link>
+          <Link href="/about" className="hover:text-foreground">{copy.about}</Link>
           <span>•</span>
-          <Link href="/terms" className="hover:text-foreground">Terms</Link>
+          <Link href="/terms" className="hover:text-foreground">{copy.terms}</Link>
           <span>•</span>
-          <Link href="/privacy" className="hover:text-foreground">Privacy</Link>
+          <Link href="/privacy" className="hover:text-foreground">{copy.privacy}</Link>
           <span>•</span>
-          <Link href="/api" className="hover:text-foreground">API</Link>
+          <Link href="/api" className="hover:text-foreground">{copy.aPI}</Link>
         </div>
-        <p className="text-xs text-muted-foreground mt-2">© 2025 Moltbook</p>
+        <p className="text-xs text-muted-foreground mt-2">{copy.text2025Moltbook}</p>
       </Card>
     </div>
   );
@@ -157,8 +158,8 @@ export function EmptyFeed({ message }: { message?: string }) {
       <div className="h-16 w-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
         <Flame className="h-8 w-8 text-muted-foreground" />
       </div>
-      <h3 className="font-semibold mb-2">No posts yet</h3>
-      <p className="text-sm text-muted-foreground">{message || 'Be the first to post something!'}</p>
+      <h3 className="font-semibold mb-2">{copy.noPostsYet}</h3>
+      <p className="text-sm text-muted-foreground">{message || copy.beTheFirstToPostSomething}</p>
     </Card>
   );
 }

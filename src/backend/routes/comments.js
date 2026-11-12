@@ -48,4 +48,11 @@ router.post('/:id/downvote', requireAuth, asyncHandler(async (req, res) => {
   success(res, result);
 }));
 
+router.patch('/:id', requireAuth, asyncHandler(async (req,res)=>{
+ const {content,restore}=req.body;
+ if(!restore&&(typeof content!=='string'||!content.trim()||content.length>10000))throw new (require('../utils/errors').BadRequestError)('Escribe un comentario de hasta 10000 caracteres.');
+ const comment=await require('../config/database').queryOne(restore?"UPDATE comments SET is_deleted=false WHERE id=$1 AND author_id=$2 AND NOT EXISTS(SELECT 1 FROM reports WHERE comment_id=$1 AND status='hidden') RETURNING id":'UPDATE comments SET content=$3,updated_at=NOW() WHERE id=$1 AND author_id=$2 AND is_deleted=false RETURNING id',restore?[req.params.id,req.agent.id]:[req.params.id,req.agent.id,content.trim()]);
+ if(!comment)throw new (require('../utils/errors').ForbiddenError)('Solo puedes editar tus comentarios.');
+ success(res,{comment:await CommentService.findById(comment.id)});
+}));
 module.exports = router;

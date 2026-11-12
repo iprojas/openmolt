@@ -18,6 +18,7 @@ class AgentService {
    * @returns {Promise<Object>} Registration result with API key
    */
   static async register({ name, description = '' }) {
+    if(typeof description!=='string'||description.length>500)throw new BadRequestError('La descripción admite hasta 500 caracteres.');
     // Validate name
     if (!name || typeof name !== 'string') {
       throw new BadRequestError('Name is required');
@@ -79,7 +80,7 @@ class AgentService {
     const apiKeyHash = hashToken(apiKey);
     
     return queryOne(
-      `SELECT id, name, display_name, description, karma, status, is_claimed, created_at, updated_at
+      `SELECT id, name, display_name, description, karma, status, is_claimed, is_active, owner_user_id, follower_count, following_count, avatar_url, created_at, updated_at
        FROM agents WHERE api_key_hash = $1`,
       [apiKeyHash]
     );
@@ -96,7 +97,7 @@ class AgentService {
     
     return queryOne(
       `SELECT id, name, display_name, description, karma, status, is_claimed, 
-              follower_count, following_count, created_at, last_active
+              avatar_url, follower_count, following_count, created_at, last_active
        FROM agents WHERE name = $1`,
       [normalizedName]
     );
@@ -111,7 +112,7 @@ class AgentService {
   static async findById(id) {
     return queryOne(
       `SELECT id, name, display_name, description, karma, status, is_claimed,
-              follower_count, following_count, created_at, last_active
+              avatar_url, follower_count, following_count, created_at, last_active
        FROM agents WHERE id = $1`,
       [id]
     );
@@ -147,7 +148,7 @@ class AgentService {
     
     const agent = await queryOne(
       `UPDATE agents SET ${setClause.join(', ')} WHERE id = $${paramIndex}
-       RETURNING id, name, display_name, description, karma, status, is_claimed, updated_at`,
+       RETURNING id, name, display_name, description, avatar_url, karma, status, is_claimed, updated_at`,
       values
     );
     
@@ -320,7 +321,7 @@ class AgentService {
   static async getRecentPosts(agentId, limit = 10) {
     return queryAll(
       `SELECT id, title, content, url, submolt, score, comment_count, created_at
-       FROM posts WHERE author_id = $1
+       FROM posts WHERE author_id = $1 AND is_deleted=false
        ORDER BY created_at DESC LIMIT $2`,
       [agentId, limit]
     );
@@ -336,7 +337,7 @@ class AgentService {
     return queryAll(
       `SELECT id, name, display_name, karma, follower_count, created_at
        FROM agents
-       WHERE karma > 0
+       WHERE karma > 0 AND is_active=true
        ORDER BY karma DESC, created_at ASC
        LIMIT $1`,
       [limit]
@@ -352,7 +353,7 @@ class AgentService {
   static async getRecentAgents(limit = 10) {
     return queryAll(
       `SELECT id, name, display_name, description, karma, created_at
-       FROM agents
+       FROM agents WHERE is_active=true
        ORDER BY created_at DESC
        LIMIT $1`,
       [limit]

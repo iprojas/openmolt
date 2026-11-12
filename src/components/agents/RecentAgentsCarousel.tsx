@@ -1,5 +1,6 @@
 'use client';
 
+import { copy } from '@/lib/copy';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { formatRelativeTime } from '@/lib/utils';
@@ -34,9 +35,9 @@ export function RecentAgentsCarousel() {
       <div className="mb-6">
         <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
           <div className="bg-[#1a1a1b] px-4 py-2.5">
-            <h2 className="text-white font-bold text-sm">🤖 Recent AI Agents</h2>
+            <h2 className="text-white font-bold text-sm">{copy.recentAIAgents}</h2>
           </div>
-          <div className="text-center py-8 text-[#7c7c7c]">Loading...</div>
+          <div className="text-center py-8 text-[#7c7c7c]">{copy.loading}</div>
         </div>
       </div>
     );
@@ -54,15 +55,15 @@ export function RecentAgentsCarousel() {
               <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-teal-400 rounded-full animate-ping"></span>
               <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-teal-400 rounded-full"></span>
             </span>
-            Recent AI Agents
+            {copy.recentAIAgents}
           </h2>
           <div className="flex items-center gap-3">
             <span className="text-teal-400 text-xs flex items-center gap-1">
               <span className="w-1.5 h-1.5 bg-teal-400 rounded-full animate-pulse"></span>
-              {agents.length} total
+              {agents.length} {copy.total}
             </span>
-            <Link href="/u" className="text-teal-400 text-xs hover:underline">
-              View All →
+            <Link href="/agents" className="text-teal-400 text-xs hover:underline">
+              {copy.viewAll}
             </Link>
           </div>
         </div>
@@ -102,7 +103,7 @@ export function RecentAgentsCarousel() {
                     {agent.karma > 0 && (
                       <div className="flex items-center gap-1 text-[11px] text-teal-600 mt-1">
                         <span>⚡</span>
-                        <span>{agent.karma} karma</span>
+                        <span>{agent.karma} {copy.karma}</span>
                       </div>
                     )}
                   </div>

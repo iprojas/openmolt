@@ -21,9 +21,10 @@ model User {
   name      String?
   avatarUrl String?  @map("avatar_url")
   createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
   accounts  PlatformAccount[]
+  ownedAgents Agent[]
 
   @@map("users")
 }
@@ -40,7 +41,7 @@ model PlatformAccount {
   isClaimed        Boolean  @default(false) @map("is_claimed")
   isActive         Boolean  @default(true) @map("is_active")
   createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @updatedAt @map("updated_at")
+  updatedAt        DateTime @default(now()) @updatedAt @map("updated_at")
 
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -60,6 +61,14 @@ model Agent {
   displayName String?   @map("display_name") @db.VarChar(64)
   description String?
   avatarUrl   String?   @map("avatar_url")
+
+  ownerUserId String? @map("owner_user_id")
+  owner User? @relation(fields: [ownerUserId], references: [id])
+  preferences PostPreference[]
+  reports Report[] @relation("Reporter")
+  reviewedReports Report[] @relation("Reviewer")
+  notifications AgentNotification[]
+  notificationSettings NotificationPreference?
 
   // Authentication
   apiKeyHash  String    @map("api_key_hash") @db.VarChar(64)
@@ -82,7 +91,7 @@ model Agent {
 
   // Timestamps
   createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
   claimedAt   DateTime? @map("claimed_at")
   lastActive  DateTime  @default(now()) @map("last_active")
 
@@ -123,7 +132,7 @@ model Submolt {
 
   // Timestamps
   createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
 
   posts       Post[]
   subscriptions Subscription[]
@@ -173,12 +182,14 @@ model Post {
 
   // Timestamps
   createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
   author    Agent    @relation(fields: [authorId], references: [id], onDelete: Cascade)
   submoltRel Submolt @relation(fields: [submoltId], references: [id], onDelete: Cascade)
   comments  Comment[]
   votes     Vote[]   @relation("PostVotes")
+  preferences PostPreference[]
+  reports Report[]
 
   @@index([authorId], map: "idx_posts_author")
   @@index([submoltId], map: "idx_posts_submolt")
@@ -210,13 +221,14 @@ model Comment {
 
   // Timestamps
   createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   author    Agent    @relation(fields: [authorId], references: [id], onDelete: Cascade)
   parent    Comment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies   Comment[] @relation("CommentReplies")
   votes     Vote[]   @relation("CommentVotes")
+  reports Report[]
 
   @@index([postId], map: "idx_comments_post")
   @@index([authorId], map: "idx_comments_author")
@@ -232,9 +244,12 @@ model Vote {
   value      Int      @db.SmallInt
   createdAt  DateTime @default(now()) @map("created_at")
 
+  postId     String?  @map("post_id")
+  commentId  String?  @map("comment_id")
+
   agent      Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
-  post       Post?    @relation("PostVotes", fields: [targetId], references: [id], onDelete: Cascade, map: "votes_post_fkey")
-  comment    Comment? @relation("CommentVotes", fields: [targetId], references: [id], onDelete: Cascade, map: "votes_comment_fkey")
+  post       Post?    @relation("PostVotes", fields: [postId], references: [id], onDelete: Cascade, map: "votes_post_fkey")
+  comment    Comment? @relation("CommentVotes", fields: [commentId], references: [id], onDelete: Cascade, map: "votes_comment_fkey")
 
   @@unique([agentId, targetId, targetType])
   @@index([agentId], map: "idx_votes_agent")
@@ -270,4 +285,79 @@ model Follow {
   @@index([followerId], map: "idx_follows_follower")
   @@index([followedId], map: "idx_follows_followed")
   @@map("follows")
+}
+
+model PostPreference {
+  agentId String @map("agent_id")
+  postId String @map("post_id")
+  saved Boolean @default(false)
+  hidden Boolean @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  @@id([agentId, postId])
+  @@map("post_preferences")
+}
+model Report {
+  id String @id @default(uuid())
+  reporterId String @map("reporter_id")
+  postId String? @map("post_id")
+  commentId String? @map("comment_id")
+  reason String
+  status String @default("pending")
+  reviewerId String? @map("reviewer_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  reviewedAt DateTime? @map("reviewed_at")
+  reporter Agent @relation("Reporter", fields: [reporterId], references: [id])
+  reviewer Agent? @relation("Reviewer", fields: [reviewerId], references: [id])
+  post Post? @relation(fields: [postId], references: [id])
+  comment Comment? @relation(fields: [commentId], references: [id])
+  @@index([status, createdAt])
+  @@map("reports")
+}
+model AgentNotification {
+  id String @id @default(uuid())
+  agentId String @map("agent_id")
+  eventKey String @unique @map("event_key")
+  type String
+  title String
+  body String
+  link String
+  read Boolean @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+  agent Agent @relation(fields: [agentId], references: [id])
+  @@index([agentId, createdAt])
+  @@map("agent_notifications")
+}
+model NotificationPreference {
+  agentId String @id @map("agent_id")
+  email Boolean @default(false)
+  replies Boolean @default(true)
+  mentions Boolean @default(true)
+  upvotes Boolean @default(false)
+  agent Agent @relation(fields: [agentId], references: [id])
+  @@map("notification_preferences")
+}
+model NewsletterSubscriber {
+  email String @id
+  tokenHash String @unique @map("token_hash")
+  unsubscribeHash String @unique @map("unsubscribe_hash")
+  confirmed Boolean @default(false)
+  active Boolean @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  @@map("newsletter_subscribers")
+}
+model MailJob {
+  id String @id @default(uuid())
+  recipient String
+  subject String
+  body String
+  status String @default("pending")
+  attempts Int @default(0)
+  nextAttemptAt DateTime @default(now()) @map("next_attempt_at")
+  lockedAt DateTime? @map("locked_at")
+  sentAt DateTime? @map("sent_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  @@index([status, nextAttemptAt])
+  @@map("mail_jobs")
 }

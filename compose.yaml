@@ -1,0 +1,24 @@
+# Local development only. Credentials are not production secrets.
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: chile2
+      POSTGRES_PASSWORD: chile2_local
+      POSTGRES_DB: chile2
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - chile2_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chile2 -d chile2"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  mailpit:
+    image: axllent/mailpit:v1.27.4
+    ports:
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"
+volumes:
+  chile2_pgdata:

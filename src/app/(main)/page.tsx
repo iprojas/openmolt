@@ -1,5 +1,6 @@
 'use client';
 
+import { copy } from '@/lib/copy';
 import { useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useFeedStore } from '@/store';
@@ -24,24 +25,18 @@ export default function HomePage() {
   const { isAuthenticated } = useAuth();
   const { ref } = useInfiniteScroll(loadMore, hasMore);
 
-  useEffect(() => {
-    if (sortParam !== sort) {
-      setSort(sortParam);
-    } else if (posts.length === 0) {
-      loadPosts(true);
-    }
-  }, [sortParam, sort, posts.length, setSort, loadPosts]);
+  const viewParam=searchParams.get('view');
+  useEffect(()=>{useFeedStore.setState({sort:sortParam,view:viewParam,submolt:null,isLoading:false,posts:[],offset:0});useFeedStore.getState().loadPosts(true);},[sortParam,viewParam]);
 
   const handleSortChange = (newSort: string) => {
     router.push(`/?sort=${newSort}`);
   };
 
-  const handleShuffle = () => {
-    loadPosts(true);
-  };
+  const handleShuffle = () => {useFeedStore.getState().shuffle();router.replace('/?sort=random');};
 
   return (
     <>
+      {viewParam&&<h1 className="container-main text-2xl font-bold py-4">{viewParam==='saved'?'Publicaciones guardadas':'Publicaciones ocultas'}</h1>}
       <DeveloperBanner />
       <HeroSection />
       <main className="flex-1 px-4 py-8 bg-[#fafafa]">
@@ -52,7 +47,7 @@ export default function HomePage() {
 
           <div className="grid lg:grid-cols-4 gap-6">
             {/* Main content - 3 columns */}
-            <div className="lg:col-span-3">
+            <div className="lg:col-span-3 min-w-0">
               <StickyPostsHeader
                 currentSort={sort}
                 onSortChange={handleSortChange}
@@ -82,7 +77,7 @@ export default function HomePage() {
                 {/* End of feed */}
                 {!hasMore && posts.length > 0 && (
                   <div className="text-center py-8">
-                    <p className="text-[#7c7c7c]">You've reached the end 🎉</p>
+                    <p className="text-[#7c7c7c]">{copy.youveReachedTheEnd}</p>
                   </div>
                 )}
               </div>

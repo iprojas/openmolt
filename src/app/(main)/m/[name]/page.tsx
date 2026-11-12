@@ -1,10 +1,11 @@
 'use client';
 
+import { copy } from '@/lib/copy';
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { useSubmolt, useAuth, useInfiniteScroll } from '@/hooks';
-import { useFeedStore, useSubscriptionStore } from '@/store';
+import { useFeedStore, useSubscriptionStore, useUIStore } from '@/store';
 import { PageContainer } from '@/components/layout';
 import { PostList, FeedSortTabs, CreatePostCard } from '@/components/post';
 import { Button, Card, CardHeader, CardTitle, CardDescription, CardContent, Avatar, AvatarImage, AvatarFallback, Skeleton, Badge, Spinner } from '@/components/ui';
@@ -18,16 +19,20 @@ export default function SubmoltPage() {
   const searchParams = useSearchParams();
   const sortParam = (searchParams.get('sort') as PostSort) || 'hot';
   
-  const { data: submolt, isLoading: submoltLoading, error } = useSubmolt(params.name);
+  const { data: submolt, isLoading: submoltLoading, error, mutate } = useSubmolt(params.name);
   const { isAuthenticated } = useAuth();
   const { isSubscribed, addSubscription, removeSubscription } = useSubscriptionStore();
   const { posts, sort, isLoading, hasMore, setSort, setSubmolt, loadMore } = useFeedStore();
   const { ref } = useInfiniteScroll(loadMore, hasMore);
   
+  const openCreatePost=useUIStore(s=>s.openCreatePost);
+  const compose=searchParams.get('compose');
+  useEffect(()=>{if(compose==='true')openCreatePost();},[compose,openCreatePost]);
   const [subscribing, setSubscribing] = useState(false);
-  const subscribed = submolt?.isSubscribed || isSubscribed(params.name);
+  const subscribed = submolt?.isSubscribed ?? isSubscribed(params.name);
   
   useEffect(() => {
+    useFeedStore.setState({view:null});
     setSubmolt(params.name);
     if (sortParam !== sort) setSort(sortParam);
   }, [params.name, sortParam, sort, setSubmolt, setSort]);
@@ -43,6 +48,7 @@ export default function SubmoltPage() {
         await api.subscribeSubmolt(params.name);
         addSubscription(params.name);
       }
+      await mutate();
     } catch (err) {
       console.error('Subscribe failed:', err);
     } finally {
@@ -86,7 +92,7 @@ export default function SubmoltPage() {
                 
                 {isAuthenticated && (
                   <Button onClick={handleSubscribe} variant={subscribed ? 'secondary' : 'default'} disabled={subscribing}>
-                    {subscribed ? 'Joined' : 'Join'}
+                    {subscribed ? copy.joined : copy.join}
                   </Button>
                 )}
               </div>
@@ -119,7 +125,7 @@ export default function SubmoltPage() {
           <div className="w-full lg:w-80 space-y-4">
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">About Community</CardTitle>
+                <CardTitle className="text-base">{copy.aboutCommunity}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {submoltLoading ? (
@@ -129,26 +135,26 @@ export default function SubmoltPage() {
                   </>
                 ) : (
                   <>
-                    <p className="text-sm">{submolt?.description || 'Welcome to this community!'}</p>
+                    <p className="text-sm">{submolt?.description || copy.welcomeToThisCommunity}</p>
                     
                     <div className="flex items-center gap-4 text-sm">
                       <div className="flex items-center gap-1">
                         <Users className="h-4 w-4 text-muted-foreground" />
                         <span className="font-medium">{formatScore(submolt?.subscriberCount || 0)}</span>
-                        <span className="text-muted-foreground">members</span>
+                        <span className="text-muted-foreground">{copy.members}</span>
                       </div>
                     </div>
                     
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <Calendar className="h-3.5 w-3.5" />
-                      Created {submolt?.createdAt ? formatDate(submolt.createdAt) : 'recently'}
+                      {copy.created} {submolt?.createdAt ? formatDate(submolt.createdAt) : 'hace poco'}
                     </div>
                     
                     {isAuthenticated && (
                       <Link href={`/m/${params.name}/submit`}>
                         <Button className="w-full gap-2">
                           <Plus className="h-4 w-4" />
-                          Create Post
+                          {copy.createPost}
                         </Button>
                       </Link>
                     )}
@@ -161,7 +167,7 @@ export default function SubmoltPage() {
             {submolt?.rules && submolt.rules.length > 0 && (
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Rules</CardTitle>
+                  <CardTitle className="text-base">{copy.rules}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ol className="space-y-2">
@@ -182,7 +188,7 @@ export default function SubmoltPage() {
             {submolt?.moderators && submolt.moderators.length > 0 && (
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Moderators</CardTitle>
+                  <CardTitle className="text-base">{copy.moderators}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">

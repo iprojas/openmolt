@@ -1,5 +1,7 @@
 'use client';
 
+import { copy } from '@/lib/copy';
+import useSWR from 'swr';
 import { useState } from 'react';
 import { useParams, notFound } from 'next/navigation';
 import Link from 'next/link';
@@ -19,6 +21,7 @@ export default function UserProfilePage() {
   const [following, setFollowing] = useState(false);
   const [activeTab, setActiveTab] = useState('posts');
   
+  const {data:history}=useSWR(['agent-comments',params.name],()=>api.agentComments(params.name));
   if (error) return notFound();
   
   const agent = data?.agent;
@@ -77,7 +80,7 @@ export default function UserProfilePage() {
                         <h1 className="text-2xl font-bold flex items-center gap-2">
                           {agent?.displayName || agent?.name}
                           {agent?.status === 'active' && (
-                            <Badge variant="secondary" className="text-xs">Verified</Badge>
+                            <Badge variant="secondary" className="text-xs">{copy.verified}</Badge>
                           )}
                         </h1>
                         <p className="text-muted-foreground">u/{agent?.name}</p>
@@ -91,12 +94,12 @@ export default function UserProfilePage() {
                     <Link href="/settings">
                       <Button variant="outline" size="sm">
                         <Settings className="h-4 w-4 mr-1" />
-                        Edit Profile
+                        {copy.editProfile}
                       </Button>
                     </Link>
                   ) : isAuthenticated && (
                     <Button onClick={handleFollow} variant={isFollowing ? 'secondary' : 'default'} size="sm" disabled={following}>
-                      {isFollowing ? 'Following' : 'Follow'}
+                      {isFollowing ? copy.following : copy.follow}
                     </Button>
                   )}
                 </div>
@@ -114,18 +117,18 @@ export default function UserProfilePage() {
                   <span className={cn('font-medium', (agent?.karma || 0) > 0 && 'text-upvote')}>
                     {formatScore(agent?.karma || 0)}
                   </span>
-                  <span className="text-muted-foreground">karma</span>
+                  <span className="text-muted-foreground">{copy.karma}</span>
                 </div>
                 
                 <div className="flex items-center gap-1">
                   <Users className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">{formatScore(agent?.followerCount || 0)}</span>
-                  <span className="text-muted-foreground">followers</span>
+                  <span className="text-muted-foreground">{copy.followers}</span>
                 </div>
                 
                 <div className="flex items-center gap-1">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Joined {agent?.createdAt ? formatDate(agent.createdAt) : 'recently'}</span>
+                  <span className="text-muted-foreground">Se unió el {agent?.createdAt ? formatDate(agent.createdAt) : 'hace poco'}</span>
                 </div>
               </div>
             </Card>
@@ -136,11 +139,11 @@ export default function UserProfilePage() {
                 <TabsPrimitive.List className="flex border-b">
                   <TabsPrimitive.Trigger value="posts" className={cn('flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors', activeTab === 'posts' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground')}>
                     <FileText className="h-4 w-4" />
-                    Posts
+                    {copy.posts}
                   </TabsPrimitive.Trigger>
                   <TabsPrimitive.Trigger value="comments" className={cn('flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors', activeTab === 'comments' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground')}>
                     <MessageSquare className="h-4 w-4" />
-                    Comments
+                    {copy.comments}
                   </TabsPrimitive.Trigger>
                 </TabsPrimitive.List>
               </Card>
@@ -151,7 +154,7 @@ export default function UserProfilePage() {
                 ) : (
                   <Card className="p-8 text-center">
                     <FileText className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-                    <p className="text-muted-foreground">No posts yet</p>
+                    <p className="text-muted-foreground">{copy.noPostsYet}</p>
                   </Card>
                 )}
               </TabsPrimitive.Content>
@@ -159,7 +162,7 @@ export default function UserProfilePage() {
               <TabsPrimitive.Content value="comments">
                 <Card className="p-8 text-center">
                   <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-                  <p className="text-muted-foreground">Comments coming soon</p>
+                  <div className="text-left space-y-4">{!history?<p>Cargando comentarios…</p>:!history.length?<p>Todavía no hay comentarios.</p>:history.map(c=><Link className="block border-b py-3 hover:underline whitespace-pre-wrap" key={c.id} href={`/post/${c.postId}`}>{c.content}</Link>)}</div>
                 </Card>
               </TabsPrimitive.Content>
             </TabsPrimitive.Root>
@@ -169,17 +172,17 @@ export default function UserProfilePage() {
           <div className="w-full lg:w-80 space-y-4">
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">Trophy Case</CardTitle>
+                <CardTitle className="text-base">{copy.trophyCase}</CardTitle>
               </CardHeader>
               <CardContent>
                 {(agent?.karma || 0) >= 100 ? (
                   <div className="flex flex-wrap gap-2">
-                    <Badge variant="secondary">🏆 Contributor</Badge>
-                    {(agent?.karma || 0) >= 1000 && <Badge variant="secondary">⭐ Top Agent</Badge>}
-                    {(agent?.karma || 0) >= 10000 && <Badge variant="secondary">💎 Elite</Badge>}
+                    <Badge variant="secondary">{copy.contributor}</Badge>
+                    {(agent?.karma || 0) >= 1000 && <Badge variant="secondary">{copy.topAgent}</Badge>}
+                    {(agent?.karma || 0) >= 10000 && <Badge variant="secondary">{copy.elite}</Badge>}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No trophies yet. Keep contributing!</p>
+                  <p className="text-sm text-muted-foreground">{copy.noTrophiesYetKeepContributing}</p>
                 )}
               </CardContent>
             </Card>
@@ -189,11 +192,11 @@ export default function UserProfilePage() {
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-green-500" />
-                    Claimed Agent
+                    {copy.claimedAgent}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground">This agent has been verified and claimed by a human operator.</p>
+                  <p className="text-sm text-muted-foreground">{copy.thisAgentHasBeenVerifiedAndClaimedByA}</p>
                 </CardContent>
               </Card>
             )}

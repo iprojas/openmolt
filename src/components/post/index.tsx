@@ -1,8 +1,10 @@
 'use client';
+import { PostActions } from '@/components/participation';
 
+import { copy, countText } from '@/lib/copy';
 import * as React from 'react';
 import Link from 'next/link';
-import { cn, formatScore, formatRelativeTime, extractDomain, truncate, getInitials, getPostUrl, getSubmoltUrl, getAgentUrl } from '@/lib/utils';
+import { formatDateTime, cn, formatScore, formatRelativeTime, extractDomain, truncate, getInitials, getPostUrl, getSubmoltUrl, getAgentUrl } from '@/lib/utils';
 import { usePostVote, useAuth } from '@/hooks';
 import { useUIStore } from '@/store';
 import { Button, Avatar, AvatarImage, AvatarFallback, Card, Skeleton, Badge } from '@/components/ui';
@@ -77,8 +79,8 @@ export function PostCard({ post, isCompact = false, showSubmolt = true, onVote }
               <span>u/{post.authorName}</span>
             </Link>
             <span>•</span>
-            <span title={post.createdAt}>{formatRelativeTime(post.createdAt)}</span>
-            {post.editedAt && <span className="text-xs">(edited)</span>}
+            <span title={formatDateTime(post.createdAt)}>{formatRelativeTime(post.createdAt)}</span>
+            {post.editedAt && <span className="text-xs">{copy.edited}</span>}
           </div>
           
           {/* Title */}
@@ -115,37 +117,10 @@ export function PostCard({ post, isCompact = false, showSubmolt = true, onVote }
           <div className="flex items-center gap-1 mt-3">
             <Link href={getPostUrl(post.id, post.submolt)} className="flex items-center gap-1.5 px-2 py-1 text-sm text-muted-foreground hover:bg-muted rounded transition-colors">
               <MessageSquare className="h-4 w-4" />
-              <span>{post.commentCount} comments</span>
+              <span>{countText(post.commentCount, 'comentario', 'comentarios')}</span>
             </Link>
             
-            <button className="flex items-center gap-1.5 px-2 py-1 text-sm text-muted-foreground hover:bg-muted rounded transition-colors">
-              <Share2 className="h-4 w-4" />
-              <span className="hidden sm:inline">Share</span>
-            </button>
-            
-            {isAuthenticated && (
-              <button className={cn('flex items-center gap-1.5 px-2 py-1 text-sm text-muted-foreground hover:bg-muted rounded transition-colors', post.isSaved && 'text-primary')}>
-                <Bookmark className={cn('h-4 w-4', post.isSaved && 'fill-current')} />
-                <span className="hidden sm:inline">{post.isSaved ? 'Saved' : 'Save'}</span>
-              </button>
-            )}
-            
-            <div className="relative ml-auto">
-              <button onClick={() => setShowMenu(!showMenu)} className="p-1 text-muted-foreground hover:bg-muted rounded transition-colors">
-                <MoreHorizontal className="h-4 w-4" />
-              </button>
-              
-              {showMenu && (
-                <div className="absolute right-0 top-full mt-1 w-40 rounded-md border bg-popover shadow-lg z-10">
-                  <button className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted text-left">
-                    <Eye className="h-4 w-4" /> Hide post
-                  </button>
-                  <button className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted text-left text-destructive">
-                    <Flag className="h-4 w-4" /> Report
-                  </button>
-                </div>
-              )}
-            </div>
+            <PostActions post={post} />
           </div>
         </div>
       </div>
@@ -168,7 +143,7 @@ export function PostList({ posts, isLoading, showSubmolt = true }: { posts: Post
   if (posts.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">No posts yet</p>
+        <p className="text-muted-foreground">{copy.noPostsYet}</p>
       </div>
     );
   }
@@ -215,10 +190,10 @@ export function PostCardSkeleton() {
 // Feed Sort Tabs
 export function FeedSortTabs({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   const tabs = [
-    { value: 'hot', label: 'Hot', icon: '🔥' },
-    { value: 'new', label: 'New', icon: '✨' },
-    { value: 'top', label: 'Top', icon: '📈' },
-    { value: 'rising', label: 'Rising', icon: '🚀' },
+    { value: 'hot', label: copy.hot, icon: '🔥' },
+    { value: 'new', label: copy.new, icon: '✨' },
+    { value: 'top', label: copy.top, icon: '📈' },
+    { value: 'rising', label: copy.rising, icon: '🚀' },
   ];
   
   return (
@@ -258,7 +233,7 @@ export function CreatePostCard({ submolt }: { submolt?: string }) {
           onClick={openCreatePost}
           className="flex-1 px-4 py-2 text-left text-muted-foreground bg-muted hover:bg-muted/80 transition-colors rounded-md border border-[#e0e0e0]"
         >
-          Create a post...
+          {copy.createAPost2}
         </button>
       </div>
     </Card>

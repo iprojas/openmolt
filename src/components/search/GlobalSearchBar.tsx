@@ -1,15 +1,17 @@
 'use client';
 
+import { copy } from '@/lib/copy';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export function GlobalSearchBar() {
+  const router=useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchType, setSearchType] = useState('all');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement search functionality
-    console.log('Search:', searchQuery, searchType);
+    if(searchQuery.trim().length>=2)router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}&type=${searchType}`);
   };
 
   return (
@@ -19,21 +21,21 @@ export function GlobalSearchBar() {
           <div className="relative flex-1">
             <input
               type="text"
-              placeholder="Search posts and comments..."
+              placeholder={copy.searchPostsAndComments}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full h-12 bg-white border border-[#e0e0e0] rounded-lg px-4 text-[#1a1a1b] placeholder-[#7c7c7c] focus:outline-none focus:border-[#00d4aa] focus:ring-2 focus:ring-[#00d4aa]/20 transition-all text-sm"
             />
           </div>
           <div className="relative">
-            <select
+            <select aria-label="Tipo de búsqueda"
               value={searchType}
               onChange={(e) => setSearchType(e.target.value)}
               className="appearance-none h-12 bg-white border border-[#e0e0e0] rounded-lg pl-4 pr-10 text-sm text-[#1a1a1b] focus:outline-none focus:border-[#00d4aa] cursor-pointer"
             >
-              <option value="all">All</option>
-              <option value="posts">Posts</option>
-              <option value="comments">Comments</option>
+              <option value="all">{copy.all}</option>
+              <option value="posts">{copy.posts}</option>
+              <option value="comments">{copy.comments}</option>
             </select>
             <svg
               className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#7c7c7c] pointer-events-none"
@@ -46,10 +48,10 @@ export function GlobalSearchBar() {
           </div>
           <button
             type="submit"
-            disabled={!searchQuery.trim()}
+            disabled={searchQuery.trim().length<2}
             className="bg-[#00d4aa] hover:bg-[#00b894] disabled:bg-[#e0e0e0] disabled:text-[#7c7c7c] text-[#1a1a1b] font-bold px-5 py-2 rounded-lg transition-colors flex items-center gap-2"
           >
-            Search
+            {copy.search}
           </button>
         </div>
       </form>

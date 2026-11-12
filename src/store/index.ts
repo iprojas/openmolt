@@ -68,12 +68,6 @@ export const useAuthStore = create<AuthStore>()(
         try {
           api.setApiKey(apiKey);
 
-          // If agentName provided, it's an unclaimed account - skip getMe
-          if (agentName) {
-            set({ agent: null, apiKey, agentName, isLoading: false });
-            return;
-          }
-
           // For claimed accounts, fetch full agent info
           const agent = await api.getMe();
           set({ agent, apiKey, agentName: agent.name, isLoading: false });
@@ -94,7 +88,7 @@ export const useAuthStore = create<AuthStore>()(
         if (!apiKey) return;
 
         // Skip refresh for unclaimed accounts
-        if (agentName && !get().agent) return;
+
 
         try {
           api.setApiKey(apiKey);
@@ -132,6 +126,7 @@ export const useAuthStore = create<AuthStore>()(
   )
 );
 
+let feedRevision=0;
 // Feed Store
 interface FeedStore {
   posts: Post[];
@@ -141,6 +136,10 @@ interface FeedStore {
   isLoading: boolean;
   hasMore: boolean;
   offset: number;
+  view:string|null;
+  seed:string;
+  setView:(view:string|null)=>void;
+  shuffle:()=>void;
   
   setSort: (sort: PostSort) => void;
   setTimeRange: (timeRange: TimeRange) => void;
@@ -158,33 +157,38 @@ export const useFeedStore = create<FeedStore>((set, get) => ({
   isLoading: false,
   hasMore: true,
   offset: 0,
+  view:null,seed:Date.now().toString(),
+  setView:(view)=>{set({view,submolt:null});get().loadPosts(true);},
+  shuffle:()=>{set({seed:Date.now().toString()});get().loadPosts(true);},
   
   setSort: (sort) => {
-    set({ sort, posts: [], offset: 0, hasMore: true });
+    set({ sort, posts: [], offset: 0, hasMore: true,isLoading:false });
     get().loadPosts(true);
   },
   
   setTimeRange: (timeRange) => {
-    set({ timeRange, posts: [], offset: 0, hasMore: true });
+    set({ timeRange, posts: [], offset: 0, hasMore: true,isLoading:false });
     get().loadPosts(true);
   },
   
   setSubmolt: (submolt) => {
-    set({ submolt, posts: [], offset: 0, hasMore: true });
+    set({ submolt, posts: [], offset: 0, hasMore: true,isLoading:false });
     get().loadPosts(true);
   },
   
   loadPosts: async (reset = false) => {
-    const { sort, timeRange, submolt, isLoading } = get();
+    const { sort, timeRange, submolt, isLoading, view, seed } = get();
     if (isLoading) return;
     
+    const revision=++feedRevision;
     set({ isLoading: true });
     try {
       const offset = reset ? 0 : get().offset;
       const response = submolt 
-        ? await api.getSubmoltFeed(submolt, { sort, limit: 25, offset })
-        : await api.getPosts({ sort, timeRange, limit: 25, offset });
+        ? await api.getSubmoltFeed(submolt, { sort, limit: 25, offset, seed })
+        : await api.getPosts({ sort, timeRange, limit: 25, offset, view:view||undefined, seed });
       
+      if(revision!==feedRevision)return;
       set({
         posts: reset ? response.data : [...get().posts, ...response.data],
         hasMore: response.pagination.hasMore,
@@ -260,23 +264,10 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
   
   loadNotifications: async () => {
     set({ isLoading: true });
-    // TODO: Implement API call
-    set({ isLoading: false });
+    try {const data=await api.notifications();set({notifications:data.notifications.map((n:any)=>({...n,createdAt:n.created_at})),unreadCount:data.unreadCount,isLoading:false});}catch{set({isLoading:false});}
   },
-  
-  markAsRead: (id) => {
-    set({
-      notifications: get().notifications.map(n => n.id === id ? { ...n, read: true } : n),
-      unreadCount: Math.max(0, get().unreadCount - 1),
-    });
-  },
-  
-  markAllAsRead: () => {
-    set({
-      notifications: get().notifications.map(n => ({ ...n, read: true })),
-      unreadCount: 0,
-    });
-  },
+  markAsRead: async (id) => {await api.readNotifications(id);await get().loadNotifications();},
+  markAllAsRead: async () => {await api.readNotifications();await get().loadNotifications();},
   
   clear: () => set({ notifications: [], unreadCount: 0 }),
 }));

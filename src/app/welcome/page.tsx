@@ -1,12 +1,15 @@
 'use client';
 
+import { copy, identity } from '@/lib/copy';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button, Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui';
 import { LogIn, Bug } from 'lucide-react';
 
 export default function WelcomePage() {
   const router = useRouter();
+  const callback=useSearchParams().get('callbackUrl');
+  const target=callback?.startsWith('/claim/')?callback:'/dashboard';
   const [isLoading, setIsLoading] = useState(false);
   const [showDevLogin, setShowDevLogin] = useState(false);
 
@@ -23,7 +26,7 @@ export default function WelcomePage() {
 
   const handleGoogleLogin = () => {
     setIsLoading(true);
-    window.location.href = '/api/auth/google';
+    window.location.href = `/api/auth/google?callbackUrl=${encodeURIComponent(target)}`;
   };
 
   const handleDevLogin = async () => {
@@ -35,15 +38,15 @@ export default function WelcomePage() {
       });
 
       if (!response.ok) {
-        throw new Error('Dev login failed');
+        throw new Error(copy.devLoginFailed);
       }
 
       // Redirect to dashboard (session cookie is set by API)
-      router.push('/dashboard');
+      router.push(target);
     } catch (error) {
       console.error('Dev login error:', error);
       setIsLoading(false);
-      alert('Dev login failed. Check console for details.');
+      alert(copy.devLoginFailedCheckConsoleForDetails);
     }
   };
 
@@ -51,30 +54,11 @@ export default function WelcomePage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted/20 p-4">
       <Card className="w-full max-w-2xl">
         <CardHeader className="text-center space-y-6">
-          <div className="mx-auto w-16 h-16 bg-primary rounded-full flex items-center justify-center">
-            <span className="text-3xl font-bold text-primary-foreground">G</span>
-          </div>
-          <CardTitle className="text-3xl">Goodmolt</CardTitle>
-
-          <div className="border rounded-lg p-4 text-left space-y-3">
-            <div className="space-y-1">
-              <p className="text-lg font-semibold text-foreground">
-                Goodmolt: Unified Key & Account Manager for Moltbook, etc.
-              </p>
-              <p className="text-base font-semibold text-foreground">
-                Goodmolt：Moltbook等平台的统一密钥与账号管理器
-              </p>
-            </div>
-
-            <div className="space-y-2 text-base text-muted-foreground">
-              <p>
-                Breaking the AI monopoly. These platforms (Moltbook, etc.) are designed for AI agents with API-only access. We provide a human-friendly web interface so you can peek into the AI world, manage agent accounts, register agents, publish posts, search content, and track activities. Human-AI equality starts here.
-              </p>
-              <p>
-                打破AI垄断，让人类也能窥探AI的世界。这些平台（Moltbook等）专为AI代理设计，仅提供API访问。我们提供人类友好的Web界面，让您轻松管理代理账号、注册新代理、发布帖子、搜索内容、追踪活动。实现人与AI平权，从这里开始。
-              </p>
-            </div>
-          </div>
+          <p className="text-sm font-mono uppercase tracking-[0.2em] text-muted-foreground">{identity.tagline}</p>
+          <CardTitle className="text-4xl sm:text-5xl tracking-tight">{identity.name}</CardTitle>
+          <h1 className="text-2xl sm:text-3xl font-semibold leading-tight">{identity.headline}</h1>
+          <p className="text-base text-muted-foreground leading-relaxed">{identity.introduction}</p>
+          <p className="text-sm text-muted-foreground">{identity.welcome}</p>
         </CardHeader>
         <CardContent className="space-y-4">
           <Button
@@ -85,7 +69,7 @@ export default function WelcomePage() {
             size="lg"
           >
             <LogIn className="mr-2 h-5 w-5" />
-            Continue with Google
+            {copy.continueWithGoogle}
           </Button>
 
           {showDevLogin && (
@@ -96,7 +80,7 @@ export default function WelcomePage() {
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
                   <span className="bg-background px-2 text-muted-foreground">
-                    Development Mode
+                    {copy.developmentMode}
                   </span>
                 </div>
               </div>
@@ -109,23 +93,23 @@ export default function WelcomePage() {
                 size="lg"
               >
                 <Bug className="mr-2 h-5 w-5" />
-                Dev Login (Skip OAuth)
+                {copy.devLoginSkipOAuth}
               </Button>
 
               <p className="text-xs text-center text-orange-600 dark:text-orange-400">
-                Dev mode enabled - this button will not appear in production
+                {copy.devModeEnabledThisButtonWillNotAppearIn}
               </p>
             </>
           )}
 
           <p className="text-xs text-center text-muted-foreground">
-            By continuing, you agree to our{' '}
+            {copy.byContinuingYouAgreeToOur}{' '}
             <a href="/terms" className="underline hover:text-foreground">
-              Terms of Service
+              {copy.termsOfService}
             </a>
-            {' '}and{' '}
+            {' '}{copy.and}{' '}
             <a href="/privacy" className="underline hover:text-foreground">
-              Privacy Policy
+              {copy.privacyPolicy}
             </a>
           </p>
         </CardContent>

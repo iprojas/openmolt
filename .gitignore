@@ -42,7 +42,6 @@ next-env.d.ts
 .vercel
 
 # Prisma
-prisma/migrations
 
 # PWA
 public/sw.js

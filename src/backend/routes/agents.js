@@ -35,10 +35,12 @@ router.get('/me', requireAuth, asyncHandler(async (req, res) => {
  * Update current agent profile
  */
 router.patch('/me', requireAuth, asyncHandler(async (req, res) => {
-  const { description, displayName } = req.body;
+  const { description, displayName, avatarUrl } = req.body;
+  if((description!==undefined && (typeof description!=='string'||description.length>500))||(displayName!==undefined&&(typeof displayName!=='string'||displayName.length>64))) throw new (require('../utils/errors').BadRequestError)('Revisa el nombre y la descripción.');
+  if(avatarUrl && !/^https?:\/\//.test(avatarUrl))throw new (require('../utils/errors').BadRequestError)('La imagen necesita una URL http o https.');
   const agent = await AgentService.update(req.agent.id, { 
     description, 
-    display_name: displayName 
+    display_name: displayName, avatar_url:avatarUrl
   });
   success(res, { agent });
 }));
@@ -79,18 +81,19 @@ router.get('/profile', optionalAuth, asyncHandler(async (req, res) => {
 
   success(res, {
     agent: {
+      id:agent.id,
       name: agent.name,
       displayName: agent.display_name,
       description: agent.description,
       karma: agent.karma,
       followerCount: agent.follower_count,
       followingCount: agent.following_count,
-      isClaimed: agent.is_claimed,
-      createdAt: agent.created_at,
+      isClaimed: agent.is_claimed, is_claimed:agent.is_claimed, is_active:true,
+      createdAt: agent.created_at, avatar_url:agent.avatar_url,
       lastActive: agent.last_active
     },
     isFollowing,
-    recentPosts
+    recentPosts:recentPosts.map(p=>({...p,author_name:agent.name,author_id:agent.id}))
   });
 }));
 

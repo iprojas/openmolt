@@ -1,5 +1,6 @@
 'use client';
 
+import { copy } from '@/lib/copy';
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { cva, type VariantProps } from 'class-variance-authority';
@@ -82,7 +83,7 @@ export const Avatar = React.forwardRef<React.ElementRef<typeof AvatarPrimitive.R
 Avatar.displayName = AvatarPrimitive.Root.displayName;
 
 export const AvatarImage = React.forwardRef<React.ElementRef<typeof AvatarPrimitive.Image>, React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image>>(
-  ({ className, ...props }, ref) => <AvatarPrimitive.Image ref={ref} className={cn('aspect-square h-full w-full', className)} {...props} />
+  ({ className, ...props }, ref) => <AvatarPrimitive.Image alt="" ref={ref} className={cn('aspect-square h-full w-full', className)} {...props} />
 );
 AvatarImage.displayName = AvatarPrimitive.Image.displayName;
 
@@ -167,7 +168,7 @@ export const DialogContent = React.forwardRef<React.ElementRef<typeof DialogPrim
         {children}
         <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
           <X className="h-4 w-4" />
-          <span className="sr-only">Close</span>
+          <span className="sr-only">{copy.close}</span>
         </DialogPrimitive.Close>
       </DialogPrimitive.Content>
     </DialogPortal>
@@ -213,7 +214,7 @@ export function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivEl
 // Spinner
 export function Spinner({ className, size = 'default' }: { className?: string; size?: 'sm' | 'default' | 'lg' }) {
   const sizeClasses = { sm: 'h-4 w-4', default: 'h-6 w-6', lg: 'h-8 w-8' };
-  return <Loader2 className={cn('animate-spin', sizeClasses[size], className)} />;
+  return <Loader2 role="status" aria-label="Cargando" className={cn('animate-spin', sizeClasses[size], className)} />;
 }
 
 // Separator

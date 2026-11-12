@@ -1,5 +1,6 @@
 'use client';
 
+import { copy } from '@/lib/copy';
 import * as React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -30,11 +31,11 @@ export function LoginPrompt({ message }: { message?: string }) {
       <div className="h-16 w-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
         <LogIn className="h-8 w-8 text-primary" />
       </div>
-      <h3 className="font-semibold text-lg mb-2">Login Required</h3>
-      <p className="text-sm text-muted-foreground mb-4">{message || 'You need to be logged in to access this feature.'}</p>
+      <h3 className="font-semibold text-lg mb-2">{copy.loginRequired}</h3>
+      <p className="text-sm text-muted-foreground mb-4">{message || copy.youNeedToBeLoggedInToAccessThis}</p>
       <div className="flex gap-2 justify-center">
-        <Link href="/auth/login"><Button>Log in</Button></Link>
-        <Link href="/auth/register"><Button variant="outline">Sign up</Button></Link>
+        <Link href="/auth/login"><Button>{copy.logIn}</Button></Link>
+        <Link href="/auth/register"><Button variant="outline">{copy.signUp}</Button></Link>
       </div>
     </Card>
   );
@@ -66,13 +67,13 @@ export function UserMenu() {
             </div>
             <div className="p-1">
               <Link href={`/u/${agent.name}`} onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted">
-                <User className="h-4 w-4" /> Profile
+                <User className="h-4 w-4" /> {copy.profile}
               </Link>
               <Link href="/settings" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted">
-                <Settings className="h-4 w-4" /> Settings
+                <Settings className="h-4 w-4" /> {copy.settings}
               </Link>
               <button onClick={() => { logout(); setOpen(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted text-destructive">
-                <LogOut className="h-4 w-4" /> Log out
+                <LogOut className="h-4 w-4" /> {copy.logOut}
               </button>
             </div>
           </div>
@@ -91,8 +92,8 @@ export function AuthStatus() {
   if (!isAuthenticated) {
     return (
       <div className="flex items-center gap-2">
-        <Link href="/auth/login"><Button variant="ghost" size="sm">Log in</Button></Link>
-        <Link href="/auth/register"><Button size="sm">Sign up</Button></Link>
+        <Link href="/auth/login"><Button variant="ghost" size="sm">{copy.logIn}</Button></Link>
+        <Link href="/auth/register"><Button size="sm">{copy.signUp}</Button></Link>
       </div>
     );
   }
@@ -110,7 +111,7 @@ export function ApiKeyDisplay({ apiKey, onReveal }: { apiKey?: string; onReveal?
     <div className="flex items-center gap-2">
       <code className="flex-1 p-2 rounded bg-muted text-sm font-mono">{revealed ? apiKey : maskedKey}</code>
       <Button variant="outline" size="sm" onClick={() => setRevealed(!revealed)}>
-        {revealed ? 'Hide' : 'Reveal'}
+        {revealed ? copy.hide : copy.reveal}
       </Button>
     </div>
   );
@@ -122,12 +123,12 @@ export function LogoutDialog({ open, onOpenChange, onConfirm }: { open: boolean;
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Log out</DialogTitle>
-          <DialogDescription>Are you sure you want to log out? You'll need your API key to log back in.</DialogDescription>
+          <DialogTitle>{copy.logOut}</DialogTitle>
+          <DialogDescription>{copy.areYouSureYouWantToLogOutYoull}</DialogDescription>
         </DialogHeader>
         <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button variant="destructive" onClick={onConfirm}>Log out</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{copy.cancel}</Button>
+          <Button variant="destructive" onClick={onConfirm}>{copy.logOut}</Button>
         </div>
       </DialogContent>
     </Dialog>

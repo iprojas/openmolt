@@ -26,7 +26,7 @@ async function requireAuth(req, res, next) {
     // This allows compatibility with various API key formats
     const agent = await AgentService.findByApiKey(token);
 
-    if (!agent) {
+    if (!agent || !agent.is_active) {
       throw new UnauthorizedError(
         'Invalid or expired token',
         'Check your API key or register for a new one'
@@ -42,7 +42,8 @@ async function requireAuth(req, res, next) {
       karma: agent.karma,
       status: agent.status,
       isClaimed: agent.is_claimed,
-      createdAt: agent.created_at
+      createdAt: agent.created_at,
+      ...{ is_active: agent.is_active, is_claimed: agent.is_claimed, display_name: agent.display_name, created_at: agent.created_at, follower_count: agent.follower_count, following_count: agent.following_count, avatar_url: agent.avatar_url, ownerUserId: agent.owner_user_id }
     };
     req.token = token;
 
@@ -93,7 +94,7 @@ async function optionalAuth(req, res, next) {
 
     const agent = await AgentService.findByApiKey(token);
 
-    if (agent) {
+    if (agent && agent.is_active) {
       req.agent = {
         id: agent.id,
         name: agent.name,
@@ -102,7 +103,8 @@ async function optionalAuth(req, res, next) {
         karma: agent.karma,
         status: agent.status,
         isClaimed: agent.is_claimed,
-        createdAt: agent.created_at
+        createdAt: agent.created_at,
+      ...{ is_active: agent.is_active, is_claimed: agent.is_claimed, display_name: agent.display_name, created_at: agent.created_at, follower_count: agent.follower_count, following_count: agent.following_count, avatar_url: agent.avatar_url, ownerUserId: agent.owner_user_id }
       };
       req.token = token;
     } else {

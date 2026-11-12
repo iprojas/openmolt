@@ -1,92 +1,32 @@
-/**
- * Search Service
- * Handles search across posts, agents, and submolts
- */
-
 const { queryAll } = require('../config/database');
-
 class SearchService {
-  /**
-   * Search across all content types
-   * 
-   * @param {string} query - Search query
-   * @param {Object} options - Search options
-   * @returns {Promise<Object>} Search results
-   */
-  static async search(query, { limit = 25 } = {}) {
-    if (!query || query.trim().length < 2) {
-      return { posts: [], agents: [], submolts: [] };
-    }
-    
-    const searchTerm = query.trim();
-    const searchPattern = `%${searchTerm}%`;
-    
-    // Search in parallel
-    const [posts, agents, submolts] = await Promise.all([
-      this.searchPosts(searchPattern, limit),
-      this.searchAgents(searchPattern, Math.min(limit, 10)),
-      this.searchSubmolts(searchPattern, Math.min(limit, 10))
+  static async search(query, { limit = 25, agentId = null } = {}) {
+    const empty = { posts: [], agents: [], submolts: [], comments: [] };
+    if (typeof query !== 'string' || query.trim().length < 2) return empty;
+    const pattern = `%${query
+      .trim()
+      .slice(0, 200)
+      .replace(/[\\%_]/g, '\\$&')}%`;
+    const size = Math.max(1, Math.min(100, Number(limit) || 25));
+    const [posts, agents, submolts, comments] = await Promise.all([
+      queryAll(
+        `SELECT p.*,a.name AS author_name FROM posts p JOIN agents a ON a.id=p.author_id WHERE p.is_deleted=false AND (p.title ILIKE $1 OR p.content ILIKE $1) AND NOT EXISTS(SELECT 1 FROM post_preferences x WHERE x.post_id=p.id AND x.agent_id=$3 AND x.hidden=true) ORDER BY p.score DESC,p.created_at DESC LIMIT $2`,
+        [pattern, size, agentId]
+      ),
+      queryAll(
+        'SELECT id,name,display_name,description,karma,is_claimed,is_active,created_at FROM agents WHERE is_active=true AND (name ILIKE $1 OR display_name ILIKE $1 OR description ILIKE $1) ORDER BY karma DESC LIMIT $2',
+        [pattern, size]
+      ),
+      queryAll(
+        'SELECT * FROM submolts WHERE name ILIKE $1 OR display_name ILIKE $1 OR description ILIKE $1 ORDER BY subscriber_count DESC LIMIT $2',
+        [pattern, size]
+      ),
+      queryAll(
+        `SELECT c.*,a.name AS author_name,p.title AS post_title FROM comments c JOIN agents a ON a.id=c.author_id JOIN posts p ON p.id=c.post_id WHERE c.is_deleted=false AND p.is_deleted=false AND c.content ILIKE $1 AND NOT EXISTS(SELECT 1 FROM post_preferences x WHERE x.post_id=p.id AND x.agent_id=$3 AND x.hidden=true) ORDER BY c.created_at DESC LIMIT $2`,
+        [pattern, size, agentId]
+      ),
     ]);
-    
-    return { posts, agents, submolts };
-  }
-  
-  /**
-   * Search posts
-   * 
-   * @param {string} pattern - Search pattern
-   * @param {number} limit - Max results
-   * @returns {Promise<Array>} Posts
-   */
-  static async searchPosts(pattern, limit) {
-    return queryAll(
-      `SELECT p.id, p.title, p.content, p.url, p.submolt, 
-              p.score, p.comment_count, p.created_at,
-              a.name as author_name
-       FROM posts p
-       JOIN agents a ON p.author_id = a.id
-       WHERE p.title ILIKE $1 OR p.content ILIKE $1
-       ORDER BY p.score DESC, p.created_at DESC
-       LIMIT $2`,
-      [pattern, limit]
-    );
-  }
-  
-  /**
-   * Search agents
-   * 
-   * @param {string} pattern - Search pattern
-   * @param {number} limit - Max results
-   * @returns {Promise<Array>} Agents
-   */
-  static async searchAgents(pattern, limit) {
-    return queryAll(
-      `SELECT id, name, display_name, description, karma, is_claimed
-       FROM agents
-       WHERE name ILIKE $1 OR display_name ILIKE $1 OR description ILIKE $1
-       ORDER BY karma DESC, follower_count DESC
-       LIMIT $2`,
-      [pattern, limit]
-    );
-  }
-  
-  /**
-   * Search submolts
-   * 
-   * @param {string} pattern - Search pattern
-   * @param {number} limit - Max results
-   * @returns {Promise<Array>} Submolts
-   */
-  static async searchSubmolts(pattern, limit) {
-    return queryAll(
-      `SELECT id, name, display_name, description, subscriber_count
-       FROM submolts
-       WHERE name ILIKE $1 OR display_name ILIKE $1 OR description ILIKE $1
-       ORDER BY subscriber_count DESC
-       LIMIT $2`,
-      [pattern, limit]
-    );
+    return { posts, agents, submolts, comments };
   }
 }
-
 module.exports = SearchService;

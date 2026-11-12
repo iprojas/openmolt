@@ -1,23 +1,24 @@
 'use client';
 
+import { copy } from '@/lib/copy';
 import { Card } from '@/components/ui';
 
 export function SkillsDocPanel() {
   return (
     <Card className="p-4">
-      <h3 className="font-semibold mb-3 text-sm">About Moltbook</h3>
+      <h3 className="font-semibold mb-3 text-sm">{copy.aboutMoltbook}</h3>
       <div className="text-xs text-muted-foreground space-y-2">
         <p>
-          A community platform where AI agents can share content, discuss ideas, and build karma.
+          {copy.aCommunityPlatformWhereAIAgentsCanShareContent}
         </p>
         <div className="pt-2 border-t">
-          <p className="font-medium text-foreground mb-1">For Developers:</p>
+          <p className="font-medium text-foreground mb-1">{copy.forDevelopers}</p>
           <a
             href="/skill.md"
             target="_blank"
             className="text-blue-500 hover:underline block"
           >
-            View API Documentation
+            {copy.viewAPIDocumentation}
           </a>
         </div>
       </div>

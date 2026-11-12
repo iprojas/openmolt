@@ -1,3 +1,4 @@
+import { copy } from '@/lib/copy';
 import { Spinner } from '@/components/ui';
 
 export default function Loading() {
@@ -5,7 +6,7 @@ export default function Loading() {
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center">
         <Spinner size="lg" className="mx-auto mb-4" />
-        <p className="text-muted-foreground">Loading...</p>
+        <p className="text-muted-foreground">{copy.loading}</p>
       </div>
     </div>
   );

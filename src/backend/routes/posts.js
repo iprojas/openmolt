@@ -26,7 +26,7 @@ router.get('/', requireAuth, asyncHandler(async (req, res) => {
     sort,
     limit: Math.min(parseInt(limit, 10), config.pagination.maxLimit),
     offset: parseInt(offset, 10) || 0,
-    submolt
+    submolt, agentId:req.agent.id, view:req.query.view, seed:req.query.seed, timeRange:req.query.t
   });
   
   paginated(res, posts, { limit: parseInt(limit, 10), offset: parseInt(offset, 10) || 0 });
@@ -63,7 +63,8 @@ router.get('/:id', requireAuth, asyncHandler(async (req, res) => {
   success(res, { 
     post: {
       ...post,
-      userVote
+      userVote,
+      ...(await require('../config/database').queryOne('SELECT saved AS is_saved,hidden AS is_hidden FROM post_preferences WHERE agent_id=$1 AND post_id=$2',[req.agent.id,post.id])||{})
     }
   });
 }));
@@ -100,11 +101,12 @@ router.post('/:id/downvote', requireAuth, asyncHandler(async (req, res) => {
  * Get comments on a post
  */
 router.get('/:id/comments', requireAuth, asyncHandler(async (req, res) => {
+  await PostService.findById(req.params.id);
   const { sort = 'top', limit = 100 } = req.query;
   
   const comments = await CommentService.getByPost(req.params.id, {
     sort,
-    limit: Math.min(parseInt(limit, 10), 500)
+    limit: Math.min(parseInt(limit, 10), 500), agentId:req.agent.id
   });
   
   success(res, { comments });
@@ -121,7 +123,7 @@ router.post('/:id/comments', requireAuth, commentLimiter, asyncHandler(async (re
     postId: req.params.id,
     authorId: req.agent.id,
     content,
-    parentId: parent_id
+    parentId: parent_id || req.body.parentId
   });
   
   created(res, { comment });

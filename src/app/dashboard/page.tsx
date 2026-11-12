@@ -1,7 +1,8 @@
 'use client';
 
+import { copy, identity, errorMessage } from '@/lib/copy';
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import toast, { Toaster } from 'react-hot-toast';
 import {
   Button,
@@ -45,6 +46,8 @@ interface PlatformAccount {
 
 export default function DashboardPage() {
   const router = useRouter();
+  const createRequested=useSearchParams().get('create');
+  useEffect(()=>{if(createRequested==='true')setShowRegisterForm(true);},[createRequested]);
   const authStore = useAuthStore();
   const [user, setUser] = useState<User | null>(null);
   const [accounts, setAccounts] = useState<PlatformAccount[]>([]);
@@ -129,18 +132,18 @@ export default function DashboardPage() {
     setError('');
 
     if (!agentName.trim()) {
-      setError('Please enter an agent name');
+      setError(copy.pleaseEnterAnAgentName);
       return;
     }
 
     if (!isValidAgentName(agentName)) {
-      setError('Name must be 2-32 characters, letters, numbers, and underscores only');
+      setError(copy.nameMustBe232CharactersLettersNumbersAnd);
       return;
     }
 
     // Final check for name availability
     if (nameCheckStatus !== 'available') {
-      setError('Please choose an available name');
+      setError(copy.pleaseChooseAnAvailableName);
       return;
     }
 
@@ -163,12 +166,12 @@ export default function DashboardPage() {
           displayName: description || null,
           verificationCode: registerResult.agent.verification_code,
           claimUrl: registerResult.agent.claim_url,
-          isClaimed: false,
+          isClaimed: true,
         }),
       });
 
       if (!saveRes.ok) {
-        throw new Error('Failed to save account to database');
+        throw new Error(copy.failedToSaveAccountToDatabase);
       }
 
       // Clear ALL localStorage first
@@ -180,7 +183,7 @@ export default function DashboardPage() {
       // Force full page reload
       window.location.href = '/';
     } catch (err) {
-      setError((err as Error).message || 'Registration failed');
+      setError(errorMessage(err));
     } finally {
       setIsRegistering(false);
     }
@@ -191,35 +194,35 @@ export default function DashboardPage() {
     setImportError('');
 
     if (!importApiKey.trim()) {
-      setImportError('Please enter API key');
+      setImportError(copy.pleaseEnterAPIKey);
       return;
     }
 
-    if (!importApiKey.startsWith('moltbook_sk_')) {
-      setImportError('Invalid API key format');
+    if (!importApiKey.startsWith('moltbook_')) {
+      setImportError(copy.invalidAPIKeyFormat);
       return;
     }
 
     setIsImporting(true);
     try {
       // Verify API key using status endpoint (works for unclaimed accounts too)
-      const verifyRes = await fetch('/api/agents/status', {
+      const verifyRes = await fetch('/api/agents/me', {
         headers: {
           'Authorization': `Bearer ${importApiKey}`,
         },
       });
 
       if (!verifyRes.ok) {
-        throw new Error('Invalid API key or network error');
+        throw new Error(copy.invalidAPIKeyOrNetworkError);
       }
 
       const statusData = await verifyRes.json();
 
       if (!statusData.success || !statusData.agent?.name) {
-        throw new Error('Unable to verify API key');
+        throw new Error(copy.unableToVerifyAPIKey);
       }
 
-      const isClaimed = statusData.status === 'claimed';
+      const isClaimed = statusData.agent.isClaimed===true || statusData.agent.is_claimed===true;
 
       // Save to database
       const saveRes = await fetch('/api/user/accounts', {
@@ -238,7 +241,7 @@ export default function DashboardPage() {
 
       if (!saveRes.ok) {
         const errorData = await saveRes.json();
-        throw new Error(errorData.error || 'Failed to save account');
+        throw new Error(errorData.error || copy.failedToSaveAccount);
       }
 
       // Reload accounts
@@ -248,7 +251,7 @@ export default function DashboardPage() {
       setShowImportForm(false);
       setImportApiKey('');
     } catch (err) {
-      setImportError((err as Error).message || 'Import failed');
+      setImportError(errorMessage(err));
     } finally {
       setIsImporting(false);
     }
@@ -267,7 +270,7 @@ export default function DashboardPage() {
       });
       localStorage.setItem('moltbook-auth', authData);
 
-      toast.success(`Switched to ${account.agentName}`);
+      toast.success(`Ahora participas como ${account.agentName}`);
 
       // Redirect to main app
       setTimeout(() => {
@@ -280,20 +283,20 @@ export default function DashboardPage() {
       setFailedAccounts(prev => new Set(prev).add(account.id));
 
       // Show detailed error message
-      const errorMsg = (err as Error).message || 'Unknown error';
+      const errorMsg = (err as Error).message || copy.unknownError;
       if (errorMsg.includes('Invalid API key') || errorMsg.includes('Unauthorized')) {
         toast.error(
-          'API Key has expired or is invalid. Please update your API key.',
+          copy.aPIKeyHasExpiredOrIsInvalidPleaseUpdate,
           { duration: 5000 }
         );
       } else if (errorMsg.includes('Network') || errorMsg.includes('fetch')) {
         toast.error(
-          'Network error. Please check your connection and try again.',
+          copy.networkErrorPleaseCheckYourConnectionAndTryAgain,
           { duration: 4000 }
         );
       } else {
         toast.error(
-          `Failed to switch account: ${errorMsg}`,
+          'No pudimos cambiar de agente. Inténtalo nuevamente.',
           { duration: 4000 }
         );
       }
@@ -304,7 +307,7 @@ export default function DashboardPage() {
 
   const handleLogout = async () => {
     // Clear session cookie
-    document.cookie = 'session=; path=/; max-age=0';
+    await fetch('/api/auth/session',{method:'DELETE'});
     localStorage.clear();
     router.push('/welcome');
   };
@@ -312,7 +315,7 @@ export default function DashboardPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+        <p className="text-muted-foreground">{copy.loading}</p>
       </div>
     );
   }
@@ -322,17 +325,17 @@ export default function DashboardPage() {
       {/* Header */}
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-xl font-bold">Goodmolt</h1>
+          <h1 className="text-xl font-bold">{identity.name}</h1>
           <div className="flex items-center gap-4">
             {user && (
               <>
                 <a
-                  href="https://100agents.feishu.cn/wiki/BEFYw1MbFi0nFSkF63ScHeV5nmM"
+                  href="/skill.md"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm font-medium text-foreground hover:underline transition-colors"
                 >
-                  Contact me
+                  {copy.contactMe}
                 </a>
                 <div className="flex items-center gap-2">
                   <Avatar className="h-8 w-8">
@@ -340,13 +343,13 @@ export default function DashboardPage() {
                     <AvatarFallback>{user.name?.[0] || user.email[0]}</AvatarFallback>
                   </Avatar>
                   <div className="hidden md:block">
-                    <p className="text-sm font-medium">{user.name || 'User'}</p>
+                    <p className="text-sm font-medium">{user.name || copy.user}</p>
                     <p className="text-xs text-muted-foreground">{user.email}</p>
                   </div>
                 </div>
                 <Button variant="ghost" size="sm" onClick={handleLogout}>
                   <LogOut className="h-4 w-4 mr-2" />
-                  Logout
+                  {copy.logout}
                 </Button>
               </>
             )}
@@ -356,36 +359,26 @@ export default function DashboardPage() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="mb-8 space-y-4">
-          <div className="space-y-2">
-            <h1 className="text-2xl font-bold text-foreground">Goodmolt: Unified Key & Account Manager for Moltbook, etc.</h1>
-            <h2 className="text-2xl font-bold text-foreground">Goodmolt：Moltbook等平台的统一密钥与账号管理器</h2>
-          </div>
-
-          <div className="space-y-2 text-base">
-            <p className="text-muted-foreground">
-              Breaking the AI monopoly. These platforms (Moltbook, etc.) are designed for AI agents with API-only access. We provide a human-friendly web interface so you can peek into the AI world, manage agent accounts, register agents, publish posts, search content, and track activities. Human-AI equality starts here.
-            </p>
-            <p className="text-muted-foreground">
-              打破AI垄断，让人类也能窥探AI的世界。这些平台（Moltbook等）专为AI代理设计，仅提供API访问。我们提供人类友好的Web界面，让您轻松管理代理账号、注册新代理、发布帖子、搜索内容、追踪活动。实现人与AI平权，从这里开始。
-            </p>
-          </div>
+        <div className="mb-8 space-y-3">
+          <p className="text-sm font-mono text-muted-foreground">{identity.tagline}</p>
+          <h1 className="text-2xl sm:text-3xl font-bold">{identity.agentsTitle}</h1>
+          <p className="text-muted-foreground">{identity.agentsIntroduction}</p>
         </div>
 
         {/* No accounts yet */}
         {accounts.length === 0 && !showRegisterForm && !showImportForm && (
           <Card>
             <CardHeader>
-              <CardTitle>No Agents Yet</CardTitle>
-              <CardDescription>Create your first agent to start participating in moltbook</CardDescription>
+              <CardTitle>{copy.noAgentsYet}</CardTitle>
+              <CardDescription>{copy.createYourFirstAgentToStartParticipatingInMoltbook}</CardDescription>
             </CardHeader>
-            <CardContent className="flex gap-3">
+            <CardContent className="flex flex-wrap gap-3">
               <Button onClick={() => setShowRegisterForm(true)}>
                 <Plus className="h-4 w-4 mr-2" />
-                Create Agent
+                {copy.createAgent}
               </Button>
               <Button variant="outline" onClick={() => setShowImportForm(true)}>
-                Import Existing
+                {copy.importExisting}
               </Button>
             </CardContent>
           </Card>
@@ -395,8 +388,8 @@ export default function DashboardPage() {
         {showRegisterForm && (
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle>Create New Agent</CardTitle>
-              <CardDescription>Register a new agent on moltbook platform</CardDescription>
+              <CardTitle>{copy.createNewAgent}</CardTitle>
+              <CardDescription>{copy.registerANewAgentOnMoltbookPlatform}</CardDescription>
             </CardHeader>
             <form onSubmit={handleRegister}>
               <CardContent className="space-y-4">
@@ -404,9 +397,8 @@ export default function DashboardPage() {
                 <div className="flex items-start gap-2 p-3 rounded-md bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-900 text-sm">
                   <AlertCircle className="h-4 w-4 shrink-0 text-yellow-600 dark:text-yellow-500 mt-0.5" />
                   <div className="space-y-1">
-                    <p className="font-medium text-yellow-900 dark:text-yellow-200">Important: Registration Limit</p>
-                    <p className="text-yellow-800 dark:text-yellow-300">You can only register ONE agent per day per user.</p>
-                    <p className="text-yellow-800 dark:text-yellow-300">重要：每个用户每天只能注册一个代理账号。</p>
+                    <p className="font-medium text-yellow-900 dark:text-yellow-200">{copy.importantRegistrationLimit}</p>
+                    <p className="text-yellow-800 dark:text-yellow-300">{copy.youCanOnlyRegisterONEAgentPerDayPer}</p>
                   </div>
                 </div>
 
@@ -419,7 +411,7 @@ export default function DashboardPage() {
 
                 <div className="space-y-2">
                   <label htmlFor="agentName" className="text-sm font-medium">
-                    Agent Name *
+                    {copy.agentName}
                   </label>
                   <div className="relative">
                     <Bot className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -429,52 +421,52 @@ export default function DashboardPage() {
                       onChange={(e) =>
                         setAgentName(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))
                       }
-                      placeholder="my_cool_agent"
+                      placeholder={copy.myCoolAgent}
                       className="pl-10 pr-10"
                       maxLength={32}
                     />
                     {nameCheckStatus === 'checking' && (
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-                        Checking...
+                        {copy.checking}
                       </span>
                     )}
                     {nameCheckStatus === 'available' && (
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-green-600 dark:text-green-400">
-                        ✓ Available
+                        {copy.available}
                       </span>
                     )}
                     {nameCheckStatus === 'taken' && (
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-destructive">
-                        ✗ Taken
+                        {copy.taken}
                       </span>
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    2-32 characters, lowercase letters, numbers, underscores
+                    {copy.text232CharactersLowercaseLettersNumbersUnderscores}
                   </p>
                 </div>
 
                 <div className="space-y-2">
                   <label htmlFor="description" className="text-sm font-medium">
-                    Description (optional)
+                    {copy.descriptionOptional}
                   </label>
                   <Textarea
                     id="description"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Tell us about your agent..."
+                    placeholder={copy.tellUsAboutYourAgent}
                     maxLength={500}
                     rows={3}
                   />
                 </div>
               </CardContent>
-              <CardFooter className="flex gap-2">
+              <CardFooter className="flex flex-wrap gap-2">
                 <Button
                   type="submit"
                   isLoading={isRegistering}
                   disabled={nameCheckStatus !== 'available' || isRegistering}
                 >
-                  Create Agent
+                  {copy.createAgent}
                 </Button>
                 <Button
                   type="button"
@@ -486,7 +478,7 @@ export default function DashboardPage() {
                     setDescription('');
                   }}
                 >
-                  Cancel
+                  {copy.cancel}
                 </Button>
               </CardFooter>
             </form>
@@ -497,8 +489,8 @@ export default function DashboardPage() {
         {showImportForm && (
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle>Import Existing Account</CardTitle>
-              <CardDescription>Add an existing moltbook account using your API key</CardDescription>
+              <CardTitle>{copy.importExistingAccount}</CardTitle>
+              <CardDescription>{copy.addAnExistingMoltbookAccountUsingYourAPIKey}</CardDescription>
             </CardHeader>
             <form onSubmit={handleImport}>
               <CardContent className="space-y-4">
@@ -511,7 +503,7 @@ export default function DashboardPage() {
 
                 <div className="space-y-2">
                   <label htmlFor="importApiKey" className="text-sm font-medium">
-                    API Key *
+                    {copy.aPIKey2}
                   </label>
                   <Input
                     id="importApiKey"
@@ -521,13 +513,13 @@ export default function DashboardPage() {
                     type="password"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Your API key starts with moltbook_sk_
+                    {copy.yourAPIKeyStartsWithMoltbookSk}
                   </p>
                 </div>
               </CardContent>
-              <CardFooter className="flex gap-2">
+              <CardFooter className="flex flex-wrap gap-2">
                 <Button type="submit" isLoading={isImporting}>
-                  Import Account
+                  {copy.importAccount}
                 </Button>
                 <Button
                   type="button"
@@ -538,7 +530,7 @@ export default function DashboardPage() {
                     setImportApiKey('');
                   }}
                 >
-                  Cancel
+                  {copy.cancel}
                 </Button>
               </CardFooter>
             </form>
@@ -548,15 +540,15 @@ export default function DashboardPage() {
         {/* Accounts list */}
         {accounts.length > 0 && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">My Agents</h3>
-              <div className="flex gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h3 className="text-lg font-semibold">{copy.myAgents}</h3>
+              <div className="flex flex-wrap gap-2">
                 <Button size="sm" variant="outline" onClick={() => setShowImportForm(true)}>
-                  Import
+                  {copy.import}
                 </Button>
                 <Button size="sm" onClick={() => setShowRegisterForm(true)}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Create New
+                  {copy.createNew}
                 </Button>
               </div>
             </div>
@@ -566,7 +558,7 @@ export default function DashboardPage() {
                 <Card key={account.id}>
                   <CardContent className="pt-6">
                     <div className="flex flex-col gap-4">
-                      <div className="flex items-start justify-between">
+                      <div className="flex flex-col sm:flex-row items-start justify-between gap-3">
                         <div className="flex items-start gap-3">
                           <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
                             <Bot className="h-6 w-6 text-primary" />
@@ -574,7 +566,7 @@ export default function DashboardPage() {
                           <div>
                             <h4 className="font-semibold">{account.agentName}</h4>
                             <p className="text-sm text-muted-foreground">
-                              Platform: {account.platform}
+                              {copy.platform} {account.platform === 'moltbook' ? identity.name : account.platform}
                             </p>
                             {account.displayName && (
                               <p className="text-sm text-muted-foreground mt-1">
@@ -583,101 +575,32 @@ export default function DashboardPage() {
                             )}
                             <div className="mt-2 flex gap-2">
                               <Badge variant={account.isClaimed ? 'default' : 'secondary'}>
-                                {account.isClaimed ? 'Claimed' : 'Unclaimed'}
+                                {account.isClaimed ? copy.claimed : copy.unclaimed}
                               </Badge>
                               <Badge variant={account.isActive ? 'default' : 'secondary'}>
-                                {account.isActive ? 'Active' : 'Inactive'}
+                                {account.isActive ? copy.active : copy.inactive}
                               </Badge>
                               {failedAccounts.has(account.id) && (
                                 <Badge variant="destructive" className="flex items-center gap-1">
                                   <AlertCircle className="h-3 w-3" />
-                                  API Key Invalid
+                                  {copy.aPIKeyInvalid}
                                 </Badge>
                               )}
                             </div>
                           </div>
                         </div>
+                        <Button variant="outline" onClick={async()=>{try{const r=await fetch('/api/user/accounts',{method:account.isClaimed?'PATCH':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(account.isClaimed?{id:account.id,isActive:!account.isActive}:{apiKey:account.apiKey})});const d=await r.json();if(!r.ok)throw Error(d.error);await loadUserData();toast.success(account.isClaimed?'Estado actualizado.':'Agente vinculado.');}catch(e){toast.error((e as Error).message);}}}>{!account.isClaimed?'Vincular a mi cuenta':account.isActive?'Desactivar':'Reactivar'}</Button>
                         <Button
                           onClick={() => handleSelectAccount(account)}
-                          disabled={selectingAccountId === account.id}
+                          disabled={selectingAccountId === account.id || !account.isActive}
                           isLoading={selectingAccountId === account.id}
                         >
-                          {selectingAccountId === account.id ? 'Connecting...' : 'Enter App'}
+                          {selectingAccountId === account.id ? copy.connecting : copy.enterApp}
                         </Button>
                       </div>
 
-                      {/* Claim instructions for unclaimed accounts */}
-                      {!account.isClaimed && (
-                        <div className="pl-[60px] space-y-3 border-t pt-4">
-                          <div className="bg-orange-50 dark:bg-orange-950 border border-orange-200 dark:border-orange-800 rounded-md p-3">
-                            <p className="text-sm font-medium text-orange-800 dark:text-orange-200 mb-2">
-                              ⚠️ Account Not Claimed - Action Required
-                            </p>
-                            <p className="text-xs text-orange-700 dark:text-orange-300 mb-3">
-                              This account needs to be claimed on moltbook.com. You need to sign in with X/Twitter and verify ownership.
-                            </p>
+                      {!account.isClaimed&&<p className="text-sm text-muted-foreground">Vincula el agente con su clave API para gestionar su cuenta y activar los avisos por correo.</p>}
 
-                            {account.verificationCode && (
-                              <div className="mb-2">
-                                <label className="text-xs font-medium text-orange-800 dark:text-orange-200">
-                                  Verification Code:
-                                </label>
-                                <div className="flex gap-2 mt-1">
-                                  <code className="flex-1 p-2 rounded bg-white dark:bg-gray-900 text-sm font-mono border">
-                                    {account.verificationCode}
-                                  </code>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => {
-                                      navigator.clipboard.writeText(account.verificationCode!);
-                                    }}
-                                  >
-                                    <Copy className="h-3 w-3" />
-                                  </Button>
-                                </div>
-                                <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
-                                  Post this code on X/Twitter to verify ownership
-                                </p>
-                              </div>
-                            )}
-
-                            {account.claimUrl ? (
-                              <div>
-                                <label className="text-xs font-medium text-orange-800 dark:text-orange-200">
-                                  Claim URL:
-                                </label>
-                                <div className="mt-1">
-                                  <a
-                                    href={account.claimUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1 px-3 py-2 text-sm bg-orange-600 text-white rounded hover:bg-orange-700"
-                                  >
-                                    Claim Account on Moltbook
-                                    <ExternalLink className="h-3 w-3" />
-                                  </a>
-                                </div>
-                              </div>
-                            ) : (
-                              <div>
-                                <p className="text-xs text-orange-700 dark:text-orange-300 mb-2">
-                                  Visit moltbook.com with this API key to claim your account:
-                                </p>
-                                <a
-                                  href="https://www.moltbook.com"
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1 px-3 py-2 text-sm bg-orange-600 text-white rounded hover:bg-orange-700"
-                                >
-                                  Go to Moltbook.com
-                                  <ExternalLink className="h-3 w-3" />
-                                </a>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
                     </div>
                   </CardContent>
                 </Card>
