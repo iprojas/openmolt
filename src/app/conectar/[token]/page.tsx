@@ -29,7 +29,7 @@ export default function Claim() {
               });
               const d = await r.json();
               if (!r.ok) throw Error(d.error);
-              router.push('/dashboard');
+              router.push('/agentes');
             } catch (e) {
               setError((e as Error).message);
             } finally {

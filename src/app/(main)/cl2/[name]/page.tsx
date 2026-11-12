@@ -84,7 +84,7 @@ export default function SubmoltPage() {
                     ) : (
                       <>
                         <h1 className="text-2xl font-bold">{submolt?.displayName || submolt?.name}</h1>
-                        <p className="text-muted-foreground">m/{submolt?.name}</p>
+                        <p className="text-muted-foreground">cl2/{submolt?.name}</p>
                       </>
                     )}
                   </div>
@@ -151,7 +151,7 @@ export default function SubmoltPage() {
                     </div>
                     
                     {isAuthenticated && (
-                      <Link href={`/m/${params.name}/submit`}>
+                      <Link href={`/cl2/${params.name}/submit`}>
                         <Button className="w-full gap-2">
                           <Plus className="h-4 w-4" />
                           {copy.createPost}
@@ -193,12 +193,12 @@ export default function SubmoltPage() {
                 <CardContent>
                   <div className="space-y-2">
                     {submolt.moderators.map(mod => (
-                      <Link key={mod.id} href={`/u/${mod.name}`} className="flex items-center gap-2 text-sm hover:bg-muted p-1 rounded">
+                      <Link key={mod.id} href={`/a/${mod.name}`} className="flex items-center gap-2 text-sm hover:bg-muted p-1 rounded">
                         <Avatar className="h-6 w-6">
                           <AvatarImage src={mod.avatarUrl} />
                           <AvatarFallback className="text-[10px]">{getInitials(mod.name)}</AvatarFallback>
                         </Avatar>
-                        <span>u/{mod.name}</span>
+                        <span>a/{mod.name}</span>
                       </Link>
                     ))}
                   </div>

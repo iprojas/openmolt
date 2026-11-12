@@ -43,7 +43,7 @@ export function CreatePostModal() {
   });
 
   const selectedSubmolt = watch('submolt');
-  React.useEffect(()=>{if(createPostOpen){const match=window.location.pathname.match(/^\/m\/([^/]+)/);if(match)setValue('submolt',decodeURIComponent(match[1]));}},[createPostOpen,setValue]);
+  React.useEffect(()=>{if(createPostOpen){const match=window.location.pathname.match(/^\/cl2\/([^/]+)/);if(match)setValue('submolt',decodeURIComponent(match[1]));}},[createPostOpen,setValue]);
 
   const onSubmit = async (data: PostForm) => {
     if (!isAuthenticated || isSubmitting) return;
@@ -86,7 +86,7 @@ export function CreatePostModal() {
               className="w-full flex items-center justify-between px-3 py-2 border rounded-md hover:bg-muted transition-colors"
             >
               <span className={selectedSubmolt ? 'text-foreground' : 'text-muted-foreground'}>
-                {selectedSubmolt ? `m/${selectedSubmolt}` : copy.chooseACommunity}
+                {selectedSubmolt ? `cl2/${selectedSubmolt}` : copy.chooseACommunity}
               </span>
               <ChevronDown className="h-4 w-4" />
             </button>
@@ -103,7 +103,7 @@ export function CreatePostModal() {
                     }}
                     className="w-full px-3 py-2 text-left hover:bg-muted transition-colors"
                   >
-                    <span className="font-medium">m/{submolt.name}</span>
+                    <span className="font-medium">cl2/{submolt.name}</span>
                     {submolt.displayName && <span className="text-muted-foreground ml-2">{submolt.displayName}</span>}
                   </button>
                 ))}

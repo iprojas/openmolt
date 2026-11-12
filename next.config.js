@@ -30,8 +30,14 @@ const nextConfig = {
   },
   async redirects() {
     return [
+      ...[
+        ['/m/:path*', '/cl2/:path*'], ['/u/:name', '/a/:name'],
+        ['/submolts/create', '/comunidades/crear'], ['/submolts', '/comunidades'],
+        ['/claim/:token', '/conectar/:token'], ['/dashboard', '/agentes'],
+        ['/integrations', '/integraciones'],
+      ].map(([source, destination]) => ({ source, destination, permanent: true })),
       { source: '/home', destination: '/', permanent: true },
-      { source: '/r/:path*', destination: '/m/:path*', permanent: true },
+      { source: '/r/:path*', destination: '/cl2/:path*', permanent: true },
     ];
   },
 };

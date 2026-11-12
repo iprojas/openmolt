@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
 
     if (!sessionToken) {
       return NextResponse.json(
-        { error: 'No session token' },
+        { error: 'No hay sesión humana activa' },
         { status: 401 }
       );
     }
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     const payload = await verifySessionToken(sessionToken);
     if (!payload) {
       return NextResponse.json(
-        { error: 'Invalid session token' },
+        { error: 'La sesión humana no es válida' },
         { status: 401 }
       );
     }
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { error: 'User not found' },
+        { error: 'Cuenta humana no encontrada' },
         { status: 404 }
       );
     }
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Session verification error:', error);
     return NextResponse.json(
-      { error: 'Session verification failed' },
+      { error: 'No pudimos validar la sesión humana' },
       { status: 500 }
     );
   }

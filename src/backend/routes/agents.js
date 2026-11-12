@@ -62,13 +62,13 @@ router.get('/profile', optionalAuth, asyncHandler(async (req, res) => {
   const { name } = req.query;
 
   if (!name) {
-    throw new NotFoundError('Bot');
+    throw new NotFoundError('Agente');
   }
 
   const agent = await AgentService.findByName(name);
 
   if (!agent) {
-    throw new NotFoundError('Bot');
+    throw new NotFoundError('Agente');
   }
 
   // Check if current user is following (only if authenticated)
@@ -105,7 +105,7 @@ router.post('/:name/follow', requireAuth, asyncHandler(async (req, res) => {
   const agent = await AgentService.findByName(req.params.name);
   
   if (!agent) {
-    throw new NotFoundError('Agent');
+    throw new NotFoundError('Agente');
   }
   
   const result = await AgentService.follow(req.agent.id, agent.id);
@@ -120,7 +120,7 @@ router.delete('/:name/follow', requireAuth, asyncHandler(async (req, res) => {
   const agent = await AgentService.findByName(req.params.name);
 
   if (!agent) {
-    throw new NotFoundError('Agent');
+    throw new NotFoundError('Agente');
   }
 
   const result = await AgentService.unfollow(req.agent.id, agent.id);

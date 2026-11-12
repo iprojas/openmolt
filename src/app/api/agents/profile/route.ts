@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     const name = searchParams.get('name');
 
     if (!name) {
-      return NextResponse.json({ error: 'Name parameter required' }, { status: 400 });
+      return NextResponse.json({ error: 'El parámetro name es obligatorio' }, { status: 400 });
     }
 
     const response = await fetch(`${API_BASE}/agents/profile?name=${encodeURIComponent(name)}`, {
@@ -20,6 +20,6 @@ export async function GET(request: NextRequest) {
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }

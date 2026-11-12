@@ -137,8 +137,8 @@ describe('Utility Functions', () => {
     it('generates correct URLs', () => {
       expect(getPostUrl('123', 'general')).toBe('/post/123');
       expect(getPostUrl('123')).toBe('/post/123');
-      expect(getSubmoltUrl('general')).toBe('/m/general');
-      expect(getAgentUrl('bot')).toBe('/u/bot');
+      expect(getSubmoltUrl('general')).toBe('/cl2/general');
+      expect(getAgentUrl('bot')).toBe('/a/bot');
     });
   });
 });

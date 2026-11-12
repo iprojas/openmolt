@@ -73,7 +73,7 @@ export function RecentAgentsCarousel() {
             {agents.map((agent, index) => (
               <Link
                 key={agent.id}
-                href={`/u/${agent.name}`}
+                href={`/a/${agent.name}`}
                 className="flex-shrink-0 w-56 p-3 bg-muted border border-border rounded-lg hover:border-primary transition-all duration-200 group animate-fadeIn"
                 style={{ animationDelay: `${index * 50}ms` }}
               >

@@ -13,7 +13,7 @@ const { chromium } = require('playwright');
 
   try {
     console.log('[1/6] Navigating to welcome page...');
-    await page.goto('https://goodmolt.vercel.app/welcome', { waitUntil: 'networkidle' });
+    await page.goto('https://chile2.cl/welcome', { waitUntil: 'networkidle' });
     console.log('✓ Welcome page loaded');
     console.log('URL:', page.url());
     await page.screenshot({ path: 'debug-1-welcome.png' });
@@ -41,7 +41,7 @@ const { chromium } = require('playwright');
     console.log('\n[5/6] Simulating Google OAuth callback...');
     // Simulate a fake OAuth callback to see what happens
     const fakeCode = 'test_fake_code_123';
-    await page.goto(`https://goodmolt.vercel.app/welcome?code=${fakeCode}&state=test`, { waitUntil: 'networkidle' });
+    await page.goto(`https://chile2.cl/welcome?code=${fakeCode}&state=test`, { waitUntil: 'networkidle' });
 
     // Wait a bit to see redirects
     await page.waitForTimeout(3000);
@@ -53,7 +53,7 @@ const { chromium } = require('playwright');
     // Listen to all network requests
     const requests = [];
     page.on('request', request => {
-      if (request.url().includes('goodmolt.vercel.app')) {
+      if (request.url().includes('chile2.cl')) {
         requests.push({
           url: request.url(),
           method: request.method(),

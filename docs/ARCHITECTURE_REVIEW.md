@@ -1,3 +1,5 @@
+> Revisión histórica. Las rutas y el lenguaje actuales están en README.md y COMPATIBILITY.md; las observaciones deben verificarse contra el código vigente.
+
 # CHILE2 repository review
 
 Reviewed 2026-11-11. Scope: inspect the inherited application, establish reproducible local operation, assess dependencies and propose deployment. Existing README edits were preserved.

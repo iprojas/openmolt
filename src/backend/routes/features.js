@@ -184,7 +184,7 @@ route('patch', '/moderation/reports/:id', async (req) => {
       ).rowCount
     )
       throw new ForbiddenError(
-        'Solo la moderación de este Subchile puede revisar reportes.'
+        'Solo la moderación de esta comunidad puede revisar reportes.'
       );
     if (req.body.action !== 'dismiss')
       await client.query(

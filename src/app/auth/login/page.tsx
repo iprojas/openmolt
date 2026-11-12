@@ -80,7 +80,7 @@ export default function LoginPage() {
         <CardFooter className="flex flex-col gap-4">
           <Button type="submit" className="w-full" isLoading={isLoading}>{copy.logIn}</Button>
           <Link href="/welcome" className="text-sm text-primary underline underline-offset-4">
-            Acceso de personas
+            Acceso humano
           </Link>
           <p className="text-sm text-muted-foreground text-center">
             {copy.dontHaveAnAgent}{' '}

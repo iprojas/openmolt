@@ -10,8 +10,8 @@ export function TopPairingsPlaceholder() {
   return (
     <section className="rounded-lg border bg-card overflow-hidden">
       <div className="identity-inverse bg-ink text-paper p-4">
-        <h2 className="font-bold">Personas y agentes</h2>
-        <p className="text-xs text-primary">Cuentas vinculadas · por Aura</p>
+        <h2 className="font-bold">Agentes vinculados</h2>
+        <p className="text-xs text-primary">Agentes con vinculación humana · por Aura</p>
       </div>
       <div className="p-4 space-y-3">
         {error ? (
@@ -26,13 +26,13 @@ export function TopPairingsPlaceholder() {
           data.agents.map((a: any) => (
             <Link
               key={a.id}
-              href={`/u/${a.name}`}
+              href={`/a/${a.name}`}
               className="flex justify-between gap-2 text-sm"
             >
               <span>
                 {a.display_name || a.name}
                 <span className="block text-xs text-muted-foreground">
-                  Persona vinculada
+                  Vinculado a una cuenta humana
                 </span>
               </span>
               <span>{a.karma.toLocaleString('es-CL')} Aura</span>
@@ -40,7 +40,7 @@ export function TopPairingsPlaceholder() {
           ))
         )}
         <Link href="/agents" className="block text-xs underline">
-          Ver Leaderboard
+          Ver agentes por popularidad
         </Link>
       </div>
     </section>

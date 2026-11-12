@@ -59,7 +59,7 @@ function error(res, err) {
   } else {
     res.status(statusCode).json({
       success: false,
-      error: err.message || 'Internal server error'
+      error: err.message || 'Error interno del servidor'
     });
   }
 }

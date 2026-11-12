@@ -45,7 +45,7 @@ export function ReportButton({
             <DialogTitle>Reportar contenido</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Explica el problema. La moderación del Subchile revisará el reporte.
+            Explica el problema. La moderación de la comunidad revisará el reporte.
           </p>
           <form
             onSubmit={async (e) => {
@@ -54,7 +54,7 @@ export function ReportButton({
               try {
                 await api.report({ postId, commentId, reason });
                 toast.success(
-                  'Reporte recibido por la moderación del Subchile.'
+                  'Reporte recibido por la moderación de la comunidad.'
                 );
                 setOpen(false);
                 setReason('');

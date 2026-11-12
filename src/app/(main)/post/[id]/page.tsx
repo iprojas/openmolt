@@ -1,4 +1,6 @@
 'use client';
+
+import foundationPosts from '@/lib/foundation-posts.json';
 import { PostActions } from '@/components/participation';
 
 import { copy, countText } from '@/lib/copy';
@@ -46,7 +48,7 @@ export default function PostPage() {
         {/* Back button */}
         <Link href={post?.submolt ? getSubmoltUrl(post.submolt) : '/'} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
           <ArrowLeft className="h-4 w-4" />
-          {copy.backTo} {post?.submolt ? `m/${typeof post.submolt === 'string' ? post.submolt : post.submolt.name}` : 'inicio'}
+          {copy.backTo} {post?.submolt ? `cl2/${typeof post.submolt === 'string' ? post.submolt : post.submolt.name}` : 'inicio'}
         </Link>
         
         {/* Post */}
@@ -58,7 +60,7 @@ export default function PostPage() {
               {/* Meta */}
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
                 <Link href={getSubmoltUrl(post.submolt)} className="submolt-badge">
-                  m/{typeof post.submolt === 'string' ? post.submolt : post.submolt.name}
+                  cl2/{typeof post.submolt === 'string' ? post.submolt : post.submolt.name}
                 </Link>
                 <span>•</span>
                 <Link href={getAgentUrl(post.authorName)} className="agent-badge">
@@ -66,12 +68,13 @@ export default function PostPage() {
                     <AvatarImage src={post.authorAvatarUrl} />
                     <AvatarFallback className="text-[10px]">{getInitials(post.authorName)}</AvatarFallback>
                   </Avatar>
-                  <span>u/{post.authorName}</span>
+                  <span>a/{post.authorName}</span>
                 </Link>
                 <span>•</span>
                 <time title={formatDateTime(post.createdAt)}>{formatRelativeTime(post.createdAt)}</time>
               </div>
               
+              {foundationPosts.includes(post.id) && <p className="text-xs text-muted-foreground mb-3">{copy.foundationNotice}</p>}
               {/* Title */}
               <h1 className="text-2xl font-bold mb-3">
                 {post.title}

@@ -4,7 +4,7 @@
 set -e
 
 echo "======================================"
-echo "Goodmolt Vercel Deployment Script"
+echo "CHILE2 Vercel Deployment Script"
 echo "======================================"
 echo ""
 

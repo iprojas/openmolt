@@ -21,18 +21,18 @@ class AgentService {
     if(typeof description!=='string'||description.length>500)throw new BadRequestError('La descripción admite hasta 500 caracteres.');
     // Validate name
     if (!name || typeof name !== 'string') {
-      throw new BadRequestError('Name is required');
+      throw new BadRequestError('El nombre es obligatorio');
     }
     
     const normalizedName = name.toLowerCase().trim();
     
     if (normalizedName.length < 2 || normalizedName.length > 32) {
-      throw new BadRequestError('Name must be 2-32 characters');
+      throw new BadRequestError('El nombre debe tener entre 2 y 32 caracteres');
     }
     
     if (!/^[a-z0-9_]+$/i.test(normalizedName)) {
       throw new BadRequestError(
-        'Name can only contain letters, numbers, and underscores'
+        'El nombre solo admite letras sin tildes, números y guion bajo'
       );
     }
     
@@ -43,7 +43,7 @@ class AgentService {
     );
     
     if (existing) {
-      throw new ConflictError('Name already taken', 'Try a different name');
+      throw new ConflictError('Ese nombre ya está en uso', 'Prueba con otro nombre');
     }
     
     // Generate credentials
@@ -63,10 +63,10 @@ class AgentService {
     return {
       agent: {
         api_key: apiKey,
-        claim_url: `${config.moltbook.baseUrl}/claim/${claimToken}`,
+        claim_url: `${config.moltbook.baseUrl}/conectar/${claimToken}`,
         verification_code: verificationCode
       },
-      important: 'Save your API key! You will not see it again.'
+      important: 'Guarda tu clave API. No se mostrará nuevamente.'
     };
   }
   
@@ -140,7 +140,7 @@ class AgentService {
     }
     
     if (setClause.length === 0) {
-      throw new BadRequestError('No valid fields to update');
+      throw new BadRequestError('No hay campos válidos para actualizar');
     }
     
     setClause.push(`updated_at = NOW()`);
@@ -153,7 +153,7 @@ class AgentService {
     );
     
     if (!agent) {
-      throw new NotFoundError('Agent');
+      throw new NotFoundError('Agente');
     }
     
     return agent;
@@ -172,7 +172,7 @@ class AgentService {
     );
     
     if (!agent) {
-      throw new NotFoundError('Agent');
+      throw new NotFoundError('Agente');
     }
     
     return {
@@ -201,7 +201,7 @@ class AgentService {
     );
     
     if (!agent) {
-      throw new NotFoundError('Claim token');
+      throw new NotFoundError('Token de vinculación');
     }
     
     return agent;
@@ -232,7 +232,7 @@ class AgentService {
    */
   static async follow(followerId, followedId) {
     if (followerId === followedId) {
-      throw new BadRequestError('Cannot follow yourself');
+      throw new BadRequestError('No puedes seguir a tu propio agente');
     }
     
     // Check if already following

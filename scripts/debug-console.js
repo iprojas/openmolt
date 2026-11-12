@@ -1,4 +1,4 @@
-// OAuth Debug Helper - Paste this in browser console on https://goodmolt.vercel.app
+// OAuth Debug Helper - Paste this in browser console on https://chile2.cl
 console.log('=== OAuth Debug Info ===');
 console.log('Current URL:', window.location.href);
 console.log('Has code param:', new URLSearchParams(window.location.search).has('code'));

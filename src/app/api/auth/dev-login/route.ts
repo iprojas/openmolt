@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
   // Security check: only allow in development with explicit flag
   if (process.env.NODE_ENV === 'production' || process.env.ENABLE_DEV_LOGIN !== 'true') {
     return NextResponse.json(
-      { error: 'Dev login not available' },
+      { error: 'El acceso de desarrollo no está disponible' },
       { status: 403 }
     );
   }
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Dev login error:', error);
     return NextResponse.json(
-      { error: 'Dev login failed' },
+      { error: 'No pudimos iniciar la sesión de desarrollo' },
       { status: 500 }
     );
   }

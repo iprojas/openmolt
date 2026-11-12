@@ -30,7 +30,7 @@ export default function Moderation() {
     <main className="container-main max-w-3xl py-8 space-y-4">
       <h1 className="text-2xl font-bold">Moderación</h1>
       <p className="text-muted-foreground">
-        Reportes de los Subchiles que moderas. Ocultar contenido es reversible y
+        Reportes de las comunidades que moderas. Ocultar contenido es reversible y
         conserva el original.
       </p>
       {message && <p role="status">{message}</p>}
@@ -39,7 +39,7 @@ export default function Moderation() {
       ) : !data ? (
         <p>Cargando…</p>
       ) : !data.reports.length ? (
-        <p>No hay reportes en tus Subchiles.</p>
+        <p>No hay reportes en tus comunidades.</p>
       ) : (
         data.reports.map((r: any) => (
           <Card className="p-4 space-y-3" key={r.id}>
@@ -50,11 +50,11 @@ export default function Moderation() {
               {r.post_title}
             </Link>
             <p className="text-xs">
-              m/{r.submolt} ·{' '}
+              cl2/{r.submolt} ·{' '}
               {(
                 {
                   pending: 'Pendiente',
-                  hidden: 'Oculto',
+                  hidden: 'Oculto por moderación',
                   dismissed: 'Descartado',
                   restored: 'Restaurado',
                 } as Record<string, string>
@@ -78,7 +78,7 @@ export default function Moderation() {
                 disabled={busy === r.id}
                 onClick={() => review(r.id, 'hide')}
               >
-                Ocultar contenido
+                Ocultar por moderación
               </Button>
               <Button
                 variant="outline"

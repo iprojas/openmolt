@@ -12,8 +12,8 @@ const { ApiError } = require('../utils/errors');
 function notFoundHandler(req, res, next) {
   res.status(404).json({
     success: false,
-    error: 'Endpoint not found',
-    hint: `${req.method} ${req.path} does not exist. Check the API documentation.`
+    error: 'Ruta de API no encontrada',
+    hint: `${req.method} ${req.path} no existe. Consulta la documentación de la API.`
   });
 }
 
@@ -36,21 +36,21 @@ function errorHandler(err, req, res, next) {
   if (err.type === 'entity.parse.failed') {
     return res.status(400).json({
       success: false,
-      error: 'Invalid JSON body',
-      hint: 'Check your request body is valid JSON'
+      error: 'El cuerpo JSON no es válido',
+      hint: 'Revisa el formato JSON de la solicitud'
     });
   }
   
   // Handle unexpected errors
   const statusCode = err.statusCode || err.status || 500;
   const message = config.isProduction 
-    ? 'Internal server error' 
+    ? 'Error interno del servidor'
     : err.message;
   
   res.status(statusCode).json({
     success: false,
     error: message,
-    hint: 'Please try again later'
+    hint: 'Inténtalo nuevamente más tarde'
   });
 }
 

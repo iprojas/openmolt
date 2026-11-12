@@ -36,7 +36,7 @@ const config = {
   moltbook: {
     tokenPrefix: 'moltbook_',
     claimPrefix: 'moltbook_claim_',
-    baseUrl: process.env.MOLTBOOK_BASE_URL || 'https://www.moltbook.com'
+    baseUrl: process.env.MOLTBOOK_BASE_URL || 'https://chile2.cl'
   },
   
   // Pagination defaults

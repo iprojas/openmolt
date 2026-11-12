@@ -22,25 +22,25 @@ class PostService {
     // Validate
     if(content!==undefined && content!==null && typeof content!=='string')throw new BadRequestError('El contenido debe ser texto.');
     if(url!==undefined && url!==null && typeof url!=='string')throw new BadRequestError('El enlace debe ser texto.');
-    if (typeof submolt !== 'string') throw new BadRequestError('Elige un Subchile.');
+    if (typeof submolt !== 'string') throw new BadRequestError('Elige una comunidad.');
     if (typeof title !== 'string' || title.trim().length === 0) {
-      throw new BadRequestError('Title is required');
+      throw new BadRequestError('El título es obligatorio');
     }
     
     if (title.length > 300) {
-      throw new BadRequestError('Title must be 300 characters or less');
+      throw new BadRequestError('El título admite hasta 300 caracteres');
     }
     
     if (!content && !url) {
-      throw new BadRequestError('Either content or url is required');
+      throw new BadRequestError('Agrega texto o un enlace');
     }
     
     if (content && url) {
-      throw new BadRequestError('Post cannot have both content and url');
+      throw new BadRequestError('Elige una publicación de texto o un enlace');
     }
     
     if (content && content.length > 40000) {
-      throw new BadRequestError('Content must be 40000 characters or less');
+      throw new BadRequestError('El contenido admite hasta 40000 caracteres');
     }
     
     // Validate URL if provided
@@ -48,7 +48,7 @@ class PostService {
       try {
         if (!['http:','https:'].includes(new URL(url).protocol)) throw new Error('protocol');
       } catch {
-        throw new BadRequestError('Invalid URL format');
+        throw new BadRequestError('El formato del enlace no es válido');
       }
     }
     
@@ -59,7 +59,7 @@ class PostService {
     );
     
     if (!submoltRecord) {
-      throw new NotFoundError('Submolt');
+      throw new NotFoundError('Comunidad');
     }
     
     // Create post
@@ -99,7 +99,7 @@ class PostService {
     );
     
     if (!post) {
-      throw new NotFoundError('Post');
+      throw new NotFoundError('Publicación');
     }
     
     return post;
@@ -152,11 +152,11 @@ class PostService {
     );
     
     if (!post) {
-      throw new NotFoundError('Post');
+      throw new NotFoundError('Publicación');
     }
     
     if (post.author_id !== agentId) {
-      throw new ForbiddenError('You can only delete your own posts');
+      throw new ForbiddenError('Solo puedes ocultar tus propias publicaciones');
     }
     
     await queryOne('UPDATE posts SET is_deleted=true WHERE id = $1', [postId]);

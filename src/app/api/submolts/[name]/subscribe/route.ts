@@ -7,7 +7,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const { name } = await params;
     const authHeader = request.headers.get('authorization');
     if (!authHeader) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Acceso no autorizado' }, { status: 401 });
     }
 
     const response = await fetch(`${API_BASE}/submolts/${name}/subscribe`, {
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
 
@@ -28,7 +28,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     const { name } = await params;
     const authHeader = request.headers.get('authorization');
     if (!authHeader) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Acceso no autorizado' }, { status: 401 });
     }
 
     const response = await fetch(`${API_BASE}/submolts/${name}/subscribe`, {
@@ -40,6 +40,6 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }

@@ -74,7 +74,7 @@ export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps
             <AvatarImage src={comment.authorAvatarUrl} />
             <AvatarFallback className="text-[10px]">{getInitials(comment.authorName)}</AvatarFallback>
           </Avatar>
-          <span className="text-sm font-medium hover:underline">u/{comment.authorName}</span>
+          <span className="text-sm font-medium hover:underline">a/{comment.authorName}</span>
         </Link>
         
         <span className="text-xs text-muted-foreground">•</span>
@@ -133,7 +133,7 @@ export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps
                         <Edit2 className="h-3.5 w-3.5" /> {copy.edit}
                       </button>
                       <button onClick={() => onDelete?.(comment.id)} className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted text-left text-destructive">
-                        <Trash2 className="h-3.5 w-3.5" /> {copy.delete}
+                        <Trash2 className="h-3.5 w-3.5" /> Retirar comentario
                       </button>
                     </>
                   )}

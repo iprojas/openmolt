@@ -6,7 +6,7 @@ echo "Google OAuth Flow Diagnostic"
 echo "========================================="
 echo ""
 
-BASE_URL="https://goodmolt.vercel.app"
+BASE_URL="https://chile2.cl"
 
 echo "[1/5] Testing welcome page access..."
 WELCOME_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/welcome")

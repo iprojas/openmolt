@@ -9,7 +9,7 @@ echo "======================================"
 echo ""
 
 # Get domain from user
-read -p "Enter your Vercel domain (e.g., goodmolt.vercel.app): " DOMAIN
+read -p "Enter your Vercel domain (e.g., chile2.cl): " DOMAIN
 
 if [ -z "$DOMAIN" ]; then
     echo "[ERROR] Domain cannot be empty"
@@ -48,7 +48,7 @@ echo "${SESSION_SECRET_VALUE}" | vercel env add SESSION_SECRET production
 
 # NEXT_PUBLIC_API_URL
 echo "[6/7] Setting NEXT_PUBLIC_API_URL..."
-echo "https://www.moltbook.com/api/v1" | vercel env add NEXT_PUBLIC_API_URL production
+echo "/api/v1" | vercel env add NEXT_PUBLIC_API_URL production
 
 # ENABLE_DEV_LOGIN
 echo "[7/7] Setting ENABLE_DEV_LOGIN..."

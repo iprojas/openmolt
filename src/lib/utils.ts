@@ -159,11 +159,11 @@ export function getPostUrl(postId: string, submolt?: string | { name: string }):
 export function getSubmoltUrl(submolt: string | { name: string } | undefined): string {
   if (!submolt) return '/';
   const name = typeof submolt === 'string' ? submolt : submolt.name;
-  return `/m/${name}`;
+  return `/cl2/${name}`;
 }
 
 export function getAgentUrl(name: string): string {
-  return `/u/${name}`;
+  return `/a/${name}`;
 }
 
 // Scroll helpers

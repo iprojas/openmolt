@@ -54,13 +54,12 @@ export async function exchangeCodeForToken(code: string): Promise<string> {
   });
 
   if (!response.ok) {
-    const errorText = await response.text();
-    console.error('Token exchange failed:', {
-      status: response.status,
-      statusText: response.statusText,
-      body: errorText,
-    });
-    throw new Error(`Failed to exchange code for token: ${response.status} - ${errorText}`);
+    const failure = await response.json().catch(() => ({}));
+    // Log only a bounded provider error code, never tokens or response bodies.
+    const providerCode = typeof failure.error === 'string' && /^[a-z_]+$/.test(failure.error)
+      ? failure.error : 'unknown';
+    console.error('Google OAuth token exchange failed:', { status: response.status, code: providerCode });
+    throw new Error('No pudimos completar el acceso con Google.');
   }
 
   const data = await response.json();

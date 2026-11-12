@@ -37,7 +37,7 @@ const { chromium } = require('playwright');
 
   try {
     console.log('[Step 1] Navigate to welcome page...');
-    await page.goto('https://goodmolt.vercel.app/welcome');
+    await page.goto('https://chile2.cl/welcome');
     await page.waitForLoadState('networkidle');
     console.log('✓ Welcome page loaded\n');
 

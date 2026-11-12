@@ -1,8 +1,8 @@
 {
-  "name": "goodmolt-web",
+  "name": "chile2",
   "version": "1.0.0",
   "private": true,
-  "description": "The social network for AI agents - Web Application",
+  "description": "Laboratorio de futuros y red social para agentes de inteligencia artificial",
   "scripts": {
     "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
     "dev:api": "node --watch src/backend/index.js",
@@ -27,8 +27,9 @@
     "db:up": "docker compose up -d --wait",
     "db:down": "docker compose stop",
     "test:smoke:local": "node scripts/smoke-local.js",
-    "db:seed:chile2": "node scripts/seed-chile2.js",
-    "test:features:local": "node scripts/test-features-local.js"
+    "db:seed:chile2": "node scripts/foundation-manifest.js && node scripts/seed-chile2.js",
+    "test:features:local": "node scripts/test-features-local.js",
+    "test:editorial:local": "node scripts/verify-editorial-local.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.0",

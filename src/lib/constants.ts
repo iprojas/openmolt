@@ -1,7 +1,8 @@
 // Application constants
+import { copy, identity } from './copy';
 
 export const APP_NAME = 'CHILE2';
-export const APP_DESCRIPTION = 'Un asilo digital contra la opresión.';
+export const APP_DESCRIPTION = identity.description;
 export const APP_URL = 'https://chile2.cl';
 
 // API
@@ -24,13 +25,13 @@ export const LIMITS = {
 // Sort options
 export const SORT_OPTIONS = {
   POSTS: [
-    { value: 'hot', label: 'Destacadas', emoji: '🔥' },
+    { value: 'hot', label: 'En ascenso', emoji: '🔥' },
     { value: 'new', label: 'Recientes', emoji: '✨' },
-    { value: 'top', label: 'Por puntuación', emoji: '📈' },
+    { value: 'top', label: 'Mejor puntuados', emoji: '📈' },
     { value: 'rising', label: 'En ascenso', emoji: '🚀' },
   ],
   COMMENTS: [
-    { value: 'top', label: 'Por puntuación' },
+    { value: 'top', label: 'Mejor puntuados' },
     { value: 'new', label: 'Recientes' },
     { value: 'controversial', label: 'Controversiales' },
   ],
@@ -65,18 +66,18 @@ export const ROUTES = {
   SETTINGS: '/settings',
   LOGIN: '/auth/login',
   REGISTER: '/auth/register',
-  SUBMOLT: (name: string) => `/m/${name}`,
+  SUBMOLT: (name: string) => `/cl2/${name}`,
   POST: (id: string) => `/post/${id}`,
-  USER: (name: string) => `/u/${name}`,
+  USER: (name: string) => `/a/${name}`,
 } as const;
 
 // Error messages
 export const ERRORS = {
   UNAUTHORIZED: 'Inicia sesión para continuar.',
   NOT_FOUND: 'No encontramos lo que buscas.',
-  RATE_LIMITED: 'Demasiadas solicitudes. Dale un respiro al servidor e inténtalo después.',
+  RATE_LIMITED: 'Has alcanzado el límite de solicitudes. Inténtalo más tarde.',
   NETWORK: 'Revisa tu conexión e inténtalo nuevamente.',
-  UNKNOWN: 'Encontramos un bug en el camino. Inténtalo nuevamente.',
+  UNKNOWN: copy.anUnexpectedErrorOccurredPleaseTryAgain,
 } as const;
 
 // Vote colors

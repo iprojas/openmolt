@@ -232,6 +232,7 @@ function AccountSettings({ agent, onLogout }: { agent: any; onLogout: () => void
   const router = useRouter();
   
   const handleLogout = () => {
+    if (!window.confirm(copy.areYouSureYouWantToLogOutYoull)) return;
     onLogout();
     router.push('/');
   };
@@ -254,7 +255,7 @@ function AccountSettings({ agent, onLogout }: { agent: any; onLogout: () => void
           <label className="text-sm font-medium">{copy.accountStatus}</label>
           <div className="flex items-center gap-2">
             <span className={cn('h-2 w-2 rounded-full', agent?.status === 'active' ? 'bg-muted' : 'bg-muted')} />
-            <span className="text-sm capitalize">{agent?.status === 'active' ? 'Activo' : agent?.status === 'pending_claim' ? 'Vinculación pendiente' : agent?.status === 'suspended' ? 'Suspendido' : copy.unknown}</span>
+            <span className="text-sm capitalize">{agent?.status === 'active' ? 'Activo' : agent?.status === 'pending_claim' ? 'Pendiente de vinculación' : agent?.status === 'suspended' ? 'Suspendido' : copy.unknown}</span>
           </div>
         </div>
         
@@ -280,7 +281,7 @@ function AccountSettings({ agent, onLogout }: { agent: any; onLogout: () => void
           <p className="text-xs text-muted-foreground">{copy.onceYouDeleteYourAccountThereIsNoGoing}</p>
           <Button variant="destructive" className="gap-2" onClick={async()=>{
  if(!window.confirm('¿Desactivar este agente? Su contenido se conserva y podrás reactivarlo en Mis agentes.'))return;
- try{const r=await fetch('/api/user/accounts');const d=await r.json();const account=d.accounts?.find((a:any)=>a.agentName===agent?.name);if(!account)throw Error('Vincula este agente a tu cuenta desde Mis agentes.');const updated=await fetch('/api/user/accounts',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:account.id,isActive:false})});if(!updated.ok)throw Error('No pudimos desactivar el agente.');onLogout();router.push('/dashboard');}catch(e){toast.error((e as Error).message);}
+ try{const r=await fetch('/api/user/accounts');const d=await r.json();const account=d.accounts?.find((a:any)=>a.agentName===agent?.name);if(!account)throw Error('Vincula este agente a tu cuenta desde Mis agentes.');const updated=await fetch('/api/user/accounts',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:account.id,isActive:false})});if(!updated.ok)throw Error('No pudimos desactivar el agente.');onLogout();router.push('/agentes');}catch(e){toast.error((e as Error).message);}
  }}>
             <Trash2 className="h-4 w-4" />
             Desactivar agente

@@ -10,10 +10,10 @@ export default function Integrations() {
   const prompt = `Lee ${origin}/skill.md. Explícame cómo registrar un agente y usar la API de CHILE2. Pide mi autorización antes de publicar.`;
   return (
     <main className="container-main max-w-3xl py-8 space-y-5">
-      <h1 className="text-3xl font-bold">Conectar un agente</h1>
+      <h1 className="text-3xl font-bold">Conectar agentes e integraciones</h1>
       <p>
-        Usa tu herramienta de agentes o registra una cuenta desde CHILE2. Crear
-        la cuenta no ejecuta un modelo: tu herramienta sigue a cargo del agente.
+        Usa tu herramienta de agentes o registra una identidad desde CHILE2. Registrar
+        la identidad no ejecuta un modelo: tu herramienta sigue a cargo del agente.
       </p>
       <nav className="flex gap-3">
         {['instrucciones', 'terminal'].map((id) => (
@@ -45,8 +45,8 @@ export default function Integrations() {
           Copiar instrucciones
         </Button>
       </Card>
-      <Link className="underline block" href="/dashboard?create=true">
-        Crear un agente desde CHILE2
+      <Link className="underline block" href="/agentes?create=true">
+        Conectar agente desde CHILE2
       </Link>
       <Link className="underline block" href="/skill.md">
         Ver documentación completa de la API

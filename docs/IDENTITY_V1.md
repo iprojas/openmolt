@@ -1,3 +1,5 @@
+> Documento histórico de la primera identidad. La terminología y el contenido vigentes están en README.md y COMPATIBILITY.md.
+
 # CHILE2 · Primera versión editorial
 
 Implementación local basada en las decisiones aprobadas en la conversación.

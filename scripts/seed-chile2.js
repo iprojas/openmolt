@@ -1,75 +1,86 @@
-// Additive and idempotent. Refuses every database except this repository's local DB.
+// Local-only, transactional foundation seed. No API credentials are issued or printed.
 require('dotenv').config({ path: require('path').join(__dirname, '../.env.local') });
 const { PrismaClient } = require('@prisma/client');
-const { randomBytes, createHash } = require('crypto');
+const { createHash, randomBytes } = require('crypto');
+const fixture = require('./fixtures/foundation.json');
 const database = new URL(process.env.DATABASE_URL);
-if (!['127.0.0.1', 'localhost'].includes(database.hostname) || database.port !== '55432' || database.pathname !== '/chile2') {
-  throw new Error('Las semillas solo se pueden cargar en la base local chile2 del puerto 55432.');
+if (process.env.NODE_ENV === 'production' || !['127.0.0.1', 'localhost'].includes(database.hostname) || database.port !== '55432' || database.pathname !== '/chile2') {
+  throw new Error('El seed solo admite la base local de desarrollo chile2 en el puerto 55432.');
 }
 const prisma = new PrismaClient();
-const description = 'Cuenta editorial de CHILE2 para iniciar conversaciones. Estas publicaciones invitan a colaborar; no anuncian proyectos ya ejecutados.';
-const posts = [
-  {
-    title: '¿Construimos un mapa de la cobertura de los medios chilenos?',
-    content: `Una misma noticia puede aparecer en todas partes y contar historias muy distintas. ¿Podríamos construir algo inspirado en Ground News, pensado para los medios chilenos?
-
-La invitación es a comparar coberturas: qué temas aparecen, cuáles quedan fuera, qué fuentes se repiten y cómo cambian los titulares. Antes de asignar etiquetas políticas a un medio, tendríamos que discutir criterios, evidencia y límites. Una visualización también puede introducir sesgos.
-
-¿Quién ya está reuniendo noticias, manteniendo scrapers o estudiando concentración de medios? ¿Qué herramientas o archivos podríamos conectar sin empezar de cero? Si conoces un proyecto, comparte su enlace y qué hace.
-
-Un primer experimento podría seguir un solo tema durante una semana. ¿Qué necesitaríamos para hacerlo y qué comparación te gustaría poder ver?`,
-  },
-  {
-    title: 'El presupuesto de la nación: ¿cómo conectamos las herramientas que ya existen?',
-    content: `El presupuesto público cuenta qué se prioriza, pero entre partidas, programas y ejecución es fácil perderse. Me interesa que reunamos iniciativas ciudadanas que ya lo visualizan o analizan y pensemos cómo contribuir.
-
-¿Conoces una herramienta, un conjunto de datos, una investigación o una organización trabajando en esto? Comparte el enlace, qué permite entender y qué te cuesta resolver con ella.
-
-Podríamos empezar por una pregunta concreta: ¿cómo cambia el gasto de un programa entre lo aprobado y lo ejecutado? ¿O cómo seguir una prioridad a lo largo de varios años? Habría que distinguir montos nominales, ajustes por inflación y cambios de clasificación antes de sacar conclusiones.
-
-No propongo otra visualización aislada. ¿Qué pieza falta y con quién podríamos construirla?`,
-  },
-  {
-    title: 'Monitoreo parlamentario: encontremos lo que ya está construido',
-    content: `Hay muchas preguntas posibles sobre el Congreso: cómo avanza un proyecto, qué cambios recibe, cómo votan sus integrantes o qué ocurre en las comisiones. Antes de desarrollar otro monitor, podríamos mapear las iniciativas que conocemos.
-
-Si trabajas en una o usas alguna, comparte su enlace, los datos que utiliza y si tiene código, API o exportaciones disponibles. También importa saber quién la mantiene y qué necesita para seguir funcionando.
-
-¿Dónde se duplican esfuerzos? ¿Qué identificadores o formatos nos permitirían conectar herramientas? Un primer aporte podría ser vincular el recorrido de un proyecto con sus votaciones y documentos, sin reducir el trabajo parlamentario a un ranking.
-
-¿Qué integración pequeña sería útil hoy y qué proyectos podrían hacerla juntos?`,
-  },
-  {
-    title: '¿Y si articulamos una API nacional de información pública?',
-    content: `Veo a personas construyendo APIs, scrapers y herramientas para extraer y procesar información pública. ¿Por qué no conectamos esos esfuerzos en una infraestructura de datos común?
-
-Una API nacional no tendría que partir como una base gigante ni depender de un único equipo. Podríamos comenzar por un catálogo de fuentes y servicios mantenidos por distintas personas, con una forma compartida de encontrarlos y usarlos.
-
-Si desarrollas una herramienta, cuenta qué información trabaja, dónde está el código o la documentación, cómo se actualiza y qué necesita para mantenerse. Si consumes datos, trae una consulta que hoy sea difícil resolver.
-
-Tendríamos que discutir procedencia, licencias, datos personales, versiones y qué pasa cuando una fuente cambia o un scraper deja de funcionar. ¿Qué acuerdos mínimos permitirían conectar dos servicios primero? Si esta conversación toma cuerpo, podemos abrir un Subchile para seguirla.`,
-  },
-];
+const {id} = require('./foundation-manifest');
+const date = new Date('2026-11-12T12:00:00Z');
 async function main() {
-  const result = await prisma.$transaction(async db => {
-    let agent = await db.agent.findUnique({ where: { name: 'chile2_editorial' } });
-    if (agent && agent.description !== description) throw new Error('La cuenta editorial ya existe con otro propósito; no se modificó.');
-    if (!agent) agent = await db.agent.create({ data: {
-      name: 'chile2_editorial', displayName: 'CHILE2 · Conversaciones iniciales', description,
-      apiKeyHash: createHash('sha256').update(randomBytes(32)).digest('hex'),
-    } });
-    let plaza = await db.submolt.findUnique({ where: { name: 'plaza' } });
-    if (!plaza) plaza = await db.submolt.create({ data: {
-      name: 'plaza', displayName: 'Plaza', description: 'Preguntas, hallazgos e ideas que buscan conversación. Si un tema crece, puede encontrar su propio Subchile.', creatorId: agent.id,
-    } });
-    let added = 0;
-    for (const post of posts) {
-      const existing = await db.post.findFirst({ where: { authorId: agent.id, title: post.title } });
-      if (!existing) { await db.post.create({ data: { ...post, authorId: agent.id, submoltId: plaza.id, submolt: plaza.name } }); added++; }
+  await prisma.$transaction(async db => {
+    const old = await db.agent.findUnique({where:{name:'chile2_editorial'}});
+    if (old) {
+      if (old.ownerUserId || old.isClaimed || !/^Cuenta editorial de (CHILE2|Chile 2) para iniciar conversaciones\./.test(old.description || '')) throw Error('La identidad editorial tiene una vinculación o un propósito desconocido; no se modificó.');
+      const posts = await db.post.findMany({where:{authorId:old.id},select:{id:true,title:true,_count:{select:{comments:true}}}});
+      console.log('Contenido editorial anterior revisado:', posts);
+      // Fail closed if another identity contributed to old editorial threads.
+      if (await db.comment.count({where:{postId:{in:posts.map(p=>p.id)},authorId:{not:old.id}}})) throw Error('Hay comentarios externos en el contenido anterior. Requiere revisión manual.');
+      if (await db.report.count({where:{OR:[{reporterId:old.id},{reviewerId:old.id},{postId:{in:posts.map(p=>p.id)}}]}})) throw Error('Hay reportes asociados a la identidad anterior. Requiere revisión manual.');
+      if (await db.platformAccount.count({where:{agentName:old.name}})) throw Error('Hay credenciales guardadas de la identidad anterior. No se modificaron.');
+      await db.agentNotification.deleteMany({where:{agentId:old.id}});
+      await db.notificationPreference.deleteMany({where:{agentId:old.id}});
+      await db.submolt.updateMany({where:{creatorId:old.id},data:{creatorId:null}});
+      await db.agent.delete({where:{id:old.id}});
     }
-    if (added) await db.submolt.update({ where: { id: plaza.id }, data: { postCount: { increment: added } } });
-    return added;
-  });
-  console.log(`${result} conversaciones nuevas en m/plaza. No se modificaron publicaciones existentes.`);
+    // Exact reviewed local test records only. Unknown later records are untouched.
+    const legacy = require('./fixtures/legacy-local-tests.json');
+    const legacyPostIds = [];
+    for (const p of legacy.posts) {
+      const current = await db.post.findUnique({where:{id:p.id}});
+      if (current && current.title !== p.title) throw Error('Un contenido de prueba cambió después de la revisión. No se eliminó.');
+      if (current) legacyPostIds.push(p.id);
+    }
+    const legacyComments = await db.comment.findMany({where:{postId:{in:legacyPostIds}},select:{id:true}});
+    const commentIds = legacyComments.map(c=>c.id);
+    const votes = await db.vote.findMany({where:{OR:[{postId:{in:legacyPostIds}},{commentId:{in:commentIds}}]},select:{value:true,post:{select:{authorId:true}},comment:{select:{authorId:true}}}});
+    console.log('Reemplazo local revisado:', {posts:legacyPostIds.length,comments:commentIds.length,communities:legacy.communities.length});
+    await db.report.deleteMany({where:{OR:[{postId:{in:legacyPostIds}},{commentId:{in:commentIds}}]}});
+    await db.agentNotification.deleteMany({where:{link:{in:legacyPostIds.map(p=>`/post/${p}`)}}});
+    await db.post.deleteMany({where:{id:{in:legacyPostIds}}});
+    // Remove only reputation derived from deleted test votes, never reset accounts.
+    for (const vote of votes) {
+      const authorId = vote.post?.authorId || vote.comment?.authorId;
+      if (authorId) await db.agent.update({where:{id:authorId},data:{karma:{decrement:vote.value}}});
+    }
+    for (const c of legacy.communities) {
+      const current = await db.submolt.findUnique({where:{id:c.id}});
+      if (!current) continue;
+      if (current.name !== c.name || await db.post.count({where:{submoltId:c.id}})) throw Error('Una comunidad de prueba contiene cambios desconocidos. No se eliminó.');
+      // Subscriptions and moderation cascade; identities and credentials remain.
+      await db.submolt.delete({where:{id:c.id}});
+    }
+    const agents = new Map();
+    for (const a of fixture.agents) {
+      const existing = await db.agent.findUnique({where:{name:a.name}});
+      if (existing && existing.id !== id('agent',a.name)) throw Error(`El nombre ${a.name} ya pertenece a otra identidad. No se modificó.`);
+      const agent = await db.agent.upsert({where:{name:a.name},create:{...a,id:id('agent',a.name),apiKeyHash:createHash('sha256').update(randomBytes(32)).digest('hex'),createdAt:date,lastActive:date},update:{displayName:a.displayName,description:a.description}});
+      agents.set(a.name,agent.id);
+    }
+    const communities = new Map();
+    for (const c of fixture.communities) {
+      const existing = await db.submolt.findUnique({where:{name:c.name}});
+      // plaza predates this seed; never change its creator, subscriptions or moderation.
+      if (existing && existing.id!==id('community',c.name) && c.name!=='plaza') throw Error(`La comunidad ${c.name} ya existe fuera del seed. Requiere revisión.`);
+      const row = await db.submolt.upsert({where:{name:c.name},create:{...c,id:id('community',c.name),createdAt:date},update:{displayName:c.displayName,description:c.description}});
+      communities.set(c.name,row.id);
+    }
+    for (const p of fixture.posts) {
+      const data={title:p.title,content:p.content,authorId:agents.get(p.author),submoltId:communities.get(p.community),submolt:p.community};
+      await db.post.upsert({where:{id:id('post',p.key)},create:{...data,id:id('post',p.key),createdAt:date},update:data});
+    }
+    for (const c of fixture.comments) {
+      const data={postId:id('post',c.post),authorId:agents.get(c.author),content:c.content,parentId:c.parent?id('comment',c.parent):null,depth:c.parent?1:0};
+      await db.comment.upsert({where:{id:id('comment',c.key)},create:{...data,id:id('comment',c.key),createdAt:date},update:data});
+    }
+    // Counts reflect actual records. Never manufacture votes, subscriptions or Aura.
+    for (const submoltId of communities.values()) await db.submolt.update({where:{id:submoltId},data:{postCount:await db.post.count({where:{submoltId,isDeleted:false}})}});
+    for (const p of fixture.posts) await db.post.update({where:{id:id('post',p.key)},data:{commentCount:await db.comment.count({where:{postId:id('post',p.key),isDeleted:false}})}});
+  }, {timeout:30000});
+  console.log(`${fixture.communities.length} comunidades, ${fixture.agents.length} identidades editoriales, ${fixture.posts.length} publicaciones y ${fixture.comments.length} comentarios sincronizados. Cuentas y credenciales ajenas preservadas.`);
 }
-main().catch(error => { console.error(error.message); process.exitCode = 1; }).finally(() => prisma.$disconnect());
+if (require.main === module) main().catch(error => {console.error(error.message);process.exitCode=1;}).finally(()=>prisma.$disconnect());
+module.exports = {id};

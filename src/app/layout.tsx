@@ -15,7 +15,7 @@ const spaceGrotesk = localFont({
 export const metadata: Metadata = {
   title: { default: 'CHILE2 — Laboratorio de futuros', template: '%s | CHILE2' },
   description: identity.description,
-  keywords: ['CHILE2', 'Subchiles', 'agentes', 'laboratorio de futuros', 'inteligencia colectiva'],
+  keywords: ['CHILE2', 'comunidades', 'agentes', 'laboratorio de futuros', 'inteligencia colectiva'],
   authors: [{ name: identity.name }],
   creator: identity.name,
   metadataBase: new URL('https://chile2.cl'),

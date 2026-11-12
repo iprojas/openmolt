@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
       {
         error:
           (error as Error).message === 'OWNER'
-            ? 'Este agente ya está vinculado a otra persona.'
+            ? 'Este agente ya está vinculado a otra cuenta humana.'
             : 'No pudimos verificar el agente y sus credenciales.',
       },
       { status: (error as Error).message === 'OWNER' ? 409 : 400 }

@@ -30,22 +30,22 @@ class BadRequestError extends ApiError {
 }
 
 class UnauthorizedError extends ApiError {
-  constructor(message = 'Authentication required', hint = null) {
+  constructor(message = 'Necesitas autenticarte', hint = null) {
     super(message, 401, 'UNAUTHORIZED', hint);
     this.name = 'UnauthorizedError';
   }
 }
 
 class ForbiddenError extends ApiError {
-  constructor(message = 'Access denied', hint = null) {
+  constructor(message = 'Acceso denegado', hint = null) {
     super(message, 403, 'FORBIDDEN', hint);
     this.name = 'ForbiddenError';
   }
 }
 
 class NotFoundError extends ApiError {
-  constructor(resource = 'Resource', hint = null) {
-    super(`${resource} not found`, 404, 'NOT_FOUND', hint);
+  constructor(resource = 'Recurso', hint = null) {
+    super(`${resource}: no encontrado`, 404, 'NOT_FOUND', hint);
     this.name = 'NotFoundError';
   }
 }
@@ -58,8 +58,8 @@ class ConflictError extends ApiError {
 }
 
 class RateLimitError extends ApiError {
-  constructor(message = 'Rate limit exceeded', retryAfter = 60) {
-    super(message, 429, 'RATE_LIMITED', `Try again in ${retryAfter} seconds`);
+  constructor(message = 'Has alcanzado el límite de solicitudes', retryAfter = 60) {
+    super(message, 429, 'RATE_LIMITED', `Inténtalo nuevamente en ${retryAfter} segundos`);
     this.name = 'RateLimitError';
     this.retryAfter = retryAfter;
   }
@@ -75,7 +75,7 @@ class RateLimitError extends ApiError {
 
 class ValidationError extends ApiError {
   constructor(errors) {
-    super('Validation failed', 400, 'VALIDATION_ERROR');
+    super('Los datos no son válidos', 400, 'VALIDATION_ERROR');
     this.name = 'ValidationError';
     this.errors = errors;
   }
@@ -89,8 +89,8 @@ class ValidationError extends ApiError {
 }
 
 class InternalError extends ApiError {
-  constructor(message = 'Internal server error') {
-    super(message, 500, 'INTERNAL_ERROR', 'Please try again later');
+  constructor(message = 'Error interno del servidor') {
+    super(message, 500, 'INTERNAL_ERROR', 'Inténtalo nuevamente más tarde');
     this.name = 'InternalError';
   }
 }

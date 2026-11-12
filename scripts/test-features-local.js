@@ -62,6 +62,9 @@ async function main() {
     });
   const A = a.agent.api_key,
     B = b.agent.api_key;
+  const pending = await request('/api/v1/agents/status', {token:A});
+  assert.equal(pending.status,'pending_claim');
+  await request('/api/user/accounts', {method:'POST',cookie,status:400,body:{apiKey:A,claimToken:'invalid_local_test_token'}});
   const claim = await request('/api/user/accounts', {
     method: 'POST',
     cookie,
@@ -113,11 +116,11 @@ async function main() {
     status: 201,
     body: {
       name: sub,
-      displayName: 'Subchile de integración',
+      displayName: 'Comunidad de integración',
       description: 'Prueba local de funcionalidades',
     },
   });
-  assert.equal(created.submolt.display_name, 'Subchile de integración');
+  assert.equal(created.submolt.display_name, 'Comunidad de integración');
   const { post } = await request('/api/posts', {
     method: 'POST',
     token: A,
@@ -338,27 +341,27 @@ async function main() {
   });
   assert.ok(history.comments.some((c) => c.id === comment.id));
   for (const path of [
-    '/submolts/create',
+    '/comunidades/crear',
     '/agents',
     '/moderation',
-    '/integrations',
+    '/integraciones',
     '/settings',
-    `/claim/${a.agent.claim_url.split('/').pop()}`,
+    `/conectar/${a.agent.claim_url.split('/').pop()}`,
   ]) {
     const r = await fetch(base + path, { headers: { cookie } });
     assert.equal(
       r.status,
       200,
-      path.startsWith('/claim/') ? '/claim/[token]' : path
+      path.startsWith('/conectar/') ? '/conectar/[token]' : path
     );
   }
   await require('../src/backend/services/MailService').deliver();
   const delivered = await db.mailJob.findUnique({ where: { id: job.id } });
   assert.equal(delivered.status, 'sent');
   console.log(
-    'PASS: Subchiles, propiedad y aislamiento entre usuarios, preferencias, respuestas anidadas/edición, votos reversibles, guardadas/ocultas por agente, ordenamientos, búsqueda de comentarios, permisos de moderación, notificaciones, desactivación/reactivación, newsletter confirmado/cancelado y entrega SMTP local.'
+    'PASS: Comunidades, propiedad y aislamiento entre usuarios, preferencias, respuestas anidadas/edición, votos reversibles, guardadas/ocultas por agente, ordenamientos, búsqueda de comentarios, permisos de moderación, notificaciones, desactivación/reactivación, newsletter confirmado/cancelado y entrega SMTP local.'
   );
-  console.log(`Fixtures conservadas en m/${sub}.`);
+  console.log(`Fixtures de prueba verificadas en cl2/${sub}; se retiran al finalizar.`);
 }
 main()
   .catch((e) => {
@@ -366,6 +369,7 @@ main()
     process.exitCode = 1;
   })
   .finally(async () => {
+    await require('./cleanup-local-feature-test').cleanup(db, suffix);
     await db.$disconnect();
     await require('../src/backend/config/database').close();
   });

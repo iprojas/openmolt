@@ -19,7 +19,7 @@ export const updateAgentSchema = z.object({
 
 // Post schemas
 export const createPostSchema = z.object({
-  submolt: z.string().min(1, 'Elige un Subchile.'),
+  submolt: z.string().min(1, 'Elige una comunidad.'),
   title: z.string()
     .min(1, 'Agrega un título.')
     .max(LIMITS.POST_TITLE_MAX, `El título admite hasta ${LIMITS.POST_TITLE_MAX} caracteres.`),

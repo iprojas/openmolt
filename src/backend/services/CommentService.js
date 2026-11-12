@@ -21,17 +21,17 @@ class CommentService {
   static async create({ postId, authorId, content, parentId = null }) {
     // Validate content
     if (typeof content !== 'string' || content.trim().length === 0) {
-      throw new BadRequestError('Content is required');
+      throw new BadRequestError('El contenido es obligatorio');
     }
 
     if (content.length > 10000) {
-      throw new BadRequestError('Content must be 10000 characters or less');
+      throw new BadRequestError('El contenido admite hasta 10000 caracteres');
     }
 
     // Verify post exists
     const post = await queryOne('SELECT id,author_id FROM posts WHERE id = $1 AND is_deleted=false', [postId]);
     if (!post) {
-      throw new NotFoundError('Post');
+      throw new NotFoundError('Publicación');
     }
 
     // Verify parent comment if provided
@@ -43,14 +43,14 @@ class CommentService {
       );
 
       if (!parent) {
-        throw new NotFoundError('Parent comment');
+        throw new NotFoundError('Comentario original');
       }
 
       depth = parent.depth + 1;
 
       // Limit nesting depth
       if (depth > 10) {
-        throw new BadRequestError('Maximum comment depth exceeded');
+        throw new BadRequestError('Se alcanzó la profundidad máxima de respuestas');
       }
     }
 
@@ -161,7 +161,7 @@ class CommentService {
     );
 
     if (!comment) {
-      throw new NotFoundError('Comment');
+      throw new NotFoundError('Comentario');
     }
 
     return comment;
@@ -181,11 +181,11 @@ class CommentService {
     );
 
     if (!comment) {
-      throw new NotFoundError('Comment');
+      throw new NotFoundError('Comentario');
     }
 
     if (comment.author_id !== agentId) {
-      throw new ForbiddenError('You can only delete your own comments');
+      throw new ForbiddenError('Solo puedes retirar tus propios comentarios');
     }
 
     // Soft delete - replace content but keep structure

@@ -12,7 +12,7 @@ const tabs = {
   posts: 'Publicaciones',
   comments: 'Comentarios',
   agents: 'Agentes',
-  submolts: 'Subchiles',
+  submolts: 'comunidades',
 };
 export default function Search() {
   const params = useSearchParams(),
@@ -37,7 +37,7 @@ export default function Search() {
         aria-label="Buscar"
         value={q}
         onChange={(e) => search(e.target.value)}
-        placeholder="Publicaciones, comentarios, agentes y Subchiles…"
+        placeholder="Publicaciones, comentarios, agentes y comunidades…"
       />
       <nav aria-label="Tipos de resultados" className="flex flex-wrap gap-2">
         {Object.entries(tabs).map(([id, label]) => (
@@ -79,7 +79,7 @@ export default function Search() {
                     {c.content}
                   </Link>
                   <p className="text-xs text-muted-foreground">
-                    u/{c.authorName}
+                    a/{c.authorName}
                   </p>
                 </Card>
               ))}
@@ -94,7 +94,7 @@ export default function Search() {
           )}
           {(active === 'all' || active === 'submolts') && (
             <section>
-              <h2 className="font-bold mb-3">Subchiles</h2>
+              <h2 className="font-bold mb-3">comunidades</h2>
               <SubmoltList submolts={data?.submolts || []} />
             </section>
           )}

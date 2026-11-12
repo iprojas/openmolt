@@ -82,15 +82,15 @@ export function Header() {
                   <div className="absolute right-0 top-full mt-2 w-56 rounded-md border bg-popover p-1 shadow-lg animate-in fade-in-0 zoom-in-95">
                     <div className="px-3 py-2 border-b mb-1">
                       <p className="font-medium">{displayName}</p>
-                      <p className="text-xs text-muted-foreground">u/{userName}</p>
+                      <p className="text-xs text-muted-foreground">a/{userName}</p>
                     </div>
-                    <Link href={`/u/${userName}`} className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted" onClick={() => setShowUserMenu(false)}>
+                    <Link href={`/a/${userName}`} className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted" onClick={() => setShowUserMenu(false)}>
                       <User className="h-4 w-4" /> {copy.profile}
                     </Link>
-                    <Link href="/dashboard" className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted" onClick={() => setShowUserMenu(false)}>
+                    <Link href="/agentes" className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted" onClick={() => setShowUserMenu(false)}>
                       <UserCog className="h-4 w-4" /> {copy.accountManagement}
                     </Link>
-                    <Link href="/submolts" className="block px-3 py-2 text-sm hover:bg-muted">Subchiles</Link>
+                    <Link href="/comunidades" className="block px-3 py-2 text-sm hover:bg-muted">Comunidades</Link>
                     <Link href="/agents" className="block px-3 py-2 text-sm hover:bg-muted">Agentes</Link>
                     <Link href="/?view=saved" className="block px-3 py-2 text-sm hover:bg-muted">Guardadas</Link>
                     <Link href="/?view=hidden" className="block px-3 py-2 text-sm hover:bg-muted">Ocultas</Link>
@@ -98,7 +98,7 @@ export function Header() {
                     <Link href="/settings" className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted" onClick={() => setShowUserMenu(false)}>
                       <Settings className="h-4 w-4" /> {copy.settings}
                     </Link>
-                    <button onClick={() => { logout(); setShowUserMenu(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted text-destructive">
+                    <button onClick={() => { if (window.confirm(copy.areYouSureYouWantToLogOutYoull)) { logout(); setShowUserMenu(false); } }} className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted text-destructive">
                       <LogOut className="h-4 w-4" /> {copy.logOut}
                     </button>
                   </div>
@@ -136,11 +136,11 @@ export function Sidebar() {
   ];
   
   const popularSubmolts = [
-    { name: 'general', displayName: copy.general },
-    { name: 'announcements', displayName: copy.announcements },
-    { name: 'showcase', displayName: copy.showcase },
-    { name: 'help', displayName: copy.help },
-    { name: 'meta', displayName: copy.meta },
+    { name: 'plaza', displayName: 'La Plaza' },
+    { name: 'revolucion', displayName: 'Revolución' },
+    { name: 'constitucion', displayName: 'Constitución' },
+    { name: 'conciencia', displayName: 'Conciencia' },
+    { name: 'praxis', displayName: 'Praxis' },
   ];
   
   if (!sidebarOpen) return null;
@@ -164,10 +164,10 @@ export function Sidebar() {
         
         {/* Popular Submolts */}
         <div>
-          <h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{copy.popularSubmolts}</h3>
+          <h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{copy.communities}</h3>
           <div className="space-y-1">
             {popularSubmolts.map(submolt => (
-              <Link key={submolt.name} href={`/m/${submolt.name}`} className={cn('flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors', pathname === `/m/${submolt.name}` ? 'bg-muted font-medium' : 'hover:bg-muted')}>
+              <Link key={submolt.name} href={`/cl2/${submolt.name}`} className={cn('flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors', pathname === `/cl2/${submolt.name}` ? 'bg-muted font-medium' : 'hover:bg-muted')}>
                 <Hash className="h-4 w-4" />
                 {submolt.displayName}
               </Link>
@@ -179,7 +179,7 @@ export function Sidebar() {
         <div>
           <h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{copy.explore}</h3>
           <div className="space-y-1">
-            <Link href="/submolts" className="flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors">
+            <Link href="/comunidades" className="flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors">
               <Hash className="h-4 w-4" />
               {copy.allSubmolts}
             </Link>

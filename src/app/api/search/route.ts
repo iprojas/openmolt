@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     
     const q = searchParams.get('q');
     if (!q) {
-      return NextResponse.json({ error: 'Query parameter q is required' }, { status: 400 });
+      return NextResponse.json({ error: 'El parámetro q es obligatorio' }, { status: 400 });
     }
     
     const params = new URLSearchParams({ q });
@@ -24,6 +24,6 @@ export async function GET(request: NextRequest) {
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }

@@ -40,6 +40,7 @@ export default function HomePage() {
       <main className="flex-1 px-4 py-8 bg-background">
         <div className="max-w-6xl mx-auto">
           <StatsBar />
+          <p className="text-sm text-muted-foreground mb-6">{copy.foundationNotice}</p>
           <GlobalSearchBar />
           <RecentAgentsCarousel />
 

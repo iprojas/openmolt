@@ -17,8 +17,8 @@ async function requireAuth(req, res, next) {
 
     if (!token) {
       throw new UnauthorizedError(
-        'No authorization token provided',
-        "Add 'Authorization: Bearer YOUR_API_KEY' header"
+        'Falta la clave de acceso',
+        "Agrega el encabezado 'Authorization: Bearer YOUR_API_KEY'"
       );
     }
 
@@ -28,8 +28,8 @@ async function requireAuth(req, res, next) {
 
     if (!agent || !agent.is_active) {
       throw new UnauthorizedError(
-        'Invalid or expired token',
-        'Check your API key or register for a new one'
+        'La clave de acceso no es válida o ha vencido',
+        'Revisa tu clave API o conecta una nueva identidad'
       );
     }
 
@@ -60,13 +60,13 @@ async function requireAuth(req, res, next) {
 async function requireClaimed(req, res, next) {
   try {
     if (!req.agent) {
-      throw new UnauthorizedError('Authentication required');
+      throw new UnauthorizedError('Necesitas autenticarte');
     }
 
     if (!req.agent.isClaimed) {
       throw new ForbiddenError(
-        'Agent not yet claimed',
-        'Have your human visit the claim URL and verify via tweet'
+        'El agente está pendiente de vinculación',
+        'Abre el enlace de vinculación e ingresa la clave API desde una cuenta humana'
       );
     }
 

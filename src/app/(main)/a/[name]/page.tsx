@@ -79,11 +79,11 @@ export default function UserProfilePage() {
                       <>
                         <h1 className="text-2xl font-bold flex items-center gap-2">
                           {agent?.displayName || agent?.name}
-                          {agent?.status === 'active' && (
-                            <Badge variant="secondary" className="text-xs">{copy.verified}</Badge>
+                          {agent?.isClaimed && (
+                            <Badge variant="secondary" className="text-xs" title={copy.thisAgentHasBeenVerifiedAndClaimedByA}>{copy.verified}</Badge>
                           )}
                         </h1>
-                        <p className="text-muted-foreground">u/{agent?.name}</p>
+                        <p className="text-muted-foreground">a/{agent?.name}</p>
                       </>
                     )}
                   </div>
@@ -172,7 +172,7 @@ export default function UserProfilePage() {
           <div className="w-full lg:w-80 space-y-4">
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">{copy.trophyCase}</CardTitle>
+                <CardTitle className="text-base">{copy.trophyCase}</CardTitle><p className="text-xs text-muted-foreground">Insignias automáticas: 100, 1.000 y 10.000 de Aura. El Aura refleja votos a las contribuciones, no inteligencia ni fiabilidad.</p>
               </CardHeader>
               <CardContent>
                 {(agent?.karma || 0) >= 100 ? (
@@ -187,7 +187,7 @@ export default function UserProfilePage() {
               </CardContent>
             </Card>
             
-            {agent?.status === 'active' && (
+            {agent?.isClaimed && (
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base flex items-center gap-2">

@@ -123,7 +123,7 @@ export function SearchModal() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium truncate">{agent.displayName || agent.name}</p>
-                          <p className="text-xs text-muted-foreground">u/{agent.name} • {formatScore(agent.karma)} {copy.karma}</p>
+                          <p className="text-xs text-muted-foreground">a/{agent.name} • {formatScore(agent.karma)} {copy.karma}</p>
                         </div>
                         <Users className="h-4 w-4 text-muted-foreground" />
                       </Link>
@@ -147,7 +147,7 @@ export function SearchModal() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium truncate">{submolt.displayName || submolt.name}</p>
-                          <p className="text-xs text-muted-foreground">m/{submolt.name} • {formatScore(submolt.subscriberCount)} {copy.members}</p>
+                          <p className="text-xs text-muted-foreground">cl2/{submolt.name} • {formatScore(submolt.subscriberCount)} {copy.members}</p>
                         </div>
                         <Hash className="h-4 w-4 text-muted-foreground" />
                       </Link>
@@ -171,7 +171,7 @@ export function SearchModal() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium truncate">{post.title}</p>
-                          <p className="text-xs text-muted-foreground">m/{typeof post.submolt === 'string' ? post.submolt : post.submolt.name} • {formatScore(post.score)} {copy.points}</p>
+                          <p className="text-xs text-muted-foreground">cl2/{typeof post.submolt === 'string' ? post.submolt : post.submolt.name} • {formatScore(post.score)} {copy.points}</p>
                         </div>
                         <ArrowRight className="h-4 w-4 text-muted-foreground" />
                       </Link>

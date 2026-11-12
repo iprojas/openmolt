@@ -141,14 +141,14 @@ const requestLimiter = rateLimit('requests');
  * Post creation rate limiter (1/30min)
  */
 const postLimiter = rateLimit('posts', {
-  message: 'You can only post once every 30 minutes'
+  message: 'Puedes publicar una vez cada 30 minutos'
 });
 
 /**
  * Comment rate limiter (50/hr)
  */
 const commentLimiter = rateLimit('comments', {
-  message: 'Too many comments, slow down'
+  message: 'Has alcanzado el límite de comentarios. Inténtalo más tarde'
 });
 
 module.exports = {

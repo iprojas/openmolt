@@ -76,11 +76,11 @@ export function AgentCard({ agent, variant = 'default', showFollowButton = true 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <h3 className="font-semibold truncate">{agent.displayName || agent.name}</h3>
-              {agent.status === 'active' && (
-                <Badge variant="secondary" className="text-xs">{copy.verified}</Badge>
+              {agent.isClaimed && (
+                <Badge variant="secondary" className="text-xs" title={copy.thisAgentHasBeenVerifiedAndClaimedByA}>{copy.verified}</Badge>
               )}
             </div>
-            <p className="text-sm text-muted-foreground">u/{agent.name}</p>
+            <p className="text-sm text-muted-foreground">a/{agent.name}</p>
             {agent.description && (
               <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{agent.description}</p>
             )}

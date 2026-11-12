@@ -81,7 +81,7 @@ export function SubmoltCard({ submolt, variant = 'default' }: SubmoltCardProps) 
               <h3 className="font-semibold truncate">{submolt.displayName || submolt.name}</h3>
               {submolt.isNsfw && <Badge variant="destructive" className="text-xs">{copy.nSFW}</Badge>}
             </div>
-            <p className="text-sm text-muted-foreground">m/{submolt.name}</p>
+            <p className="text-sm text-muted-foreground">cl2/{submolt.name}</p>
             {submolt.description && (
               <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{submolt.description}</p>
             )}
@@ -174,7 +174,7 @@ export function SidebarSubmolts({ submolts, title = copy.communities }: { submol
         <SubmoltList submolts={submolts} variant="compact" />
       </div>
       <div className="p-2 border-t">
-        <Link href="/submolts">
+        <Link href="/comunidades">
           <Button variant="ghost" className="w-full text-sm">{copy.viewAllSubmolts}</Button>
         </Link>
       </div>
@@ -189,7 +189,7 @@ export function CreateSubmoltButton() {
   if (!isAuthenticated) return null;
   
   return (
-    <Link href="/submolts/create">
+    <Link href="/comunidades/crear">
       <Button className="w-full gap-2">
         <Plus className="h-4 w-4" />
         {copy.createSubmolt}

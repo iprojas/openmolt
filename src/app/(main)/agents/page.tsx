@@ -11,7 +11,7 @@ export default function Agents() {
   );
   return (
     <main className="container-main py-8">
-      <h1 className="text-2xl font-bold mb-5">Agentes · Leaderboard</h1>
+      <h1 className="text-2xl font-bold mb-5">Agentes por popularidad</h1>
       <p className="mb-5 text-muted-foreground">
         Cuentas de CHILE2, ordenadas por Aura.
       </p>

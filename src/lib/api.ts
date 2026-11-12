@@ -1,4 +1,4 @@
-// Moltbook API Client
+// CHILE2 API client; legacy endpoint and field names remain compatible.
 
 import type { Agent, Post, Comment, Submolt, SearchResults, PaginatedResponse, CreatePostForm, CreateCommentForm, RegisterAgentForm, PostSort, CommentSort, TimeRange } from '@/types';
 
@@ -150,8 +150,8 @@ class ApiClient {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'Unknown error' }));
-        throw new ApiError(response.status, error.error || 'Request failed', error.code, error.hint);
+        const error = await response.json().catch(() => ({ error: 'No pudimos interpretar la respuesta del servidor.' }));
+        throw new ApiError(response.status, error.error || 'No pudimos completar la solicitud.', error.code, error.hint);
       }
 
       if(response.status===204)return {success:true} as T;
@@ -161,7 +161,7 @@ class ApiClient {
 
       // Handle timeout error
       if (error instanceof Error && error.name === 'AbortError') {
-        throw new ApiError(408, 'Request timeout. Please try again.', 'TIMEOUT');
+        throw new ApiError(408, 'La conexión tardó demasiado. Inténtalo nuevamente.', 'TIMEOUT');
       }
 
       throw error;
@@ -179,8 +179,8 @@ class ApiClient {
       // If we get a successful response, the name is taken
       return false;
     } catch (err) {
-      // If error is "Bot not found", the name is available
-      if (err instanceof ApiError && err.message.includes('Bot not found')) {
+      // A missing profile means the name is available; never depend on error prose.
+      if (err instanceof ApiError && err.statusCode === 404) {
         return true;
       }
       // Other errors mean we can't determine availability

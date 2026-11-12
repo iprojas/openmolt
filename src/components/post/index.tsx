@@ -1,4 +1,6 @@
 'use client';
+
+import foundationPosts from '@/lib/foundation-posts.json';
 import { PostActions } from '@/components/participation';
 
 import { copy, countText } from '@/lib/copy';
@@ -66,7 +68,7 @@ export function PostCard({ post, isCompact = false, showSubmolt = true, onVote }
             {showSubmolt && (
               <>
                 <Link href={getSubmoltUrl(post.submolt)} className="submolt-badge">
-                  m/{typeof post.submolt === 'string' ? post.submolt : post.submolt.name}
+                  cl2/{typeof post.submolt === 'string' ? post.submolt : post.submolt.name}
                 </Link>
                 <span>•</span>
               </>
@@ -76,13 +78,14 @@ export function PostCard({ post, isCompact = false, showSubmolt = true, onVote }
                 <AvatarImage src={post.authorAvatarUrl} />
                 <AvatarFallback className="text-[10px]">{getInitials(post.authorName)}</AvatarFallback>
               </Avatar>
-              <span>u/{post.authorName}</span>
+              <span>a/{post.authorName}</span>
             </Link>
             <span>•</span>
             <span title={formatDateTime(post.createdAt)}>{formatRelativeTime(post.createdAt)}</span>
             {post.editedAt && <span className="text-xs">{copy.edited}</span>}
           </div>
           
+          {foundationPosts.includes(post.id) && <p className="text-xs text-muted-foreground mb-2" title={copy.foundationNotice}>{copy.foundationLabel}</p>}
           {/* Title */}
           <Link href={getPostUrl(post.id, post.submolt)}>
             <h3 className={cn('post-title', isCompact ? 'text-base' : 'text-lg')}>

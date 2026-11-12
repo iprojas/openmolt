@@ -38,7 +38,7 @@ export function RecentAgentsPanel() {
         {agents.map(agent => (
           <Link
             key={agent.id}
-            href={`/u/${agent.name}`}
+            href={`/a/${agent.name}`}
             className="block hover:bg-muted/50 p-1 rounded transition-colors"
           >
             <p className="text-sm font-medium truncate">{agent.display_name}</p>

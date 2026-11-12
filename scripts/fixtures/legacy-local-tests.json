@@ -1,0 +1,99 @@
+{
+  "notice": "Local development test records reviewed on 2026-11-12. Exact IDs and titles prevent deleting later external contributions. Human accounts and agent credentials are never deleted.",
+  "posts": [
+    {
+      "id": "8a311a72-d8a9-4bf1-8684-c44a3b0d932a",
+      "title": "Verificación local mwcuh9nc"
+    },
+    {
+      "id": "dbc0e5c9-529c-46d9-8281-bbd44e8e7c07",
+      "title": "Local setup verification"
+    },
+    {
+      "id": "6969db8c-486f-499d-8c50-bf6587a8b687",
+      "title": "Local smoke mwcqmyob"
+    },
+    {
+      "id": "4cdd5ea7-b0ce-421b-be79-51f2475ed787",
+      "title": "Local smoke mwcqncfs"
+    },
+    {
+      "id": "617f3688-bd3d-45f6-8e0f-716f3af32cff",
+      "title": "Conversación mwcvpv5f"
+    },
+    {
+      "id": "8f16e295-48b9-4c55-9b59-93a8626f3188",
+      "title": "Conversación mwcvox5c"
+    },
+    {
+      "id": "b145041b-1312-4117-ba29-aae03f4c36ad",
+      "title": "Conversación mwcvuby9"
+    },
+    {
+      "id": "38583a00-ab77-4a0d-bc5f-5ff33611d2bd",
+      "title": "Conversación mwcvwqye"
+    },
+    {
+      "id": "ee310d45-ecdc-4599-821c-d3737183760f",
+      "title": "Conversación mwcvy1wj"
+    },
+    {
+      "id": "9be1c783-c1aa-411f-b08c-5f203f1c7f3a",
+      "title": "Humano"
+    },
+    {
+      "id": "cfb17459-b72c-46af-a171-bddb57c3a21f",
+      "title": "Conversación mwcvxm0e"
+    },
+    {
+      "id": "a114ef32-80ec-4c58-805f-e64177524cf9",
+      "title": "Conversación mwcw4mxn"
+    }
+  ],
+  "communities": [
+    {
+      "id": "cae1c8a8-6cbe-481c-89a3-be33ce75a975",
+      "name": "local_review"
+    },
+    {
+      "id": "2acc4158-da5f-4e22-9356-9dc1d6573ebe",
+      "name": "smoke_mwcqmyob"
+    },
+    {
+      "id": "d65dfdca-2613-4f66-876e-892021391ae0",
+      "name": "smoke_mwcqncfs"
+    },
+    {
+      "id": "71487d6f-ede9-46a2-9c55-1e5ae1cbe84b",
+      "name": "smoke_mwcuh9nc"
+    },
+    {
+      "id": "79794e19-048e-4617-af8e-c60bbd241b93",
+      "name": "f_mwcvox5c"
+    },
+    {
+      "id": "5020a2bf-0363-45c3-8e52-ad5756e8d34f",
+      "name": "f_mwcvpv5f"
+    },
+    {
+      "id": "4f0d6bb6-736a-4f7e-b532-98c2f588175d",
+      "name": "f_mwcvuby9"
+    },
+    {
+      "id": "f50a01c0-e5dd-4e9b-99ed-77815fca3d7f",
+      "name": "f_mwcvwqye"
+    },
+    {
+      "id": "50650d20-85a0-4af9-a0ab-7454daa6300c",
+      "name": "f_mwcvxm0e"
+    },
+    {
+      "id": "140a251d-e2c4-4cbc-b3c8-904aca3311da",
+      "name": "f_mwcvy1wj"
+    },
+    {
+      "id": "66432f9d-52d0-44e5-8af2-f97c60d3c166",
+      "name": "f_mwcw4mxn"
+    }
+  ]
+}

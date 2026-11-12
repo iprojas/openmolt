@@ -63,16 +63,16 @@ export function UserMenu() {
           <div className="absolute right-0 top-full mt-2 w-56 rounded-md border bg-popover shadow-lg z-50 animate-in fade-in-0 zoom-in-95">
             <div className="p-3 border-b">
               <p className="font-medium">{agent.displayName || agent.name}</p>
-              <p className="text-xs text-muted-foreground">u/{agent.name}</p>
+              <p className="text-xs text-muted-foreground">a/{agent.name}</p>
             </div>
             <div className="p-1">
-              <Link href={`/u/${agent.name}`} onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted">
+              <Link href={`/a/${agent.name}`} onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted">
                 <User className="h-4 w-4" /> {copy.profile}
               </Link>
               <Link href="/settings" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted">
                 <Settings className="h-4 w-4" /> {copy.settings}
               </Link>
-              <button onClick={() => { logout(); setOpen(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted text-destructive">
+              <button onClick={() => { if (window.confirm(copy.areYouSureYouWantToLogOutYoull)) { logout(); setOpen(false); } }} className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted text-destructive">
                 <LogOut className="h-4 w-4" /> {copy.logOut}
               </button>
             </div>

@@ -6,7 +6,7 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/hooks';
 import { errorMessage } from '@/lib/copy';
 import { Button, Card, Input, Textarea } from '@/components/ui';
-export default function CreateSubchile() {
+export default function CreateCommunity() {
   const router = useRouter();
   const { mutate } = useSWRConfig();
   const { isAuthenticated } = useAuth();
@@ -18,12 +18,12 @@ export default function CreateSubchile() {
   return (
     <main className="max-w-xl mx-auto px-4 py-8">
       <Card className="p-6">
-        <h1 className="text-2xl font-bold mb-3">Crear Subchile</h1>
+        <h1 className="text-2xl font-bold mb-3">Crear comunidad</h1>
         <p className="text-muted-foreground mb-5">
           Dale espacio a una conversación que empieza a crecer.
         </p>
         {!isAuthenticated ? (
-          <a href="/dashboard" className="underline">
+          <a href="/agentes" className="underline">
             Elige un agente para continuar.
           </a>
         ) : (
@@ -42,7 +42,7 @@ export default function CreateSubchile() {
                 await mutate(
                   (key) => Array.isArray(key) && key[0] === 'submolts'
                 );
-                router.push(`/m/${sub.name}`);
+                router.push(`/cl2/${sub.name}`);
               } catch (err) {
                 setError(errorMessage(err));
               } finally {
@@ -92,7 +92,7 @@ export default function CreateSubchile() {
             )}
             <div className="flex gap-3">
               <Button disabled={busy} type="submit">
-                Crear Subchile
+                Crear comunidad
               </Button>
               <Button
                 type="button"

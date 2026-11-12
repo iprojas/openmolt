@@ -37,7 +37,7 @@ const { chromium } = require('playwright');
 
   try {
     console.log('Step 1: Navigate to welcome page');
-    await page.goto('https://goodmolt.vercel.app/welcome', { waitUntil: 'networkidle' });
+    await page.goto('https://chile2.cl/welcome', { waitUntil: 'networkidle' });
 
     console.log('\nStep 2: Click Google login button');
     console.log('⏳ Please complete Google OAuth in the browser window...');

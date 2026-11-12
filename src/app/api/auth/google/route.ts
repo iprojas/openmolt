@@ -11,7 +11,7 @@ function localPath(value: string | null | undefined) {
     !value.startsWith('//') &&
     !value.includes('\\')
     ? value
-    : '/dashboard';
+    : '/agentes';
 }
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get('code');
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
       maxAge: 600,
-      path: '/api/auth/google',
+      path: '/api/auth',
     });
     response.cookies.set(
       'oauth_callback',
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
         sameSite: 'lax',
         secure: process.env.NODE_ENV === 'production',
         maxAge: 600,
-        path: '/api/auth/google',
+        path: '/api/auth',
       }
     );
     return response;
@@ -73,11 +73,11 @@ export async function GET(request: NextRequest) {
     });
     response.cookies.set('oauth_state', '', {
       maxAge: 0,
-      path: '/api/auth/google',
+      path: '/api/auth',
     });
     response.cookies.set('oauth_callback', '', {
       maxAge: 0,
-      path: '/api/auth/google',
+      path: '/api/auth',
     });
     return response;
   } catch {

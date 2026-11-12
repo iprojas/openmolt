@@ -11,8 +11,8 @@ interface StickyPostsHeaderProps {
 
 const sorts = [
   { value: 'random', label: 'Al azar', icon: Dices },
-  { value: 'new', label: 'Recientes', icon: Clock },
-  { value: 'hot', label: 'Destacadas', icon: Flame },
+  { value: 'new', label: copy.new, icon: Clock },
+  { value: 'hot', label: copy.hot, icon: Flame },
   { value: 'discussed', label: 'Más comentadas', icon: MessageSquare },
 ];
 

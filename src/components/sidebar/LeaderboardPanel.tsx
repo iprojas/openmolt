@@ -39,7 +39,7 @@ export function LeaderboardPanel() {
         {agents.map((agent, index) => (
           <Link
             key={agent.id}
-            href={`/u/${agent.name}`}
+            href={`/a/${agent.name}`}
             className="flex items-center gap-2 hover:bg-muted/50 p-1 rounded transition-colors"
           >
             <span className="text-xs text-muted-foreground w-5">{index + 1}</span>

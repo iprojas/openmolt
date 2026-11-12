@@ -75,17 +75,17 @@ export function PopularSubmolts({ submolts }: { submolts: Submolt[] }) {
           <Users className="h-5 w-5 text-primary" />
           <h3 className="font-semibold">{copy.popularCommunities}</h3>
         </div>
-        <Link href="/submolts" className="text-xs text-primary hover:underline">{copy.seeAll}</Link>
+        <Link href="/comunidades" className="text-xs text-primary hover:underline">{copy.seeAll}</Link>
       </div>
       <div className="space-y-2">
         {submolts.slice(0, 5).map((submolt, i) => (
-          <Link key={submolt.id} href={`/m/${submolt.name}`} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors">
+          <Link key={submolt.id} href={`/cl2/${submolt.name}`} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors">
             <span className="text-sm font-medium text-muted-foreground w-4">{i + 1}</span>
             <Avatar className="h-8 w-8">
               <AvatarFallback className="text-xs bg-primary/10 text-primary">{getInitials(submolt.name)}</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm">m/{submolt.name}</p>
+              <p className="font-medium text-sm">cl2/{submolt.name}</p>
               <p className="text-xs text-muted-foreground">{formatScore(submolt.subscriberCount)} {copy.members}</p>
             </div>
           </Link>
@@ -107,12 +107,12 @@ export function ActiveAgents({ agents }: { agents: Agent[] }) {
       </div>
       <div className="space-y-2">
         {agents.slice(0, 5).map(agent => (
-          <Link key={agent.id} href={`/u/${agent.name}`} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors">
+          <Link key={agent.id} href={`/a/${agent.name}`} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors">
             <Avatar className="h-8 w-8">
               <AvatarFallback className="text-xs">{getInitials(agent.name)}</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm">u/{agent.name}</p>
+              <p className="font-medium text-sm">a/{agent.name}</p>
               <p className="text-xs text-muted-foreground">{formatScore(agent.karma)} {copy.karma}</p>
             </div>
           </Link>

@@ -1,7 +1,7 @@
 'use client';
 
 import { copy, identity, errorMessage } from '@/lib/copy';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import toast, { Toaster } from 'react-hot-toast';
 import {
@@ -71,11 +71,6 @@ export default function DashboardPage() {
   const [selectingAccountId, setSelectingAccountId] = useState<string | null>(null);
   const [failedAccounts, setFailedAccounts] = useState<Set<string>>(new Set());
 
-  // Load user session and accounts
-  useEffect(() => {
-    loadUserData();
-  }, []);
-
   // Name availability check with debounce
   useEffect(() => {
     if (!agentName || agentName.length < 2) {
@@ -101,7 +96,7 @@ export default function DashboardPage() {
     return () => clearTimeout(timer);
   }, [agentName]);
 
-  const loadUserData = async () => {
+  const loadUserData = useCallback(async () => {
     try {
       setIsLoading(true);
 
@@ -125,7 +120,9 @@ export default function DashboardPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [router]);
+
+  useEffect(() => { loadUserData(); }, [loadUserData]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -283,23 +280,7 @@ export default function DashboardPage() {
       setFailedAccounts(prev => new Set(prev).add(account.id));
 
       // Show detailed error message
-      const errorMsg = (err as Error).message || copy.unknownError;
-      if (errorMsg.includes('Invalid API key') || errorMsg.includes('Unauthorized')) {
-        toast.error(
-          copy.aPIKeyHasExpiredOrIsInvalidPleaseUpdate,
-          { duration: 5000 }
-        );
-      } else if (errorMsg.includes('Network') || errorMsg.includes('fetch')) {
-        toast.error(
-          copy.networkErrorPleaseCheckYourConnectionAndTryAgain,
-          { duration: 4000 }
-        );
-      } else {
-        toast.error(
-          'No pudimos cambiar de agente. Inténtalo nuevamente.',
-          { duration: 4000 }
-        );
-      }
+      toast.error(errorMessage(err), { duration: 5000 });
     } finally {
       setSelectingAccountId(null);
     }
@@ -308,7 +289,7 @@ export default function DashboardPage() {
   const handleLogout = async () => {
     // Clear session cookie
     await fetch('/api/auth/session',{method:'DELETE'});
-    localStorage.clear();
+    authStore.logout();
     router.push('/welcome');
   };
 
@@ -589,7 +570,7 @@ export default function DashboardPage() {
                             </div>
                           </div>
                         </div>
-                        <Button variant="outline" onClick={async()=>{try{const r=await fetch('/api/user/accounts',{method:account.isClaimed?'PATCH':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(account.isClaimed?{id:account.id,isActive:!account.isActive}:{apiKey:account.apiKey})});const d=await r.json();if(!r.ok)throw Error(d.error);await loadUserData();toast.success(account.isClaimed?'Estado actualizado.':'Agente vinculado.');}catch(e){toast.error((e as Error).message);}}}>{!account.isClaimed?'Vincular a mi cuenta':account.isActive?'Desactivar':'Reactivar'}</Button>
+                        <Button variant="outline" onClick={async()=>{try{const r=await fetch('/api/user/accounts',{method:account.isClaimed?'PATCH':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(account.isClaimed?{id:account.id,isActive:!account.isActive}:{apiKey:account.apiKey})});const d=await r.json();if(!r.ok)throw Error(d.error);await loadUserData();toast.success(account.isClaimed?'Estado actualizado.':'Agente vinculado.');}catch(e){toast.error((e as Error).message);}}}>{!account.isClaimed?'Vincular a mi cuenta':account.isActive?'Desactivar agente':'Reactivar agente'}</Button>
                         <Button
                           onClick={() => handleSelectAccount(account)}
                           disabled={selectingAccountId === account.id || !account.isActive}

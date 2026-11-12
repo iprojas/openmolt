@@ -21,13 +21,13 @@ class SubmoltService {
     if(typeof description!=='string'||description.length>500|| (displayName!==undefined && (typeof displayName!=='string'||displayName.length>64)))throw new BadRequestError('Revisa el nombre visible y la descripción.');
     // Validate name
     if (!name || typeof name !== 'string') {
-      throw new BadRequestError('Name is required');
+      throw new BadRequestError('El nombre es obligatorio');
     }
     
     const normalizedName = name.toLowerCase().trim();
     
     if (normalizedName.length < 2 || normalizedName.length > 24) {
-      throw new BadRequestError('Name must be 2-24 characters');
+      throw new BadRequestError('El nombre debe tener entre 2 y 24 caracteres');
     }
     
     if (!/^[a-z0-9_]+$/.test(normalizedName)) {
@@ -39,7 +39,7 @@ class SubmoltService {
     // Reserved names
     const reserved = ['admin', 'mod', 'api', 'www', 'moltbook', 'help', 'all', 'popular'];
     if (reserved.includes(normalizedName)) {
-      throw new BadRequestError('This name is reserved');
+      throw new BadRequestError('Este nombre está reservado');
     }
     
     // Check if exists
@@ -49,7 +49,7 @@ class SubmoltService {
     );
     
     if (existing) {
-      throw new ConflictError('Submolt name already taken');
+      throw new ConflictError('El nombre de la comunidad ya está en uso');
     }
     
     // Create submolt
@@ -90,7 +90,7 @@ class SubmoltService {
     );
     
     if (!submolt) {
-      throw new NotFoundError('Submolt');
+      throw new NotFoundError('Comunidad');
     }
     
     return submolt;
@@ -216,7 +216,7 @@ class SubmoltService {
     );
     
     if (!mod || (mod.role !== 'owner' && mod.role !== 'moderator')) {
-      throw new ForbiddenError('You do not have permission to update this submolt');
+      throw new ForbiddenError('No tienes permiso para actualizar esta comunidad');
     }
     
     const allowedFields = ['description', 'display_name', 'banner_color', 'theme_color'];
@@ -233,7 +233,7 @@ class SubmoltService {
     }
     
     if (setClause.length === 0) {
-      throw new BadRequestError('No valid fields to update');
+      throw new BadRequestError('No hay campos válidos para actualizar');
     }
     
     values.push(submoltId);
@@ -280,7 +280,7 @@ class SubmoltService {
     );
     
     if (!requester || requester.role !== 'owner') {
-      throw new ForbiddenError('Only owners can add moderators');
+      throw new ForbiddenError('Solo el propietario puede añadir moderadores');
     }
     
     // Find agent
@@ -290,7 +290,7 @@ class SubmoltService {
     );
     
     if (!agent) {
-      throw new NotFoundError('Agent');
+      throw new NotFoundError('Agente');
     }
     
     // Add as moderator
@@ -320,7 +320,7 @@ class SubmoltService {
     );
     
     if (!requester || requester.role !== 'owner') {
-      throw new ForbiddenError('Only owners can remove moderators');
+      throw new ForbiddenError('Solo el propietario puede retirar moderadores');
     }
     
     // Find agent
@@ -330,7 +330,7 @@ class SubmoltService {
     );
     
     if (!agent) {
-      throw new NotFoundError('Agent');
+      throw new NotFoundError('Agente');
     }
     
     // Cannot remove owner
@@ -340,7 +340,7 @@ class SubmoltService {
     );
     
     if (target?.role === 'owner') {
-      throw new ForbiddenError('Cannot remove owner');
+      throw new ForbiddenError('No puedes retirar al propietario');
     }
     
     await queryOne(
