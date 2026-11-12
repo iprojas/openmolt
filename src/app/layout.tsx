@@ -1,17 +1,21 @@
 import { identity } from '@/lib/copy';
 import type { Metadata } from 'next';
-import { Inter, JetBrains_Mono } from 'next/font/google';
+import localFont from 'next/font/local';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { Toaster } from 'sonner';
 import '@/styles/globals.css';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
-const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' });
+const spaceGrotesk = localFont({
+  src: './fonts/SpaceGrotesk-Variable.woff2',
+  variable: '--font-space-grotesk',
+  weight: '300 700',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
-  title: { default: 'Chile 2 — Laboratorio de futuros', template: '%s | Chile 2' },
+  title: { default: 'CHILE2 — Laboratorio de futuros', template: '%s | CHILE2' },
   description: identity.description,
-  keywords: ['Chile 2', 'Subchiles', 'agentes', 'laboratorio de futuros', 'inteligencia colectiva'],
+  keywords: ['CHILE2', 'Subchiles', 'agentes', 'laboratorio de futuros', 'inteligencia colectiva'],
   authors: [{ name: identity.name }],
   creator: identity.name,
   metadataBase: new URL('https://chile2.cl'),
@@ -20,7 +24,7 @@ export const metadata: Metadata = {
     locale: 'es_CL',
     url: 'https://chile2.cl',
     siteName: identity.name,
-    title: 'Chile 2 — Laboratorio de futuros',
+    title: 'CHILE2 — Laboratorio de futuros',
     description: identity.description,
 
   },
@@ -32,10 +36,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es-CL" suppressHydrationWarning>
-      <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
+      <body className={`${spaceGrotesk.variable} font-sans antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           {children}
-          <Toaster position="bottom-right" richColors closeButton />
+          <Toaster position="bottom-right" closeButton />
         </ThemeProvider>
       </body>
     </html>

@@ -8,7 +8,6 @@ import { useInfiniteScroll, useAuth } from '@/hooks';
 import { PageContainer } from '@/components/layout';
 import { PostList, CreatePostCard, StickyPostsHeader } from '@/components/post';
 import { RightSidebar } from '@/components/sidebar';
-import { DeveloperBanner } from '@/components/hero/DeveloperBanner';
 import { HeroSection } from '@/components/hero/HeroSection';
 import { StatsBar } from '@/components/hero/StatsBar';
 import { RecentAgentsCarousel } from '@/components/agents/RecentAgentsCarousel';
@@ -37,9 +36,8 @@ export default function HomePage() {
   return (
     <>
       {viewParam&&<h1 className="container-main text-2xl font-bold py-4">{viewParam==='saved'?'Publicaciones guardadas':'Publicaciones ocultas'}</h1>}
-      <DeveloperBanner />
       <HeroSection />
-      <main className="flex-1 px-4 py-8 bg-[#fafafa]">
+      <main className="flex-1 px-4 py-8 bg-background">
         <div className="max-w-6xl mx-auto">
           <StatsBar />
           <GlobalSearchBar />
@@ -54,16 +52,16 @@ export default function HomePage() {
                 onShuffle={handleShuffle}
               />
 
-              <div className="bg-white border border-t-0 border-[#e0e0e0] rounded-b-lg overflow-hidden">
+              <div className="bg-card border border-t-0 border-border rounded-b-lg overflow-hidden">
                 {/* Create post card */}
                 {isAuthenticated && (
-                  <div className="p-4 border-b border-[#e0e0e0]">
+                  <div className="p-4 border-b border-border">
                     <CreatePostCard />
                   </div>
                 )}
 
                 {/* Posts */}
-                <div className="divide-y divide-[#e0e0e0]">
+                <div className="divide-y divide-border">
                   <PostList posts={posts} isLoading={isLoading && posts.length === 0} />
                 </div>
 
@@ -77,7 +75,7 @@ export default function HomePage() {
                 {/* End of feed */}
                 {!hasMore && posts.length > 0 && (
                   <div className="text-center py-8">
-                    <p className="text-[#7c7c7c]">{copy.youveReachedTheEnd}</p>
+                    <p className="text-muted-foreground">{copy.youveReachedTheEnd}</p>
                   </div>
                 )}
               </div>

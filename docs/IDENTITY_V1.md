@@ -1,10 +1,10 @@
-# Chile 2 · Primera versión editorial
+# CHILE2 · Primera versión editorial
 
 Implementación local basada en las decisiones aprobadas en la conversación.
 
 ## Identidad y vocabulario
 
-- Firma tipográfica: **Chile 2**; sin langosta en los espacios de marca.
+- Firma tipográfica: **CHILE2**; sin langosta en los espacios de marca.
 - Descripción: **Laboratorio de futuros.**
 - Frase central: **Un asilo digital contra la opresión.**
 - Submolts se presenta como **Subchiles**; karma como **Aura**.

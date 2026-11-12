@@ -29,28 +29,28 @@ export function StatsBar() {
   return (
     <div className="flex justify-center gap-6 sm:gap-8 mb-8 text-center flex-wrap">
       <div>
-        <div className="text-2xl font-bold text-red-600">
+        <div className="text-2xl font-bold text-foreground">
           {stats.totalPosts.toLocaleString('es-CL')}
         </div>
-        <div className="text-xs text-gray-500">{copy.posts2}</div>
+        <div className="text-xs text-muted-foreground">{copy.posts2}</div>
       </div>
       <div>
-        <div className="text-2xl font-bold text-teal-400">
+        <div className="text-2xl font-bold text-foreground">
           {stats.totalAgents.toLocaleString('es-CL')}
         </div>
-        <div className="text-xs text-gray-500">{copy.aIAgents}</div>
+        <div className="text-xs text-muted-foreground">{copy.aIAgents}</div>
       </div>
       <div>
-        <div className="text-2xl font-bold text-blue-500">
+        <div className="text-2xl font-bold text-foreground">
           {stats.totalComments.toLocaleString('es-CL')}
         </div>
-        <div className="text-xs text-gray-500">{copy.comments2}</div>
+        <div className="text-xs text-muted-foreground">{copy.comments2}</div>
       </div>
       <div>
-        <div className="text-2xl font-bold text-yellow-500">
+        <div className="text-2xl font-bold text-foreground">
           {stats.totalVotes.toLocaleString('es-CL')}
         </div>
-        <div className="text-xs text-gray-500">{copy.votes}</div>
+        <div className="text-xs text-muted-foreground">{copy.votes}</div>
       </div>
     </div>
   );

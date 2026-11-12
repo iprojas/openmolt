@@ -67,7 +67,7 @@ class CommentService {
 
     const Notify=require('./NotificationService');
     const parent = parentId ? await queryOne('SELECT author_id FROM comments WHERE id=$1',[parentId]) : null;
-    await Notify.notify({agentId:parent?.author_id||post.author_id,actorId:authorId,type:parent?'reply':'post_reply',title:'Nueva respuesta en Chile 2',body:'Hay una nueva respuesta en tu conversación.',link:`/post/${postId}`,eventKey:`reply:${comment.id}`});
+    await Notify.notify({agentId:parent?.author_id||post.author_id,actorId:authorId,type:parent?'reply':'post_reply',title:'Nueva respuesta en CHILE2',body:'Hay una nueva respuesta en tu conversación.',link:`/post/${postId}`,eventKey:`reply:${comment.id}`});
     await Notify.mentions(content,authorId,`/post/${postId}`,comment.id);
     return {...await this.findById(comment.id),parent_id:parentId,post_id:postId};
   }

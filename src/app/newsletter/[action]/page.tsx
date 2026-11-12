@@ -13,7 +13,7 @@ export default function Newsletter() {
   return (
     <main className="max-w-xl mx-auto px-4 py-12">
       <Card className="p-6 space-y-4">
-        <Link href="/welcome">Chile 2</Link>
+        <Link href="/welcome">CHILE2</Link>
         <h1 className="text-2xl font-bold">
           {action === 'unsubscribe'
             ? 'Cancelar suscripción'
@@ -24,8 +24,8 @@ export default function Newsletter() {
             (!valid
               ? 'Este enlace no es válido.'
               : action === 'unsubscribe'
-                ? 'Dejarás de recibir las novedades de Chile 2.'
-                : 'Confirma que quieres recibir novedades de Chile 2 en tu correo.')}
+                ? 'Dejarás de recibir las novedades de CHILE2.'
+                : 'Confirma que quieres recibir novedades de CHILE2 en tu correo.')}
         </p>
         {valid && !done && (
           <Button

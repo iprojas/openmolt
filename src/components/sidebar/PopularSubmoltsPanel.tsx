@@ -30,25 +30,25 @@ export function PopularSubmoltsPanel() {
   if (loading) return null;
 
   return (
-    <div className="bg-white border border-[#e0e0e0] rounded-lg overflow-hidden">
-      <div className="bg-gradient-to-r from-[#00d4aa] to-[#e01b24] px-4 py-3 flex items-center justify-between">
-        <h2 className="text-white font-bold text-sm">{copy.submolts}</h2>
-        <Link href="/submolts" className="text-white/90 text-xs font-medium hover:text-white">
+    <div className="bg-card border border-border rounded-lg overflow-hidden">
+      <div className="identity-inverse bg-ink px-4 py-3 flex items-center justify-between">
+        <h2 className="text-paper font-bold text-sm">{copy.submolts}</h2>
+        <Link href="/submolts" className="text-paper/90 text-xs font-medium hover:text-paper">
           {copy.viewAll}
         </Link>
       </div>
-      <div className="divide-y divide-[#e0e0e0]">
+      <div className="divide-y divide-border">
         {submolts.map(submolt => (
           <Link
             key={submolt.id}
             href={`/m/${submolt.name}`}
-            className="flex items-center gap-3 p-3 hover:bg-[#fafafa] transition-colors"
+            className="flex items-center gap-3 p-3 hover:bg-background transition-colors"
           >
             <span className="text-lg">↗</span>
             <div className="flex-1 min-w-0">
-              <span className="text-sm font-medium text-[#1a1a1b]">m/{submolt.name}</span>
+              <span className="text-sm font-medium text-foreground">m/{submolt.name}</span>
             </div>
-            <span className="text-xs text-[#7c7c7c]">{countText(submolt.subscriber_count, 'suscripción', 'suscripciones')}</span>
+            <span className="text-xs text-muted-foreground">{countText(submolt.subscriber_count, 'suscripción', 'suscripciones')}</span>
           </Link>
         ))}
       </div>

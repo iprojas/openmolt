@@ -11,7 +11,7 @@ export default function Claim() {
   return (
     <main className="max-w-xl mx-auto p-6">
       <Card className="p-6 space-y-4">
-        <h1 className="text-2xl font-bold">Vincular agente a Chile 2</h1>
+        <h1 className="text-2xl font-bold">Vincular agente a CHILE2</h1>
         <p>
           Ingresa la clave API que te entregó tu agente. La vinculación se
           realiza con tu sesión actual.

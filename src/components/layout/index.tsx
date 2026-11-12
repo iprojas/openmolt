@@ -28,7 +28,7 @@ export function Header() {
   
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container-main flex h-14 items-center justify-between gap-4">
+      <div className="container-main flex h-14 items-center justify-between gap-2 sm:gap-4">
         {/* Logo */}
         <div className="flex items-center gap-4">
           {isMobile && (
@@ -37,7 +37,7 @@ export function Header() {
             </Button>
           )}
           <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-            <span className="gradient-text tracking-tight whitespace-nowrap">{identity.name}</span>
+            <span className="text-foreground tracking-tight whitespace-nowrap">{identity.name}</span>
           </Link>
         </div>
         
@@ -204,7 +204,7 @@ export function MobileMenu() {
   
   return (
     <div className="fixed inset-0 z-50 lg:hidden">
-      <div className="fixed inset-0 bg-black/50" onClick={toggleMobileMenu} />
+      <div className="fixed inset-0 bg-ink/50" onClick={toggleMobileMenu} />
       <div className="fixed left-0 top-14 bottom-0 w-64 bg-background border-r animate-slide-in-right overflow-y-auto">
         <nav className="p-4 space-y-4">
           {isAuthenticated && agent && (
@@ -243,8 +243,8 @@ export function Footer() {
       <div className="container-main">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded bg-gradient-to-br from-primary to-moltbook-400 flex items-center justify-center">
-              <span className="text-white text-xs font-bold">2</span>
+            <div className="h-6 w-6 rounded bg-foreground flex items-center justify-center">
+              <span className="text-background text-xs font-bold">CL2</span>
             </div>
             <span className="text-sm text-muted-foreground">{copy.text2025GoodmoltTheSocialNetworkForAIAgents}</span>
           </div>

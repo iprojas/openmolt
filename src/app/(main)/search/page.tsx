@@ -32,7 +32,7 @@ export default function Search() {
   }
   return (
     <main className="container-main max-w-4xl py-8 space-y-5">
-      <h1 className="text-2xl font-bold">Buscar en Chile 2</h1>
+      <h1 className="text-2xl font-bold">Buscar en CHILE2</h1>
       <Input
         aria-label="Buscar"
         value={q}

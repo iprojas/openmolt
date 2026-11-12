@@ -1,74 +1,58 @@
 'use client';
 
 import { copy } from '@/lib/copy';
+import { Dices, Shuffle, Clock, Flame, MessageSquare, FileText } from 'lucide-react';
+
 interface StickyPostsHeaderProps {
   currentSort: string;
   onSortChange: (sort: string) => void;
   onShuffle?: () => void;
 }
 
+const sorts = [
+  { value: 'random', label: 'Al azar', icon: Dices },
+  { value: 'new', label: 'Recientes', icon: Clock },
+  { value: 'hot', label: 'Destacadas', icon: Flame },
+  { value: 'discussed', label: 'Más comentadas', icon: MessageSquare },
+];
+
 export function StickyPostsHeader({ currentSort, onSortChange, onShuffle }: StickyPostsHeaderProps) {
   return (
-    <div className="bg-[#1a1a1b] px-4 py-3 flex flex-wrap items-center justify-between gap-3 sticky top-[52px] z-40 rounded-t-lg border border-[#333] shadow-md">
-      <h2 className="text-white font-bold text-sm flex items-center gap-2">
-        <span className="relative">
-          📝
-          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-[#e01b24] rounded-full animate-ping"></span>
-          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-[#e01b24] rounded-full"></span>
-        </span>
+    <div className="identity-inverse bg-ink px-4 py-3 flex flex-wrap items-center justify-between gap-3 sticky top-[52px] z-40 rounded-t-lg border border-border">
+      <h2 className="text-paper font-bold text-sm flex items-center gap-2">
+        <FileText aria-hidden="true" className="h-4 w-4" />
         {copy.posts}
       </h2>
       <div className="flex flex-wrap items-center gap-2 min-w-0">
         {onShuffle && (
           <button
+            type="button"
+            aria-label={copy.shuffle}
+            title={copy.shuffle}
             onClick={onShuffle}
-            className="flex items-center gap-1.5 bg-[#2d2d2e] border border-[#00d4aa] text-[#00d4aa] hover:bg-[#00d4aa] hover:text-[#1a1a1b] text-xs font-bold px-3 py-1.5 rounded-lg transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-[#00d4aa]/20 active:scale-95"
+            className="inline-flex h-9 w-9 items-center justify-center border border-border rounded hover:bg-muted"
           >
-            <span className="text-sm">🎲</span>
-            {copy.shuffle}
+            <Shuffle aria-hidden="true" className="h-4 w-4" />
           </button>
         )}
-        <div className="flex flex-wrap items-center gap-1 bg-[#2d2d2e] rounded-lg p-0.5">
-          <button
-            onClick={() => onSortChange('random')}
-            className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
-              currentSort === 'random'
-                ? 'bg-gradient-to-r from-[#e01b24] to-[#ff6b35] text-white'
-                : 'text-[#888] hover:text-white'
-            }`}
-          >
-            {copy.random}
-          </button>
-          <button
-            onClick={() => onSortChange('new')}
-            className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
-              currentSort === 'new'
-                ? 'bg-gradient-to-r from-[#e01b24] to-[#ff6b35] text-white'
-                : 'text-[#888] hover:text-white'
-            }`}
-          >
-            {copy.new2}
-          </button>
-          <button
-            onClick={() => onSortChange('hot')}
-            className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
-              currentSort === 'hot'
-                ? 'bg-gradient-to-r from-[#e01b24] to-[#ff6b35] text-white'
-                : 'text-[#888] hover:text-white'
-            }`}
-          >
-            {copy.top2}
-          </button>
-          <button
-            onClick={() => onSortChange('discussed')}
-            className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
-              currentSort === 'discussed'
-                ? 'bg-gradient-to-r from-[#e01b24] to-[#ff6b35] text-white'
-                : 'text-[#888] hover:text-white'
-            }`}
-          >
-            {copy.discussed}
-          </button>
+        <div className="flex flex-wrap items-center gap-1 bg-muted rounded p-0.5">
+          {sorts.map(({ value, label, icon: Icon }) => (
+            <button
+              key={value}
+              type="button"
+              aria-label={label}
+              title={label}
+              aria-pressed={currentSort === value}
+              onClick={() => onSortChange(value)}
+              className={`inline-flex h-9 w-9 items-center justify-center rounded ${
+                currentSort === value
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-paper'
+              }`}
+            >
+              <Icon aria-hidden="true" className="h-4 w-4" />
+            </button>
+          ))}
         </div>
       </div>
     </div>

@@ -16,7 +16,7 @@ import {
   DialogTitle,
   Textarea,
 } from '@/components/ui';
-import { Bell } from 'lucide-react';
+import { Bell, Share2, Bookmark, Eye, EyeOff, Flag } from 'lucide-react';
 import type { Post } from '@/types';
 
 export function ReportButton({
@@ -33,9 +33,11 @@ export function ReportButton({
     <>
       <button
         onClick={() => setOpen(true)}
-        className="px-2 py-1 text-sm text-destructive hover:underline"
+        aria-label="Reportar"
+        title="Reportar"
+        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
       >
-        Reportar
+        <Flag aria-hidden="true" className="h-4 w-4" />
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
@@ -114,9 +116,11 @@ export function PostActions({ post }: { post: Post }) {
     }
   }
   return (
-    <div className="flex flex-wrap items-center gap-2 text-sm">
+    <div className="flex flex-wrap items-center gap-1 text-muted-foreground">
       <button
-        className="px-2 py-1 hover:underline"
+        aria-label="Compartir"
+        title="Compartir"
+        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded hover:bg-muted hover:text-foreground disabled:opacity-50"
         onClick={async () => {
           try {
             const url = `${window.location.origin}/post/${post.id}`;
@@ -134,23 +138,28 @@ export function PostActions({ post }: { post: Post }) {
           }
         }}
       >
-        Compartir
+        <Share2 aria-hidden="true" className="h-4 w-4" />
       </button>
       {isAuthenticated && (
         <>
           <button
             disabled={busy}
+            aria-label={saved ? 'Quitar de guardados' : 'Guardar'}
+            title={saved ? 'Quitar de guardados' : 'Guardar'}
+            aria-pressed={saved}
             onClick={() => change('save')}
-            className="px-2 py-1 hover:underline"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded hover:bg-muted hover:text-foreground disabled:opacity-50"
           >
-            {saved ? 'Quitar de guardados' : 'Guardar'}
+            <Bookmark aria-hidden="true" className={`h-4 w-4 ${saved ? 'fill-current' : ''}`} />
           </button>
           <button
             disabled={busy}
+            aria-label={post.isHidden ? 'Volver a mostrar' : 'Ocultar'}
+            title={post.isHidden ? 'Volver a mostrar' : 'Ocultar'}
             onClick={() => change('hide')}
-            className="px-2 py-1 hover:underline"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded hover:bg-muted hover:text-foreground disabled:opacity-50"
           >
-            {post.isHidden ? 'Volver a mostrar' : 'Ocultar'}
+            {post.isHidden ? <Eye aria-hidden="true" className="h-4 w-4" /> : <EyeOff aria-hidden="true" className="h-4 w-4" />}
           </button>
           <ReportButton postId={post.id} />
         </>
@@ -177,7 +186,7 @@ export function NotificationBell() {
       >
         <Bell className="h-5 w-5" />
         {data?.unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-destructive text-white text-xs rounded-full px-1">
+          <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full px-1">
             {data.unreadCount}
           </span>
         )}

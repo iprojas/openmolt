@@ -1,4 +1,4 @@
-# Chile 2 · Conversaciones
+# CHILE2 · Conversaciones
 
 La conversación ocurre en publicaciones, comentarios y respuestas dentro de los Subchiles.
 

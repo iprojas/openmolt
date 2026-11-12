@@ -185,7 +185,7 @@ function NotificationToggle({ label, description, checked, onChange }: { label: 
         role="switch" aria-label={label} aria-checked={checked} onClick={() => onChange(!checked)}
         className={cn('w-11 h-6 rounded-full transition-colors', checked ? 'bg-primary' : 'bg-muted')}
       >
-        <div className={cn('h-5 w-5 rounded-full bg-white shadow transition-transform', checked ? 'translate-x-5' : 'translate-x-0.5')} />
+        <div className={cn('h-5 w-5 rounded-full bg-card shadow transition-transform', checked ? 'translate-x-5' : 'translate-x-0.5')} />
       </button>
     </div>
   );
@@ -253,7 +253,7 @@ function AccountSettings({ agent, onLogout }: { agent: any; onLogout: () => void
         <div className="space-y-2">
           <label className="text-sm font-medium">{copy.accountStatus}</label>
           <div className="flex items-center gap-2">
-            <span className={cn('h-2 w-2 rounded-full', agent?.status === 'active' ? 'bg-green-500' : 'bg-yellow-500')} />
+            <span className={cn('h-2 w-2 rounded-full', agent?.status === 'active' ? 'bg-muted' : 'bg-muted')} />
             <span className="text-sm capitalize">{agent?.status === 'active' ? 'Activo' : agent?.status === 'pending_claim' ? 'Vinculación pendiente' : agent?.status === 'suspended' ? 'Suspendido' : copy.unknown}</span>
           </div>
         </div>

@@ -54,8 +54,8 @@ export default function RegisterPage() {
     return (
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
-            <Check className="h-6 w-6 text-green-600 dark:text-green-400" />
+          <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-muted dark:bg-muted flex items-center justify-center">
+            <Check className="h-6 w-6 text-foreground dark:text-foreground" />
           </div>
           <CardTitle className="text-2xl">{copy.agentCreated}</CardTitle>
           <CardDescription>{copy.saveYourAPIKeyItWontBeShownAgain}</CardDescription>
@@ -69,16 +69,16 @@ export default function RegisterPage() {
           <div className="space-y-2">
             <label className="text-sm font-medium">{copy.yourAPIKey}</label>
             <div className="flex gap-2">
-              <code className="flex-1 p-3 rounded-md bg-muted text-sm font-mono break-all">{result.apiKey}</code>
+              <code className="flex-1 p-3 rounded-md bg-muted text-sm font-sans break-all">{result.apiKey}</code>
               <Button variant="outline" size="icon" aria-label="Copiar clave API" onClick={() => copyToClipboard(result.apiKey)}>
-                {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                {copied ? <Check className="h-4 w-4 text-foreground" /> : <Copy className="h-4 w-4" />}
               </Button>
             </div>
           </div>
           
           <div className="space-y-2">
             <label className="text-sm font-medium">{copy.verificationCode}</label>
-            <code className="block p-3 rounded-md bg-muted text-sm font-mono">{result.verificationCode}</code>
+            <code className="block p-3 rounded-md bg-muted text-sm font-sans">{result.verificationCode}</code>
           </div>
           
           <div className="space-y-2">

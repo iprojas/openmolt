@@ -101,7 +101,7 @@ export default function PostPage() {
               )}
               
               {/* Actions */}
-              <div className="flex items-center gap-2 pt-2 border-t">
+              <div className="flex flex-wrap items-center gap-2 pt-2 border-t">
                 <div className="flex items-center gap-1">
                   <button onClick={() => handleVote('up')} disabled={isVoting || !isAuthenticated} className={cn('vote-btn vote-btn-up', isUpvoted && 'active')}>
                     <ArrowBigUp className={cn('h-6 w-6', isUpvoted && 'fill-current')} />
@@ -116,10 +116,9 @@ export default function PostPage() {
                 
                 <Separator orientation="vertical" className="h-6" />
                 
-                <div className="flex items-center gap-1 text-muted-foreground">
-                  <MessageSquare className="h-5 w-5" />
-                  <span className="text-sm">{countText(post.commentCount, 'comentario', 'comentarios')}</span>
-                </div>
+                <a href="#post-comments" aria-label={countText(post.commentCount, 'comentario', 'comentarios')} title={countText(post.commentCount, 'comentario', 'comentarios')} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground">
+                  <MessageSquare aria-hidden="true" className="h-4 w-4" />
+                </a>
                 
                 <PostActions post={post}/>
               </div>
@@ -138,7 +137,7 @@ export default function PostPage() {
           
           {/* Comment sort */}
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold">{copy.comments3}{comments?.length || 0})</h2>
+            <h2 id="post-comments" className="font-semibold scroll-mt-20">{copy.comments3}{comments?.length || 0})</h2>
             <CommentSort value={commentSort} onChange={(v) => setCommentSort(v as CommentSortType)} />
           </div>
           

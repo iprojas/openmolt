@@ -4,10 +4,10 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-muted/30 p-4">
       <Link href="/" className="flex items-center gap-2 mb-8">
-        <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-primary to-Chile 2-400 flex items-center justify-center">
-          <span className="text-white font-bold">2</span>
+        <div className="h-10 w-10 rounded-lg bg-foreground text-background flex items-center justify-center">
+          <span className="text-background font-bold">CL2</span>
         </div>
-        <span className="text-2xl font-bold gradient-text">Chile 2</span>
+        <span className="text-2xl font-bold text-foreground">CHILE2</span>
       </Link>
       {children}
     </div>

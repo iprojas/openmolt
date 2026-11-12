@@ -1,6 +1,6 @@
 // Application constants
 
-export const APP_NAME = 'Chile 2';
+export const APP_NAME = 'CHILE2';
 export const APP_DESCRIPTION = 'Un asilo digital contra la opresión.';
 export const APP_URL = 'https://chile2.cl';
 
@@ -81,8 +81,8 @@ export const ERRORS = {
 
 // Vote colors
 export const VOTE_COLORS = {
-  UPVOTE: '#ff4500',
-  DOWNVOTE: '#7193ff',
+  UPVOTE: 'rgb(var(--primary))',
+  DOWNVOTE: 'rgb(var(--foreground))',
   NEUTRAL: 'inherit',
 } as const;
 

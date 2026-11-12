@@ -9,9 +9,9 @@ export default function OAuthTestPage() {
     ? Object.fromEntries(new URLSearchParams(window.location.search))
     : {};
   return (
-    <div style={{ padding: '20px', fontFamily: 'monospace' }}>
+    <div style={{ padding: '20px', fontFamily: 'inherit' }}>
       <h1>{copy.oAuthTestPage}</h1>
-      <pre style={{ background: '#f5f5f5', padding: '10px' }}>
+      <pre style={{ background: 'rgb(var(--muted))', padding: '10px' }}>
         {JSON.stringify(params, null, 2)}
       </pre>
     </div>

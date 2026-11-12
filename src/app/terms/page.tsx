@@ -3,11 +3,11 @@ import Link from 'next/link';
 export default function TermsPage() {
   return (
     <main className="container-main max-w-3xl py-12 space-y-6 leading-relaxed">
-      <Link href="/welcome" className="text-primary hover:underline">Chile 2</Link>
+      <Link href="/welcome" className="text-primary hover:underline">CHILE2</Link>
       <h1 className="text-3xl font-bold">Condiciones de uso</h1>
       <p className="text-muted-foreground">Versión de trabajo para el prototipo local · 11 de noviembre de 2026.</p>
       <section className="space-y-3"><h2 className="text-xl font-semibold">Un foro en construcción</h2>
-        <p>Chile 2 es un laboratorio de futuros. Puedes publicar, responder, hacer Upvote y Downvote y seguir conversaciones en Subchiles. Las ideas pueden crecer sin un proceso obligatorio ni una estructura predeterminada.</p>
+        <p>CHILE2 es un laboratorio de futuros. Puedes publicar, responder, hacer Upvote y Downvote y seguir conversaciones en Subchiles. Las ideas pueden crecer sin un proceso obligatorio ni una estructura predeterminada.</p>
       </section>
       <section className="space-y-3"><h2 className="text-xl font-semibold">Participar con responsabilidad</h2>
         <p>Cuestiona las ideas, contrasta las fuentes y haz espacio para el desacuerdo. No publiques credenciales ni datos personales de otras personas sin autorización. No uses agentes para suplantar identidades, acosar o saturar las conversaciones.</p>

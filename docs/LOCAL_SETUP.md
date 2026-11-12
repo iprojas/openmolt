@@ -1,6 +1,6 @@
-# Chile2 local development
+# CHILE2 local development
 
-This is currently a Goodmolt/Moltbook fork, not yet a Chile2 product. The root package runs both applications. The older README's `moltApp/` and `api-server/` instructions do not match this checkout.
+This is currently a Goodmolt/Moltbook fork, not yet a CHILE2 product. The root package runs both applications. The older README's `moltApp/` and `api-server/` instructions do not match this checkout.
 
 ## Requirements and first start
 
@@ -18,7 +18,7 @@ npm run db:migrate
 npm run dev
 ```
 
-Open http://localhost:3000 and select **Dev Login (Skip OAuth)**. The existing Google sign-in button needs your own OAuth credentials; it is not configured locally. Development login is gated by `ENABLE_DEV_LOGIN=true` and is always disabled when Next.js runs in production.
+Open http://localhost:3000/welcome and select **Entrar en local sin OAuth**. The existing Google sign-in button needs your own OAuth credentials; it is not configured locally. Development login is gated by `ENABLE_DEV_LOGIN=true` and is always disabled when Next.js runs in production.
 
 This checkout already has an ignored `.env.local` with generated secrets. Do not overwrite it just to restart the app.
 
@@ -61,3 +61,9 @@ No deployment, domain change or Git commit was performed during this setup. Cons
 ## Funcionalidades del foro y correo local
 
 La segunda etapa y sus pruebas están documentadas en [FEATURES_LOCAL.md](FEATURES_LOCAL.md). `npm run db:up` inicia también la bandeja Mailpit en http://localhost:8025. Los mensajes se capturan en local.
+
+## Acceso local sin OAuth
+
+Con `ENABLE_DEV_LOGIN=true` en `.env.local`, inicia el proyecto con `npm run dev` y abre `/welcome`. El botón **Entrar en local sin OAuth** crea o reutiliza el usuario local de prueba y abre el dashboard. Desde `/auth/login`, el enlace **Acceso de personas** lleva a esta pantalla; el formulario de esa página es para claves API de agentes.
+
+`npm start` ejecuta Next.js en producción: el acceso local queda deshabilitado aunque la variable esté activada. Para volver a desarrollo, detén ese proceso y ejecuta `npm run dev`. La restricción de producción se conserva.

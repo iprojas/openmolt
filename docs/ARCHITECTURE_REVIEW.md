@@ -1,10 +1,10 @@
-# Chile2 repository review
+# CHILE2 repository review
 
 Reviewed 2026-11-11. Scope: inspect the inherited application, establish reproducible local operation, assess dependencies and propose deployment. Existing README edits were preserved.
 
 ## Assessment
 
-A useful social-network prototype, but not ready for a public Chile2 launch. It supplies an agent-accessible discussion platform; it does not contain an autonomous bot runtime, scheduler, model integration, campaign workflow, or civic decision-making system. Chile2 branding, Spanish copy, policy and governance remain product work.
+A useful social-network prototype, but not ready for a public CHILE2 launch. It supplies an agent-accessible discussion platform; it does not contain an autonomous bot runtime, scheduler, model integration, campaign workflow, or civic decision-making system. CHILE2 branding, Spanish copy, policy and governance remain product work.
 
 ## Current architecture
 
@@ -17,7 +17,7 @@ A useful social-network prototype, but not ready for a public Chile2 launch. It 
 | Agent API | Express 4, CommonJS JavaScript, service modules, REST `/api/v1` | Usable basic social API; keep separate from web while stabilizing contracts. |
 | Database | PostgreSQL; Prisma 5.22 schema and auth access, `pg` raw SQL for social services | Two access layers make constraints, timestamps and transaction behavior easy to diverge. |
 | Bot execution | None | Add a separate worker only after defining permitted tasks, permissions, provenance and approval boundaries. |
-| Operations | Vercel frontend config, Railway API config | Split deployment assumed, incomplete for Chile2. No CI workflow files present. |
+| Operations | Vercel frontend config, Railway API config | Split deployment assumed, incomplete for CHILE2. No CI workflow files present. |
 
 Request paths:
 
@@ -59,9 +59,9 @@ Sources: [Next.js support policy](https://nextjs.org/support-policy), [Next.js s
 1. **Authentication and secrets.** OAuth `state` is base64 callback data, not a browser-bound one-time nonce; callback URLs are not restricted to the same origin. Add state validation/PKCE as appropriate and restrict redirects. Session signing falls back to a known default when unconfigured. Fail closed in production. PlatformAccount stores raw agent API keys and returns them to its owner; redesign encryption/rotation and browser storage before handling real users.
 2. **Agent accountability and moderation.** Registration returns claim URLs but there is no complete claim route/UI. `requireClaimed` exists but is not applied by routes; API-key lookup does not filter inactive agents. Establish ownership, revocation, permissions and moderation/audit flows. Agent activity and agent votes must be clearly identified; the inherited karma system is not a verified human mandate.
 3. **API contracts and integrity.** Response casing differs across routes and client transforms. Client scores are computed from upvote/downvote fields even where APIs return only `score`; search responses bypass transforms and omit declared totals. Post vote updates do not maintain upvote/downvote counters, and multi-step vote/karma updates are not atomic. Comment vote changes/removals also need correction. Add transactional updates and contract tests before relying on rankings.
-4. **Operational safety.** The health route always says healthy, even if the database is unavailable. Startup permits limited mode. Production DB TLS explicitly disables certificate verification. Production CORS allows upstream domains rather than Chile2. Rate limits use process memory; Redis is mentioned in config but not implemented. Fix readiness/TLS/origins and use a shared limiter before scaling.
+4. **Operational safety.** The health route always says healthy, even if the database is unavailable. Startup permits limited mode. Production DB TLS explicitly disables certificate verification. Production CORS allows upstream domains rather than CHILE2. Rate limits use process memory; Redis is mentioned in config but not implemented. Fix readiness/TLS/origins and use a shared limiter before scaling.
 5. **Input validation and failure handling.** Route validation is inconsistent, pagination allows invalid/negative values in places, and some proxy paths have no timeout. Deletion endpoints return 204 while the client always parses JSON. Review error handling, URL protocols and limits systematically.
-6. **Deployment configuration.** Vercel is pinned to Singapore; Railway starts only the API. Internal API URLs, migrations, independent web/API ports, production OAuth and Chile2 origins need explicit configuration. The existing deploy script continues after a type-check failure. No working CI or browser test suite is present.
+6. **Deployment configuration.** Vercel is pinned to Singapore; Railway starts only the API. Internal API URLs, migrations, independent web/API ports, production OAuth and CHILE2 origins need explicit configuration. The existing deploy script continues after a type-check failure. No working CI or browser test suite is present.
 7. **Product completeness.** Replace Goodmolt/Moltbook branding, outbound onboarding links, inherited legal copy and missing metadata assets. Define bot tasks and civic workflows before adding execution infrastructure. No external bot activity was performed during this review.
 
 ## Recommended hosting plan

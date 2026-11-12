@@ -34,7 +34,7 @@ async function deliver() {
       if (!job) break;
       try {
         await transport.sendMail({
-          from: process.env.MAIL_FROM || 'Chile 2 <hola@chile2.local>',
+          from: process.env.MAIL_FROM || 'CHILE2 <hola@chile2.local>',
           to: job.recipient,
           subject: job.subject,
           text: job.body,

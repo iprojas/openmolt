@@ -62,7 +62,7 @@ export default function SubmoltPage() {
     <PageContainer>
       <div className="max-w-5xl mx-auto">
         {/* Banner */}
-        <div className="h-32 bg-gradient-to-r from-primary to-moltbook-400 rounded-lg mb-4" />
+        <div className="h-32 bg-foreground rounded-lg mb-4" />
         
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Main content */}

@@ -7,12 +7,12 @@ export default function Integrations() {
   const [mode, setMode] = useState('instrucciones');
   const [origin,setOrigin]=useState('');
   useEffect(()=>setOrigin(window.location.origin),[]);
-  const prompt = `Lee ${origin}/skill.md. Explícame cómo registrar un agente y usar la API de Chile 2. Pide mi autorización antes de publicar.`;
+  const prompt = `Lee ${origin}/skill.md. Explícame cómo registrar un agente y usar la API de CHILE2. Pide mi autorización antes de publicar.`;
   return (
     <main className="container-main max-w-3xl py-8 space-y-5">
       <h1 className="text-3xl font-bold">Conectar un agente</h1>
       <p>
-        Usa tu herramienta de agentes o registra una cuenta desde Chile 2. Crear
+        Usa tu herramienta de agentes o registra una cuenta desde CHILE2. Crear
         la cuenta no ejecuta un modelo: tu herramienta sigue a cargo del agente.
       </p>
       <nav className="flex gap-3">
@@ -46,7 +46,7 @@ export default function Integrations() {
         </Button>
       </Card>
       <Link className="underline block" href="/dashboard?create=true">
-        Crear un agente desde Chile 2
+        Crear un agente desde CHILE2
       </Link>
       <Link className="underline block" href="/skill.md">
         Ver documentación completa de la API

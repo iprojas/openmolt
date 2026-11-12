@@ -109,7 +109,7 @@ export function ApiKeyDisplay({ apiKey, onReveal }: { apiKey?: string; onReveal?
   
   return (
     <div className="flex items-center gap-2">
-      <code className="flex-1 p-2 rounded bg-muted text-sm font-mono">{revealed ? apiKey : maskedKey}</code>
+      <code className="flex-1 p-2 rounded bg-muted text-sm font-sans">{revealed ? apiKey : maskedKey}</code>
       <Button variant="outline" size="sm" onClick={() => setRevealed(!revealed)}>
         {revealed ? copy.hide : copy.reveal}
       </Button>

@@ -8,7 +8,7 @@ import { formatDateTime, cn, formatScore, formatRelativeTime, extractDomain, tru
 import { usePostVote, useAuth } from '@/hooks';
 import { useUIStore } from '@/store';
 import { Button, Avatar, AvatarImage, AvatarFallback, Card, Skeleton, Badge } from '@/components/ui';
-import { ArrowBigUp, ArrowBigDown, MessageSquare, Share2, Bookmark, MoreHorizontal, ExternalLink, Flag, Eye, EyeOff, Trash2 } from 'lucide-react';
+import { ArrowBigUp, ArrowBigDown, MessageSquare, Share2, Bookmark, MoreHorizontal, ExternalLink, Flag, Eye, EyeOff, Trash2, Flame, Clock, TrendingUp, Zap } from 'lucide-react';
 import type { Post, VoteDirection } from '@/types';
 
 interface PostCardProps {
@@ -114,10 +114,9 @@ export function PostCard({ post, isCompact = false, showSubmolt = true, onVote }
           )}
           
           {/* Actions */}
-          <div className="flex items-center gap-1 mt-3">
-            <Link href={getPostUrl(post.id, post.submolt)} className="flex items-center gap-1.5 px-2 py-1 text-sm text-muted-foreground hover:bg-muted rounded transition-colors">
-              <MessageSquare className="h-4 w-4" />
-              <span>{countText(post.commentCount, 'comentario', 'comentarios')}</span>
+          <div className="flex flex-wrap items-center gap-1 mt-3">
+            <Link href={getPostUrl(post.id, post.submolt)} aria-label={countText(post.commentCount, 'comentario', 'comentarios')} title={countText(post.commentCount, 'comentario', 'comentarios')} className="inline-flex h-9 w-9 shrink-0 items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground rounded">
+              <MessageSquare aria-hidden="true" className="h-4 w-4" />
             </Link>
             
             <PostActions post={post} />
@@ -190,10 +189,10 @@ export function PostCardSkeleton() {
 // Feed Sort Tabs
 export function FeedSortTabs({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   const tabs = [
-    { value: 'hot', label: copy.hot, icon: '🔥' },
-    { value: 'new', label: copy.new, icon: '✨' },
-    { value: 'top', label: copy.top, icon: '📈' },
-    { value: 'rising', label: copy.rising, icon: '🚀' },
+    { value: 'hot', label: copy.hot, icon: Flame },
+    { value: 'new', label: copy.new, icon: Clock },
+    { value: 'top', label: copy.top, icon: TrendingUp },
+    { value: 'rising', label: copy.rising, icon: Zap },
   ];
   
   return (
@@ -201,14 +200,16 @@ export function FeedSortTabs({ value, onChange }: { value: string; onChange: (va
       {tabs.map(tab => (
         <button
           key={tab.value}
+          aria-label={tab.label}
+          title={tab.label}
+          aria-pressed={value === tab.value}
           onClick={() => onChange(tab.value)}
           className={cn(
-            'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+            'inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors',
             value === tab.value ? 'bg-background shadow text-foreground' : 'text-muted-foreground hover:text-foreground'
           )}
         >
-          <span>{tab.icon}</span>
-          <span>{tab.label}</span>
+          <tab.icon aria-hidden="true" className="h-4 w-4" />
         </button>
       ))}
     </div>
@@ -231,7 +232,7 @@ export function CreatePostCard({ submolt }: { submolt?: string }) {
         </Avatar>
         <button
           onClick={openCreatePost}
-          className="flex-1 px-4 py-2 text-left text-muted-foreground bg-muted hover:bg-muted/80 transition-colors rounded-md border border-[#e0e0e0]"
+          className="flex-1 px-4 py-2 text-left text-muted-foreground bg-muted hover:bg-muted/80 transition-colors rounded-md border border-border"
         >
           {copy.createAPost2}
         </button>

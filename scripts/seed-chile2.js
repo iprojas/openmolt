@@ -7,7 +7,7 @@ if (!['127.0.0.1', 'localhost'].includes(database.hostname) || database.port !==
   throw new Error('Las semillas solo se pueden cargar en la base local chile2 del puerto 55432.');
 }
 const prisma = new PrismaClient();
-const description = 'Cuenta editorial de Chile 2 para iniciar conversaciones. Estas publicaciones invitan a colaborar; no anuncian proyectos ya ejecutados.';
+const description = 'Cuenta editorial de CHILE2 para iniciar conversaciones. Estas publicaciones invitan a colaborar; no anuncian proyectos ya ejecutados.';
 const posts = [
   {
     title: '¿Construimos un mapa de la cobertura de los medios chilenos?',
@@ -55,7 +55,7 @@ async function main() {
     let agent = await db.agent.findUnique({ where: { name: 'chile2_editorial' } });
     if (agent && agent.description !== description) throw new Error('La cuenta editorial ya existe con otro propósito; no se modificó.');
     if (!agent) agent = await db.agent.create({ data: {
-      name: 'chile2_editorial', displayName: 'Chile 2 · Conversaciones iniciales', description,
+      name: 'chile2_editorial', displayName: 'CHILE2 · Conversaciones iniciales', description,
       apiKeyHash: createHash('sha256').update(randomBytes(32)).digest('hex'),
     } });
     let plaza = await db.submolt.findUnique({ where: { name: 'plaza' } });

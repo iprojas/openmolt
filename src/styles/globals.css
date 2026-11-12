@@ -3,55 +3,49 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 239 84% 67%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 239 84% 67%;
+  :root, .dark, .identity-inverse {
+    /* República experimental. RGB channels retain Tailwind opacity utilities. */
+    --color-ink: 21 21 21; /* #151515 */
+    --color-paper: 233 232 226; /* #E9E8E2 */
+    --color-red: 232 63 50; /* #E83F32 */
+    --color-blue: 35 71 200; /* #2347C8 */
+    --background: var(--color-paper);
+    --foreground: var(--color-ink);
+    --card: var(--background);
+    --card-foreground: var(--foreground);
+    --popover: var(--background);
+    --popover-foreground: var(--foreground);
+    --primary: var(--color-blue);
+    --primary-foreground: var(--color-paper);
+    --secondary: 218 217 211;
+    --secondary-foreground: var(--foreground);
+    --muted: var(--secondary);
+    --muted-foreground: 94 93 89;
+    --accent: var(--secondary);
+    --accent-foreground: var(--foreground);
+    --destructive: var(--foreground);
+    --destructive-foreground: var(--background);
+    --border: 120 119 114;
+    --input: var(--border);
+    --ring: var(--primary);
     --radius: 0.5rem;
   }
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 239 84% 67%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 239 84% 67%;
+  .dark, .identity-inverse {
+    --background: var(--color-ink);
+    --foreground: var(--color-paper);
+    --primary: var(--color-paper);
+    --primary-foreground: var(--color-ink);
+    --secondary: 45 45 43;
+    --muted-foreground: 174 173 167;
+    --border: 100 99 95;
   }
 }
 
 @layer base {
   * { @apply border-border; }
-  body { @apply bg-background text-foreground; }
+  body { @apply bg-background text-foreground font-sans; }
+  button, input, textarea, select, code, pre, kbd, samp { font-family: inherit; }
   html { scroll-behavior: smooth; }
 }
 
@@ -76,11 +70,7 @@
     animation: float 3s ease-in-out infinite;
   }
 
-  .animate-shimmer {
-    background: linear-gradient(90deg, transparent, rgba(20, 184, 166, 0.5), transparent);
-    background-size: 2000px 100%;
-    animation: shimmer 3s infinite;
-  }
+  .animate-shimmer { @apply bg-border; }
 
   .animate-fadeIn {
     animation: fadeIn 0.5s ease-out;
@@ -142,24 +132,48 @@
   .text-balance { text-wrap: balance; }
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
-  .gradient-text { @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-moltbook-400; }
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: hsl(var(--muted-foreground) / 0.3); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.5); }
+::-webkit-scrollbar-thumb { background: rgb(var(--muted-foreground) / 0.3); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgb(var(--muted-foreground) / 0.5); }
 
 /* Selection */
-::selection { background: hsl(var(--primary) / 0.2); }
+::selection { background: rgb(var(--primary) / 0.2); }
 
 /* Focus visible */
-:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
+:focus-visible { outline: 2px solid rgb(var(--ring)); outline-offset: 2px; }
 
 /* Markdown content */
-.prose-moltbook { @apply prose prose-slate dark:prose-invert max-w-none; }
+.prose-moltbook { @apply prose max-w-none; }
 .prose-moltbook a { @apply text-primary hover:underline; }
 .prose-moltbook code { @apply bg-muted px-1 py-0.5 rounded text-sm; }
 .prose-moltbook pre { @apply bg-muted p-4 rounded-lg overflow-x-auto; }
 .prose-moltbook blockquote { @apply border-l-4 border-primary pl-4 italic; }
+
+/* Keep editorial content and notifications within the same theme and family. */
+.prose-moltbook {
+  --tw-prose-body: rgb(var(--foreground));
+  --tw-prose-headings: rgb(var(--foreground));
+  --tw-prose-lead: rgb(var(--muted-foreground));
+  --tw-prose-bold: rgb(var(--foreground));
+  --tw-prose-counters: rgb(var(--muted-foreground));
+  --tw-prose-bullets: rgb(var(--muted-foreground));
+  --tw-prose-hr: rgb(var(--border));
+  --tw-prose-quotes: rgb(var(--foreground));
+  --tw-prose-quote-borders: rgb(var(--border));
+  --tw-prose-captions: rgb(var(--muted-foreground));
+  --tw-prose-code: rgb(var(--foreground));
+  --tw-prose-pre-code: rgb(var(--foreground));
+  --tw-prose-pre-bg: rgb(var(--muted));
+  --tw-prose-th-borders: rgb(var(--border));
+  --tw-prose-td-borders: rgb(var(--border));
+}
+[data-sonner-toaster] {
+  font-family: var(--font-space-grotesk), sans-serif !important;
+  --normal-bg: rgb(var(--card));
+  --normal-text: rgb(var(--card-foreground));
+  --normal-border: rgb(var(--border));
+}

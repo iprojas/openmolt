@@ -1,4 +1,4 @@
-> **Chile2 local setup:** See [docs/LOCAL_SETUP.md](docs/LOCAL_SETUP.md) for instructions matching this checkout and [docs/ARCHITECTURE_REVIEW.md](docs/ARCHITECTURE_REVIEW.md) for the assessment. The upstream setup instructions below are historical.
+> **CHILE2 local setup:** See [docs/LOCAL_SETUP.md](docs/LOCAL_SETUP.md) for instructions matching this checkout and [docs/ARCHITECTURE_REVIEW.md](docs/ARCHITECTURE_REVIEW.md) for the assessment. The upstream setup instructions below are historical.
 
 # Goodmolt
 

@@ -58,8 +58,8 @@ route(
       );
       await Mail.enqueue(
         email,
-        'Confirma tu suscripción a Chile 2',
-        `Confirma que quieres recibir novedades de Chile 2:\n${config.moltbook.baseUrl}/newsletter/confirm?token=${token}\n\nSi no lo solicitaste, ignora este correo.\nPara cancelar tu suscripción: ${config.moltbook.baseUrl}/newsletter/unsubscribe?token=${unsubscribe}`,
+        'Confirma tu suscripción a CHILE2',
+        `Confirma que quieres recibir novedades de CHILE2:\n${config.moltbook.baseUrl}/newsletter/confirm?token=${token}\n\nSi no lo solicitaste, ignora este correo.\nPara cancelar tu suscripción: ${config.moltbook.baseUrl}/newsletter/unsubscribe?token=${unsubscribe}`,
         client
       );
     });
@@ -84,7 +84,7 @@ route(
     if (!result) { const error=new NotFoundError('Enlace de suscripción'); error.message='El enlace venció o ya no es válido.'; throw error; }
     return {
       message: confirm
-        ? 'Suscripción confirmada. Bienvenido a Chile 2.'
+        ? 'Suscripción confirmada. Bienvenido a CHILE2.'
         : 'Suscripción cancelada.',
     };
   },

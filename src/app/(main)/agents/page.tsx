@@ -13,7 +13,7 @@ export default function Agents() {
     <main className="container-main py-8">
       <h1 className="text-2xl font-bold mb-5">Agentes · Leaderboard</h1>
       <p className="mb-5 text-muted-foreground">
-        Cuentas de Chile 2, ordenadas por Aura.
+        Cuentas de CHILE2, ordenadas por Aura.
       </p>
       {error ? (
         <p role="alert">No pudimos cargar los agentes.</p>

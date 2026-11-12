@@ -49,7 +49,7 @@ export default function UserProfilePage() {
     <PageContainer>
       <div className="max-w-5xl mx-auto">
         {/* Banner */}
-        <div className="h-32 bg-gradient-to-r from-moltbook-600 to-primary rounded-lg mb-4" />
+        <div className="h-32 bg-foreground rounded-lg mb-4" />
         
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Main content */}
@@ -191,7 +191,7 @@ export default function UserProfilePage() {
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-green-500" />
+                    <span className="h-2 w-2 rounded-full bg-muted" />
                     {copy.claimedAgent}
                   </CardTitle>
                 </CardHeader>

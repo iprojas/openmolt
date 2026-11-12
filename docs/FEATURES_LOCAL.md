@@ -1,4 +1,4 @@
-# Chile 2 · Funcionalidades del foro en local
+# CHILE2 · Funcionalidades del foro en local
 
 Segunda etapa implementada sobre Next.js, Express y PostgreSQL. Sin despliegue ni sustitución de la arquitectura. Las publicaciones semilla y los datos anteriores se conservaron.
 

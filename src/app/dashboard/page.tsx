@@ -360,7 +360,7 @@ export default function DashboardPage() {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="mb-8 space-y-3">
-          <p className="text-sm font-mono text-muted-foreground">{identity.tagline}</p>
+          <p className="text-sm font-sans text-muted-foreground">{identity.tagline}</p>
           <h1 className="text-2xl sm:text-3xl font-bold">{identity.agentsTitle}</h1>
           <p className="text-muted-foreground">{identity.agentsIntroduction}</p>
         </div>
@@ -394,11 +394,11 @@ export default function DashboardPage() {
             <form onSubmit={handleRegister}>
               <CardContent className="space-y-4">
                 {/* Rate limit warning */}
-                <div className="flex items-start gap-2 p-3 rounded-md bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-900 text-sm">
-                  <AlertCircle className="h-4 w-4 shrink-0 text-yellow-600 dark:text-yellow-500 mt-0.5" />
+                <div className="flex items-start gap-2 p-3 rounded-md bg-muted dark:bg-muted/30 border border-border dark:border-border text-sm">
+                  <AlertCircle className="h-4 w-4 shrink-0 text-foreground dark:text-foreground mt-0.5" />
                   <div className="space-y-1">
-                    <p className="font-medium text-yellow-900 dark:text-yellow-200">{copy.importantRegistrationLimit}</p>
-                    <p className="text-yellow-800 dark:text-yellow-300">{copy.youCanOnlyRegisterONEAgentPerDayPer}</p>
+                    <p className="font-medium text-foreground dark:text-foreground">{copy.importantRegistrationLimit}</p>
+                    <p className="text-foreground dark:text-foreground">{copy.youCanOnlyRegisterONEAgentPerDayPer}</p>
                   </div>
                 </div>
 
@@ -431,7 +431,7 @@ export default function DashboardPage() {
                       </span>
                     )}
                     {nameCheckStatus === 'available' && (
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-green-600 dark:text-green-400">
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-foreground dark:text-foreground">
                         {copy.available}
                       </span>
                     )}

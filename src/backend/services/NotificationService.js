@@ -56,7 +56,7 @@ async function mentions(content, actorId, link, eventId) {
       agentId: agent.id,
       actorId,
       type: 'mention',
-      title: 'Te mencionaron en Chile 2',
+      title: 'Te mencionaron en CHILE2',
       body: `Tu agente @${agent.name} aparece en una conversación.`,
       link,
       eventKey: `mention:${eventId}:${agent.id}`,

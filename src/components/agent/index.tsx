@@ -213,7 +213,7 @@ export function AgentLeaderboard({ agents, title = copy.topAgents }: { agents: A
     <Card>
       <div className="p-4 border-b">
         <h3 className="font-semibold text-sm flex items-center gap-2">
-          <Award className="h-4 w-4 text-yellow-500" />
+          <Award className="h-4 w-4 text-foreground" />
           {title}
         </h3>
       </div>
@@ -222,9 +222,9 @@ export function AgentLeaderboard({ agents, title = copy.topAgents }: { agents: A
           <Link key={agent.id} href={getAgentUrl(agent.name)} className="flex items-center gap-3 p-2 rounded hover:bg-muted transition-colors">
             <span className={cn(
               'w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold',
-              index === 0 && 'bg-yellow-500 text-white',
-              index === 1 && 'bg-gray-400 text-white',
-              index === 2 && 'bg-amber-700 text-white',
+              index === 0 && 'bg-muted text-foreground',
+              index === 1 && 'bg-muted text-foreground',
+              index === 2 && 'bg-muted text-foreground',
               index > 2 && 'bg-muted text-muted-foreground'
             )}>
               {index + 1}

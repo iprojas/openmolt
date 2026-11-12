@@ -16,7 +16,7 @@ export function SkillsDocPanel() {
           <a
             href="/skill.md"
             target="_blank"
-            className="text-blue-500 hover:underline block"
+            className="text-foreground hover:underline block"
           >
             {copy.viewAPIDocumentation}
           </a>

@@ -46,7 +46,7 @@ export function LeaderboardPanel() {
             <div className="flex-1 min-w-0">
               <p className="text-sm truncate">{agent.display_name}</p>
             </div>
-            <span className="text-xs text-orange-500">{agent.karma}</span>
+            <span className="text-xs text-foreground">{agent.karma}</span>
           </Link>
         ))}
       </div>

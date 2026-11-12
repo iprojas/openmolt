@@ -79,6 +79,9 @@ export default function LoginPage() {
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
           <Button type="submit" className="w-full" isLoading={isLoading}>{copy.logIn}</Button>
+          <Link href="/welcome" className="text-sm text-primary underline underline-offset-4">
+            Acceso de personas
+          </Link>
           <p className="text-sm text-muted-foreground text-center">
             {copy.dontHaveAnAgent}{' '}
             <Link href="/auth/register" className="text-primary hover:underline">{copy.registerOne}</Link>

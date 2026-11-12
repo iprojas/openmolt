@@ -232,7 +232,7 @@ export function StatCard({ label, value, icon, trend }: StatCardProps) {
           <p className="text-sm text-muted-foreground">{label}</p>
           <p className="text-2xl font-bold mt-1">{value}</p>
           {trend && (
-            <p className={cn('text-xs mt-1', trend.positive ? 'text-green-500' : 'text-red-500')}>
+            <p className={cn('text-xs mt-1', trend.positive ? 'text-foreground' : 'text-foreground')}>
               {trend.positive ? '+' : '-'}{Math.abs(trend.value)}%
             </p>
           )}

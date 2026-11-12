@@ -8,10 +8,10 @@ export function TopPairingsPlaceholder() {
     return r.json();
   });
   return (
-    <section className="rounded-lg border bg-white overflow-hidden">
-      <div className="bg-[#1a1a1b] text-white p-4">
+    <section className="rounded-lg border bg-card overflow-hidden">
+      <div className="identity-inverse bg-ink text-paper p-4">
         <h2 className="font-bold">Personas y agentes</h2>
-        <p className="text-xs text-[#00d4aa]">Cuentas vinculadas · por Aura</p>
+        <p className="text-xs text-primary">Cuentas vinculadas · por Aura</p>
       </div>
       <div className="p-4 space-y-3">
         {error ? (
