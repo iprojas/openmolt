@@ -1,12 +1,8 @@
-// CHILE2 API client; legacy endpoint and field names remain compatible.
+// CHILE2 API v1 client. Human requests use the Google session.
 
-import type { Agent, Post, Comment, Submolt, SearchResults, PaginatedResponse, CreatePostForm, CreateCommentForm, RegisterAgentForm, PostSort, CommentSort, TimeRange } from '@/types';
+import type { Agent, Post, Comment, Community, SearchResults, PaginatedResponse, CreatePostForm, CreateCommentForm, RegisterAgentForm, PostSort, CommentSort, TimeRange } from '@/types';
 
-// API base URL configuration
-// Use the same-origin backend proxy by default; direct reads require explicit opt-in.
-const USE_DIRECT_API = process.env.NEXT_PUBLIC_USE_DIRECT_API === 'true';
-const DIRECT_API_URL = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
-const PROXY_API_URL = '/api';
+const API_URL = '/api/v1';
 
 // Request timeout in milliseconds (30 seconds)
 const REQUEST_TIMEOUT = 30000;
@@ -19,8 +15,6 @@ class ApiError extends Error {
 }
 
 class ApiClient {
-  private apiKey: string | null = null;
-
   // Transform API response to frontend format
   private transformPost(apiPost: any): Post {
     return {
@@ -28,13 +22,14 @@ class ApiClient {
       title: apiPost.title,
       content: apiPost.content,
       url: apiPost.url,
-      submolt: apiPost.submolt?.name || apiPost.submolt,
-      submoltDisplayName: apiPost.submolt?.display_name,
+      community: apiPost.community?.name || apiPost.community,
+      communityDisplayName: apiPost.community?.display_name,
       postType: apiPost.url ? 'link' : 'text',
       score: apiPost.score ?? ((apiPost.upvotes || 0) - (apiPost.downvotes || 0)),
       upvotes: apiPost.upvotes,
       downvotes: apiPost.downvotes,
       commentCount: apiPost.comment_count || 0,
+      authorKind: apiPost.author_kind,
       authorId: apiPost.author?.id || apiPost.author_id || apiPost.agent_id,
       authorName: apiPost.author?.name || apiPost.author_name || apiPost.agent_name || apiPost.agent?.name || 'Sin nombre',
       authorDisplayName: apiPost.author?.display_name || apiPost.author_display_name || apiPost.agent?.display_name,
@@ -58,6 +53,7 @@ class ApiClient {
       downvotes: apiComment.downvotes || 0,
       parentId: apiComment.parent_id || null,
       depth: apiComment.depth || 0,
+      authorKind: apiComment.author_kind,
       authorId: apiComment.author?.id || apiComment.author_id || apiComment.agent_id,
       authorName: apiComment.author?.name || apiComment.author_name || apiComment.agent_name || apiComment.agent?.name || 'Sin nombre',
       authorDisplayName: apiComment.author?.display_name || apiComment.author_display_name || apiComment.agent?.display_name,
@@ -72,12 +68,13 @@ class ApiClient {
 
   private transformAgent(apiAgent: any): Agent {
     return {
+      kind: apiAgent.kind,
       id: apiAgent.id,
       name: apiAgent.name,
       displayName: apiAgent.display_name ?? apiAgent.displayName,
       description: apiAgent.description,
       avatarUrl: apiAgent.avatar_url,
-      karma: apiAgent.karma || 0,
+      aura: apiAgent.aura || 0,
       status: apiAgent.status === 'suspended' ? 'suspended' : (apiAgent.is_claimed || apiAgent.isClaimed) ? 'active' : 'pending_claim',
       isClaimed: apiAgent.is_claimed ?? apiAgent.isClaimed ?? false,
       followerCount: apiAgent.follower_count ?? apiAgent.followerCount ?? 0,
@@ -90,37 +87,11 @@ class ApiClient {
   }
 
   private voteDirection(value:any): 'up'|'down'|null {return value===1||value==='up'?'up':value===-1||value==='down'?'down':null;}
-  private transformSubmolt(s:any):Submolt {return {...s,displayName:s.display_name??s.displayName,subscriberCount:s.subscriber_count??s.subscriberCount??0,postCount:s.post_count??s.postCount??0,createdAt:s.created_at??s.createdAt,iconUrl:s.avatar_url??s.iconUrl,creatorId:s.creator_id??s.creatorId,yourRole:s.your_role??s.yourRole,moderators:(s.moderators||[]).map((a:any)=>this.transformAgent(a))};}
-
-  setApiKey(key: string | null) {
-    this.apiKey = key;
-    if (key && typeof window !== 'undefined') {
-      localStorage.setItem('moltbook_api_key', key);
-    }
-  }
-
-  getApiKey(): string | null {
-    if (this.apiKey) return this.apiKey;
-    if (typeof window !== 'undefined') {
-      this.apiKey = localStorage.getItem('moltbook_api_key');
-    }
-    return this.apiKey;
-  }
-
-  clearApiKey() {
-    this.apiKey = null;
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('moltbook_api_key');
-    }
-  }
+  private transformCommunity(s:any):Community {return {...s,displayName:s.display_name??s.displayName,subscriberCount:s.subscriber_count??s.subscriberCount??0,postCount:s.post_count??s.postCount??0,createdAt:s.created_at??s.createdAt,iconUrl:s.avatar_url??s.iconUrl,creatorId:s.creator_id??s.creatorId,yourRole:s.your_role??s.yourRole,moderators:(s.moderators||[]).map((a:any)=>this.transformAgent(a))};}
 
   private async request<T>(method: string, path: string, body?: unknown, query?: Record<string, string | number | undefined>): Promise<T> {
-    // Determine base URL: use direct API for GET requests if enabled, otherwise use proxy
-    const useDirectForThisRequest = USE_DIRECT_API && method === 'GET';
-    const baseUrl = useDirectForThisRequest ? DIRECT_API_URL : PROXY_API_URL;
-
     const cleanPath = path.startsWith('/') ? path.slice(1) : path;
-    let url = `${baseUrl}/${cleanPath}`;
+    let url = `${API_URL}/${cleanPath}`;
 
     if (query) {
       const params = new URLSearchParams();
@@ -132,8 +103,6 @@ class ApiClient {
     }
 
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    const apiKey = this.getApiKey();
-    if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
 
     // Create abort controller for timeout
     const controller = new AbortController();
@@ -170,7 +139,7 @@ class ApiClient {
 
   // Agent endpoints
   async register(data: RegisterAgentForm) {
-    return this.request<{ agent: { api_key: string; claim_url: string; verification_code: string }; important: string }>('POST', '/agents/register', data);
+    return this.request<{ agent: { api_key: string; claim_url: string }; important: string }>('POST', '/agents/register', data);
   }
 
   async checkNameAvailable(name: string): Promise<boolean> {
@@ -218,13 +187,13 @@ class ApiClient {
   }
 
   // Post endpoints
-  async getPosts(options: { sort?: PostSort; timeRange?: TimeRange; limit?: number; offset?: number; submolt?: string; view?:string; seed?:string } = {}) {
+  async getPosts(options: { sort?: PostSort; timeRange?: TimeRange; limit?: number; offset?: number; community?: string; view?:string; seed?:string } = {}) {
     const result = await this.request<any>('GET', '/posts', undefined, {
       sort: options.sort || 'hot',
       t: options.timeRange,
       limit: options.limit || 25,
       offset: options.offset || 0,
-      submolt: options.submolt, view:options.view, seed:options.seed,
+      community: options.community, view:options.view, seed:options.seed,
     });
 
     // Adapt production API response to expected format
@@ -294,44 +263,44 @@ class ApiClient {
     return this.request<{ success: boolean; action: string; scoreDelta:number; user_vote:'up'|'down'|null; score:number }>('POST', `/comments/${id}/downvote`);
   }
 
-  // Submolt endpoints
-  async getSubmolts(options: { sort?: string; limit?: number; offset?: number } = {}) {
-    const result = await this.request<any>('GET', '/submolts', undefined, {
+  // Community endpoints
+  async getCommunities(options: { sort?: string; limit?: number; offset?: number } = {}) {
+    const result = await this.request<any>('GET', '/communities', undefined, {
       sort: options.sort || 'popular',
       limit: options.limit || 50,
       offset: options.offset || 0, seed:(options as any).seed,
     });
 
     // 转换 API 返回格式
-    const submolts = (result.submolts || result.data || []).map((s:any)=>this.transformSubmolt(s));
+    const communities = (result.communities || result.data || []).map((s:any)=>this.transformCommunity(s));
     return {
-      data: submolts,
+      data: communities,
       pagination: {
-        count: submolts.length,
-        total: result.count || submolts.length,
+        count: communities.length,
+        total: result.count || communities.length,
         hasMore: result.has_more || false,
       }
     };
   }
 
-  async getSubmolt(name: string) {
-    return this.request<{ submolt: Submolt }>('GET', `/submolts/${name}`).then(r => this.transformSubmolt(r.submolt));
+  async getCommunity(name: string) {
+    return this.request<{ community: Community }>('GET', `/communities/${name}`).then(r => this.transformCommunity(r.community));
   }
 
-  async createSubmolt(data: { name: string; displayName?: string; description?: string }) {
-    return this.request<{ submolt: Submolt }>('POST', '/submolts', data).then(r => this.transformSubmolt(r.submolt));
+  async createCommunity(data: { name: string; displayName?: string; description?: string }) {
+    return this.request<{ community: Community }>('POST', '/communities', data).then(r => this.transformCommunity(r.community));
   }
 
-  async subscribeSubmolt(name: string) {
-    return this.request<{ success: boolean }>('POST', `/submolts/${name}/subscribe`);
+  async subscribeCommunity(name: string) {
+    return this.request<{ success: boolean }>('POST', `/communities/${name}/subscribe`);
   }
 
-  async unsubscribeSubmolt(name: string) {
-    return this.request<{ success: boolean }>('DELETE', `/submolts/${name}/subscribe`);
+  async unsubscribeCommunity(name: string) {
+    return this.request<{ success: boolean }>('DELETE', `/communities/${name}/subscribe`);
   }
 
-  async getSubmoltFeed(name: string, options: { sort?: PostSort; limit?: number; offset?: number; seed?:string } = {}) {
-    const result = await this.request<any>('GET', `/submolts/${name}/feed`, undefined, {
+  async getCommunityFeed(name: string, options: { sort?: PostSort; limit?: number; offset?: number; seed?:string } = {}) {
+    const result = await this.request<any>('GET', `/communities/${name}/feed`, undefined, {
       sort: options.sort || 'hot',
       limit: options.limit || 25,
       offset: options.offset || 0, seed:(options as any).seed,
@@ -396,7 +365,7 @@ class ApiClient {
   // Search endpoints
   async search(query: string, options: { limit?: number } = {}) {
     const r=await this.request<any>('GET','/search',undefined,{q:query,limit:options.limit||25});
-    return {...r,posts:(r.posts||[]).map((p:any)=>this.transformPost(p)),agents:(r.agents||[]).map((a:any)=>this.transformAgent(a)),submolts:(r.submolts||[]).map((s:any)=>this.transformSubmolt(s)),comments:(r.comments||[]).map((c:any)=>this.transformComment(c)),totalPosts:r.posts?.length||0,totalAgents:r.agents?.length||0,totalSubmolts:r.submolts?.length||0} as SearchResults;
+    return {...r,posts:(r.posts||[]).map((p:any)=>this.transformPost(p)),agents:(r.agents||[]).map((a:any)=>this.transformAgent(a)),communities:(r.communities||[]).map((s:any)=>this.transformCommunity(s)),comments:(r.comments||[]).map((c:any)=>this.transformComment(c)),totalPosts:r.posts?.length||0,totalAgents:r.agents?.length||0,totalCommunities:r.communities?.length||0} as SearchResults;
   }
 }
 

@@ -1,10 +1,11 @@
 'use client';
+import { IdentityName } from '@/components/IdentityName';
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSearch } from '@/hooks';
 import { PostCard } from '@/components/post';
 import { AgentList } from '@/components/agent';
-import { SubmoltList } from '@/components/submolt';
+import { CommunityList } from '@/components/community';
 import { Input, Card } from '@/components/ui';
 import Link from 'next/link';
 const tabs = {
@@ -12,7 +13,7 @@ const tabs = {
   posts: 'Publicaciones',
   comments: 'Comentarios',
   agents: 'Agentes',
-  submolts: 'comunidades',
+  communities: 'comunidades',
 };
 export default function Search() {
   const params = useSearchParams(),
@@ -79,7 +80,7 @@ export default function Search() {
                     {c.content}
                   </Link>
                   <p className="text-xs text-muted-foreground">
-                    a/{c.authorName}
+                    <IdentityName name={c.authorDisplayName || c.authorName} kind={c.authorKind} />
                   </p>
                 </Card>
               ))}
@@ -92,10 +93,10 @@ export default function Search() {
               <AgentList agents={data?.agents || []} />
             </section>
           )}
-          {(active === 'all' || active === 'submolts') && (
+          {(active === 'all' || active === 'communities') && (
             <section>
               <h2 className="font-bold mb-3">comunidades</h2>
-              <SubmoltList submolts={data?.submolts || []} />
+              <CommunityList communities={data?.communities || []} />
             </section>
           )}
         </>

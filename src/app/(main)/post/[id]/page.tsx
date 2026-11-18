@@ -1,6 +1,6 @@
 'use client';
 
-import foundationPosts from '@/lib/foundation-posts.json';
+import { IdentityName } from '@/components/IdentityName';
 import { PostActions } from '@/components/participation';
 
 import { copy, countText } from '@/lib/copy';
@@ -12,7 +12,7 @@ import { PageContainer } from '@/components/layout';
 import { CommentList, CommentForm, CommentSort } from '@/components/comment';
 import { Button, Card, Avatar, AvatarImage, AvatarFallback, Skeleton, Separator } from '@/components/ui';
 import { ArrowBigUp, ArrowBigDown, MessageSquare, Share2, Bookmark, MoreHorizontal, ExternalLink, ArrowLeft } from 'lucide-react';
-import { cn, formatScore, formatRelativeTime, formatDateTime, extractDomain, getInitials, getSubmoltUrl, getAgentUrl } from '@/lib/utils';
+import { cn, formatScore, formatRelativeTime, formatDateTime, extractDomain, getInitials, getCommunityUrl, getAgentUrl } from '@/lib/utils';
 import type { CommentSort as CommentSortType, Comment } from '@/types';
 
 export default function PostPage() {
@@ -22,18 +22,18 @@ export default function PostPage() {
   const { data: comments, isLoading: commentsLoading, mutate: mutateComments } = useComments(params.id, { sort: commentSort });
   const { vote, isVoting } = usePostVote(params.id);
   const { isAuthenticated } = useAuth();
-  
+
   if (postError) return notFound();
-  
+
   const isUpvoted = post?.userVote === 'up';
   const isDownvoted = post?.userVote === 'down';
   const domain = post?.url ? extractDomain(post.url) : null;
-  
+
   const handleVote = async (direction: 'up' | 'down') => {
     if (!isAuthenticated) return;
     await vote(direction);
   };
-  
+
   const handleNewComment = (comment: Comment) => {
     mutateComments([...(comments || []), comment], false);
     // Update post comment count
@@ -41,16 +41,16 @@ export default function PostPage() {
       mutatePost({ ...post, commentCount: post.commentCount + 1 }, false);
     }
   };
-  
+
   return (
     <PageContainer>
       <div className="max-w-4xl mx-auto">
         {/* Back button */}
-        <Link href={post?.submolt ? getSubmoltUrl(post.submolt) : '/'} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
+        <Link href={post?.community ? getCommunityUrl(post.community) : '/'} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
           <ArrowLeft className="h-4 w-4" />
-          {copy.backTo} {post?.submolt ? `cl2/${typeof post.submolt === 'string' ? post.submolt : post.submolt.name}` : 'inicio'}
+          {copy.backTo} {post?.community ? `/${typeof post.community === 'string' ? post.community : post.community.name}` : 'inicio'}
         </Link>
-        
+
         {/* Post */}
         <Card className="p-4 mb-4">
           {postLoading ? (
@@ -59,8 +59,8 @@ export default function PostPage() {
             <>
               {/* Meta */}
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
-                <Link href={getSubmoltUrl(post.submolt)} className="submolt-badge">
-                  cl2/{typeof post.submolt === 'string' ? post.submolt : post.submolt.name}
+                <Link href={getCommunityUrl(post.community)} className="community-badge">
+                  /{typeof post.community === 'string' ? post.community : post.community.name}
                 </Link>
                 <span>•</span>
                 <Link href={getAgentUrl(post.authorName)} className="agent-badge">
@@ -68,13 +68,12 @@ export default function PostPage() {
                     <AvatarImage src={post.authorAvatarUrl} />
                     <AvatarFallback className="text-[10px]">{getInitials(post.authorName)}</AvatarFallback>
                   </Avatar>
-                  <span>a/{post.authorName}</span>
+                  <IdentityName name={post.authorDisplayName || post.authorName} kind={post.authorKind} />
                 </Link>
                 <span>•</span>
                 <time title={formatDateTime(post.createdAt)}>{formatRelativeTime(post.createdAt)}</time>
               </div>
-              
-              {foundationPosts.includes(post.id) && <p className="text-xs text-muted-foreground mb-3">{copy.foundationNotice}</p>}
+
               {/* Title */}
               <h1 className="text-2xl font-bold mb-3">
                 {post.title}
@@ -85,14 +84,14 @@ export default function PostPage() {
                   </span>
                 )}
               </h1>
-              
+
               {/* Content */}
               {post.content && (
-                <div className="prose-moltbook mb-4">
+                <div className="prose-cl2 mb-4">
                   {post.content}
                 </div>
               )}
-              
+
               {/* Link */}
               {post.url && (
                 <a href={post.url} target="_blank" rel="noopener noreferrer" className="block p-4 rounded-lg border bg-muted/50 hover:bg-muted transition-colors mb-4">
@@ -102,7 +101,7 @@ export default function PostPage() {
                   </div>
                 </a>
               )}
-              
+
               {/* Actions */}
               <div className="flex flex-wrap items-center gap-2 pt-2 border-t">
                 <div className="flex items-center gap-1">
@@ -116,34 +115,34 @@ export default function PostPage() {
                     <ArrowBigDown className={cn('h-6 w-6', isDownvoted && 'fill-current')} />
                   </button>
                 </div>
-                
+
                 <Separator orientation="vertical" className="h-6" />
-                
+
                 <a href="#post-comments" aria-label={countText(post.commentCount, 'comentario', 'comentarios')} title={countText(post.commentCount, 'comentario', 'comentarios')} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground">
                   <MessageSquare aria-hidden="true" className="h-4 w-4" />
                 </a>
-                
+
                 <PostActions post={post}/>
               </div>
             </>
           ) : null}
         </Card>
-        
+
         {/* Comments section */}
         <Card className="p-4">
           {/* Comment form */}
           <div className="mb-6">
             <CommentForm postId={params.id} onSubmit={handleNewComment} />
           </div>
-          
+
           <Separator className="my-4" />
-          
+
           {/* Comment sort */}
           <div className="flex items-center justify-between mb-4">
             <h2 id="post-comments" className="font-semibold scroll-mt-20">{copy.comments3}{comments?.length || 0})</h2>
             <CommentSort value={commentSort} onChange={(v) => setCommentSort(v as CommentSortType)} />
           </div>
-          
+
           {/* Comments */}
           <CommentList comments={comments || []} postId={params.id} isLoading={commentsLoading} />
         </Card>

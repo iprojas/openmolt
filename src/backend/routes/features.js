@@ -59,7 +59,7 @@ route(
       await Mail.enqueue(
         email,
         'Confirma tu suscripción a CHILE2',
-        `Confirma que quieres recibir novedades de CHILE2:\n${config.moltbook.baseUrl}/newsletter/confirm?token=${token}\n\nSi no lo solicitaste, ignora este correo.\nPara cancelar tu suscripción: ${config.moltbook.baseUrl}/newsletter/unsubscribe?token=${unsubscribe}`,
+        `Confirma que quieres recibir novedades de CHILE2:\n${config.cl2.baseUrl}/newsletter/confirm?token=${token}\n\nSi no lo solicitaste, ignora este correo.\nPara cancelar tu suscripción: ${config.cl2.baseUrl}/newsletter/unsubscribe?token=${unsubscribe}`,
         client
       );
     });
@@ -92,7 +92,7 @@ route(
 );
 route('get', '/agents', async (req) => ({
   agents: await queryAll(
-    'SELECT id,name,display_name,description,karma,is_claimed,is_active,created_at FROM agents WHERE is_active=true ORDER BY karma DESC,created_at DESC LIMIT $1 OFFSET $2',
+    "SELECT id,name,display_name,description,aura,is_claimed,is_active,created_at FROM agents WHERE kind='agent' AND is_active=true ORDER BY aura DESC,created_at DESC LIMIT $1 OFFSET $2",
     [pageSize(req.query.limit), Math.max(0, Number(req.query.offset) || 0)]
   ),
 }));
@@ -101,14 +101,14 @@ route(
   '/agents/paired',
   async () => ({
     agents: await queryAll(
-      `SELECT a.id,a.name,a.display_name,a.karma,a.is_claimed FROM agents a WHERE a.is_claimed=true AND a.owner_user_id IS NOT NULL AND a.is_active=true ORDER BY a.karma DESC,a.claimed_at DESC LIMIT 10`
+      `SELECT a.id,a.name,a.display_name,a.aura,a.is_claimed FROM agents a WHERE a.kind='agent' AND a.is_claimed=true AND a.(owner_user_id IS NOT NULL OR human_user_id IS NOT NULL) AND a.is_active=true ORDER BY a.aura DESC,a.claimed_at DESC LIMIT 10`
     ),
   }),
   false
 );
 route('get', '/agents/:name/comments', async (req) => ({
   comments: await queryAll(
-    `SELECT c.*,a.name AS author_name FROM comments c JOIN agents a ON a.id=c.author_id JOIN posts p ON p.id=c.post_id WHERE a.name=$1 AND c.is_deleted=false AND p.is_deleted=false ORDER BY c.created_at DESC LIMIT $2`,
+    `SELECT c.*,a.kind AS author_kind,a.display_name AS author_display_name,a.name AS author_name FROM comments c JOIN agents a ON a.id=c.author_id JOIN posts p ON p.id=c.post_id WHERE a.name=$1 AND c.is_deleted=false AND p.is_deleted=false ORDER BY c.created_at DESC LIMIT $2`,
     [req.params.name, pageSize(req.query.limit)]
   ),
 }));
@@ -160,7 +160,7 @@ route('post', '/reports', async (req) => {
 });
 route('get', '/moderation/reports', async (req) => ({
   reports: await queryAll(
-    `SELECT r.*,COALESCE(p.id,cp.id) AS target_post_id,COALESCE(p.title,cp.title) AS post_title,COALESCE(p.submolt,cp.submolt) AS submolt,c.content AS comment_content FROM reports r LEFT JOIN posts p ON p.id=r.post_id LEFT JOIN comments c ON c.id=r.comment_id LEFT JOIN posts cp ON cp.id=c.post_id WHERE EXISTS(SELECT 1 FROM submolt_moderators sm WHERE sm.submolt_id=COALESCE(p.submolt_id,cp.submolt_id) AND sm.agent_id=$1) ORDER BY r.created_at DESC LIMIT 100`,
+    `SELECT r.*,COALESCE(p.id,cp.id) AS target_post_id,COALESCE(p.title,cp.title) AS post_title,COALESCE(p.community,cp.community) AS community,c.content AS comment_content FROM reports r LEFT JOIN posts p ON p.id=r.post_id LEFT JOIN comments c ON c.id=r.comment_id LEFT JOIN posts cp ON cp.id=c.post_id WHERE EXISTS(SELECT 1 FROM community_moderators sm WHERE sm.community_id=COALESCE(p.community_id,cp.community_id) AND sm.agent_id=$1) ORDER BY r.created_at DESC LIMIT 100`,
     [req.agent.id]
   ),
 }));
@@ -170,7 +170,7 @@ route('patch', '/moderation/reports/:id', async (req) => {
   await transaction(async (client) => {
     const r = (
       await client.query(
-        `SELECT r.*,COALESCE(p.submolt_id,cp.submolt_id) AS submolt_id FROM reports r LEFT JOIN posts p ON p.id=r.post_id LEFT JOIN comments c ON c.id=r.comment_id LEFT JOIN posts cp ON cp.id=c.post_id WHERE r.id=$1 FOR UPDATE OF r`,
+        `SELECT r.*,COALESCE(p.community_id,cp.community_id) AS community_id FROM reports r LEFT JOIN posts p ON p.id=r.post_id LEFT JOIN comments c ON c.id=r.comment_id LEFT JOIN posts cp ON cp.id=c.post_id WHERE r.id=$1 FOR UPDATE OF r`,
         [req.params.id]
       )
     ).rows[0];
@@ -178,8 +178,8 @@ route('patch', '/moderation/reports/:id', async (req) => {
     if (
       !(
         await client.query(
-          'SELECT 1 FROM submolt_moderators WHERE submolt_id=$1 AND agent_id=$2',
-          [r.submolt_id, req.agent.id]
+          'SELECT 1 FROM community_moderators WHERE community_id=$1 AND agent_id=$2',
+          [r.community_id, req.agent.id]
         )
       ).rowCount
     )
@@ -245,7 +245,7 @@ route('patch', '/notifications/preferences', async (req) => {
   if (
     email &&
     !(await queryOne(
-      'SELECT id FROM agents WHERE id=$1 AND owner_user_id IS NOT NULL',
+      'SELECT id FROM agents WHERE id=$1 AND (owner_user_id IS NOT NULL OR human_user_id IS NOT NULL)',
       [req.agent.id]
     ))
   )

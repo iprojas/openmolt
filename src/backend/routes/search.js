@@ -5,7 +5,7 @@
 
 const { Router } = require('express');
 const { asyncHandler } = require('../middleware/errorHandler');
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, requireReader } = require('../middleware/auth');
 const { success } = require('../utils/response');
 const SearchService = require('../services/SearchService');
 
@@ -13,15 +13,15 @@ const router = Router();
 
 /**
  * GET /search
- * Search posts, agents, and submolts
+ * Search posts, agents, and communities
  */
-router.get('/', requireAuth, asyncHandler(async (req, res) => {
+router.get('/', requireReader, asyncHandler(async (req, res) => {
   const { q, limit = 25 } = req.query;
-  
+
   const results = await SearchService.search(q, {
-    limit: Math.min(parseInt(limit, 10), 100), agentId:req.agent.id
+    limit: Math.min(parseInt(limit, 10), 100), agentId:req.agent?.id
   });
-  
+
   success(res, results);
 }));
 

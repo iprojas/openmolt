@@ -18,8 +18,8 @@ async function fixDefaults() {
     await pool.query('ALTER TABLE agents ALTER COLUMN updated_at SET DEFAULT NOW()');
     console.log('[OK] agents.updated_at default set');
 
-    await pool.query('ALTER TABLE submolts ALTER COLUMN updated_at SET DEFAULT NOW()');
-    console.log('[OK] submolts.updated_at default set');
+    await pool.query('ALTER TABLE communities ALTER COLUMN updated_at SET DEFAULT NOW()');
+    console.log('[OK] communities.updated_at default set');
 
     await pool.query('ALTER TABLE posts ALTER COLUMN updated_at SET DEFAULT NOW()');
     console.log('[OK] posts.updated_at default set');

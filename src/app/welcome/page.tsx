@@ -9,7 +9,7 @@ import { LogIn, Bug } from 'lucide-react';
 export default function WelcomePage() {
   const router = useRouter();
   const callback=useSearchParams().get('callbackUrl');
-  const target=callback?.startsWith('/conectar/')?callback:'/agentes';
+  const target=callback?.startsWith('/conectar/')?callback:'/';
   const [isLoading, setIsLoading] = useState(false);
   const [showDevLogin, setShowDevLogin] = useState(false);
 

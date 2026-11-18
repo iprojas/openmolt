@@ -1,5 +1,6 @@
 'use client';
 
+import { IdentityName } from '@/components/IdentityName';
 import { copy } from '@/lib/copy';
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
@@ -8,7 +9,7 @@ import { useSearch, useDebounce, useKeyboardShortcut } from '@/hooks';
 import { useUIStore } from '@/store';
 import { Dialog, DialogContent, Input, Skeleton } from '@/components/ui';
 import { Search, ArrowRight, Hash, Users, FileText, Clock, X } from 'lucide-react';
-import { cn, getAgentUrl, getSubmoltUrl, getPostUrl, formatScore, getInitials } from '@/lib/utils';
+import { cn, getAgentUrl, getCommunityUrl, getPostUrl, formatScore, getInitials } from '@/lib/utils';
 
 export function SearchModal() {
   const router = useRouter();
@@ -18,15 +19,15 @@ export function SearchModal() {
   const debouncedQuery = useDebounce(query, 200);
   const { data, isLoading } = useSearch(debouncedQuery);
   const inputRef = React.useRef<HTMLInputElement>(null);
-  
+
   // Load recent searches from localStorage
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('moltbook_recent_searches');
+      const saved = localStorage.getItem('cl2_recent_searches');
       if (saved) setRecentSearches(JSON.parse(saved));
     }
   }, []);
-  
+
   // Focus input when modal opens
   React.useEffect(() => {
     if (searchOpen) {
@@ -35,18 +36,18 @@ export function SearchModal() {
       setQuery('');
     }
   }, [searchOpen]);
-  
+
   // Close on escape
   useKeyboardShortcut('Escape', closeSearch);
-  
+
   const saveSearch = (term: string) => {
     const updated = [term, ...recentSearches.filter(s => s !== term)].slice(0, 5);
     setRecentSearches(updated);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('moltbook_recent_searches', JSON.stringify(updated));
+      localStorage.setItem('cl2_recent_searches', JSON.stringify(updated));
     }
   };
-  
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
@@ -55,21 +56,21 @@ export function SearchModal() {
       closeSearch();
     }
   };
-  
+
   const handleResultClick = (term?: string) => {
     if (term) saveSearch(term);
     closeSearch();
   };
-  
+
   const clearRecent = () => {
     setRecentSearches([]);
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('moltbook_recent_searches');
+      localStorage.removeItem('cl2_recent_searches');
     }
   };
-  
-  const hasResults = data && (data.posts?.length || data.agents?.length || data.submolts?.length);
-  
+
+  const hasResults = data && (data.posts?.length || data.agents?.length || data.communities?.length);
+
   return (
     <Dialog open={searchOpen} onOpenChange={(open) => !open && closeSearch()}>
       <DialogContent className="sm:max-w-xl p-0 gap-0 overflow-hidden">
@@ -80,7 +81,7 @@ export function SearchModal() {
             <input
               ref={inputRef}
               type="text"
-              placeholder={copy.searchMoltbook}
+              placeholder={copy.searchChile2}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="flex-1 h-14 px-3 bg-transparent text-lg focus:outline-none"
@@ -92,7 +93,7 @@ export function SearchModal() {
             )}
           </div>
         </form>
-        
+
         {/* Results */}
         <div className="max-h-[60vh] overflow-y-auto">
           {isLoading ? (
@@ -122,39 +123,39 @@ export function SearchModal() {
                           {getInitials(agent.name)}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{agent.displayName || agent.name}</p>
-                          <p className="text-xs text-muted-foreground">a/{agent.name} • {formatScore(agent.karma)} {copy.karma}</p>
+                          <p className="font-medium truncate"><IdentityName name={agent.displayName || agent.name} /></p>
+                          <p className="text-xs text-muted-foreground">{agent.name} • {formatScore(agent.aura)} {copy.aura}</p>
                         </div>
                         <Users className="h-4 w-4 text-muted-foreground" />
                       </Link>
                     ))}
                   </div>
                 )}
-                
-                {/* Submolts */}
-                {data.submolts && data.submolts.length > 0 && (
+
+                {/* Communities */}
+                {data.communities && data.communities.length > 0 && (
                   <div className="mb-2">
                     <div className="px-4 py-1 text-xs font-semibold text-muted-foreground uppercase">{copy.communities}</div>
-                    {data.submolts.slice(0, 3).map(submolt => (
+                    {data.communities.slice(0, 3).map(community => (
                       <Link
-                        key={submolt.id}
-                        href={getSubmoltUrl(submolt.name)}
-                        onClick={() => handleResultClick(submolt.name)}
+                        key={community.id}
+                        href={getCommunityUrl(community.name)}
+                        onClick={() => handleResultClick(community.name)}
                         className="flex items-center gap-3 px-4 py-2 hover:bg-muted transition-colors"
                       >
                         <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
                           <Hash className="h-4 w-4 text-primary" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{submolt.displayName || submolt.name}</p>
-                          <p className="text-xs text-muted-foreground">cl2/{submolt.name} • {formatScore(submolt.subscriberCount)} {copy.members}</p>
+                          <p className="font-medium truncate">{community.displayName || community.name}</p>
+                          <p className="text-xs text-muted-foreground">/{community.name} • {formatScore(community.subscriberCount)} {copy.members}</p>
                         </div>
                         <Hash className="h-4 w-4 text-muted-foreground" />
                       </Link>
                     ))}
                   </div>
                 )}
-                
+
                 {/* Posts */}
                 {data.posts && data.posts.length > 0 && (
                   <div className="mb-2">
@@ -162,7 +163,7 @@ export function SearchModal() {
                     {data.posts.slice(0, 5).map(post => (
                       <Link
                         key={post.id}
-                        href={getPostUrl(post.id, post.submolt)}
+                        href={getPostUrl(post.id, post.community)}
                         onClick={() => handleResultClick(post.title)}
                         className="flex items-center gap-3 px-4 py-2 hover:bg-muted transition-colors"
                       >
@@ -171,14 +172,14 @@ export function SearchModal() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium truncate">{post.title}</p>
-                          <p className="text-xs text-muted-foreground">cl2/{typeof post.submolt === 'string' ? post.submolt : post.submolt.name} • {formatScore(post.score)} {copy.points}</p>
+                          <p className="text-xs text-muted-foreground">/{typeof post.community === 'string' ? post.community : post.community.name} • {formatScore(post.score)} {copy.points}</p>
                         </div>
                         <ArrowRight className="h-4 w-4 text-muted-foreground" />
                       </Link>
                     ))}
                   </div>
                 )}
-                
+
                 {/* View all */}
                 <Link
                   href={`/search?q=${encodeURIComponent(debouncedQuery)}`}
@@ -219,7 +220,7 @@ export function SearchModal() {
             </div>
           )}
         </div>
-        
+
         {/* Footer */}
         <div className="border-t px-4 py-2 flex items-center justify-between text-xs text-muted-foreground">
           <div className="flex items-center gap-4">

@@ -22,6 +22,7 @@ jest.mock('next-themes', () => ({
 }));
 
 // Mock window.matchMedia
+if (typeof window !== 'undefined') {
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
   value: jest.fn().mockImplementation(query => ({
@@ -61,6 +62,7 @@ Object.defineProperty(window, 'ResizeObserver', {
   configurable: true,
   value: MockResizeObserver,
 });
+}
 
 // Suppress console errors in tests
 const originalError = console.error;

@@ -7,7 +7,7 @@ export function Footer() {
       <div className="max-w-6xl mx-auto">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
           <div className="flex items-center gap-4">
-            <span>{copy.text2026Moltbook}</span>
+            <span>{copy.text2026Chile2}</span>
             <span className="text-foreground">|</span>
             <span className="text-foreground">{copy.builtForAgentsByAgents}</span>
           </div>

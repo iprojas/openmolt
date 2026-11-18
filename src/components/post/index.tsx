@@ -1,12 +1,12 @@
 'use client';
 
-import foundationPosts from '@/lib/foundation-posts.json';
+import { IdentityName } from '@/components/IdentityName';
 import { PostActions } from '@/components/participation';
 
 import { copy, countText } from '@/lib/copy';
 import * as React from 'react';
 import Link from 'next/link';
-import { formatDateTime, cn, formatScore, formatRelativeTime, extractDomain, truncate, getInitials, getPostUrl, getSubmoltUrl, getAgentUrl } from '@/lib/utils';
+import { formatDateTime, cn, formatScore, formatRelativeTime, extractDomain, truncate, getInitials, getPostUrl, getCommunityUrl, getAgentUrl } from '@/lib/utils';
 import { usePostVote, useAuth } from '@/hooks';
 import { useUIStore } from '@/store';
 import { Button, Avatar, AvatarImage, AvatarFallback, Card, Skeleton, Badge } from '@/components/ui';
@@ -16,25 +16,25 @@ import type { Post, VoteDirection } from '@/types';
 interface PostCardProps {
   post: Post;
   isCompact?: boolean;
-  showSubmolt?: boolean;
+  showCommunity?: boolean;
   onVote?: (direction: 'up' | 'down') => void;
 }
 
-export function PostCard({ post, isCompact = false, showSubmolt = true, onVote }: PostCardProps) {
+export function PostCard({ post, isCompact = false, showCommunity = true, onVote }: PostCardProps) {
   const { isAuthenticated } = useAuth();
   const { vote, isVoting } = usePostVote(post.id);
   const [showMenu, setShowMenu] = React.useState(false);
-  
+
   const handleVote = async (direction: 'up' | 'down') => {
     if (!isAuthenticated) return;
     await vote(direction);
     onVote?.(direction);
   };
-  
+
   const domain = post.url ? extractDomain(post.url) : null;
   const isUpvoted = post.userVote === 'up';
   const isDownvoted = post.userVote === 'down';
-  
+
   return (
     <Card className={cn('post-card group', isCompact ? 'p-3' : 'p-4')}>
       <div className="flex gap-3">
@@ -48,7 +48,7 @@ export function PostCard({ post, isCompact = false, showSubmolt = true, onVote }
           >
             <ArrowBigUp className={cn('h-6 w-6', isUpvoted && 'fill-current')} />
           </button>
-          <span className={cn('text-sm font-medium karma', post.score > 0 && 'karma-positive', post.score < 0 && 'karma-negative')}>
+          <span className={cn('text-sm font-medium aura', post.score > 0 && 'aura-positive', post.score < 0 && 'aura-negative')}>
             {formatScore(post.score)}
           </span>
           <button
@@ -60,15 +60,15 @@ export function PostCard({ post, isCompact = false, showSubmolt = true, onVote }
             <ArrowBigDown className={cn('h-6 w-6', isDownvoted && 'fill-current')} />
           </button>
         </div>
-        
+
         {/* Content */}
         <div className="flex-1 min-w-0">
           {/* Meta */}
           <div className="post-meta mb-1 flex-wrap">
-            {showSubmolt && (
+            {showCommunity && (
               <>
-                <Link href={getSubmoltUrl(post.submolt)} className="submolt-badge">
-                  cl2/{typeof post.submolt === 'string' ? post.submolt : post.submolt.name}
+                <Link href={getCommunityUrl(post.community)} className="community-badge">
+                  /{typeof post.community === 'string' ? post.community : post.community.name}
                 </Link>
                 <span>•</span>
               </>
@@ -78,16 +78,15 @@ export function PostCard({ post, isCompact = false, showSubmolt = true, onVote }
                 <AvatarImage src={post.authorAvatarUrl} />
                 <AvatarFallback className="text-[10px]">{getInitials(post.authorName)}</AvatarFallback>
               </Avatar>
-              <span>a/{post.authorName}</span>
+              <IdentityName name={post.authorDisplayName || post.authorName} kind={post.authorKind} />
             </Link>
             <span>•</span>
             <span title={formatDateTime(post.createdAt)}>{formatRelativeTime(post.createdAt)}</span>
             {post.editedAt && <span className="text-xs">{copy.edited}</span>}
           </div>
-          
-          {foundationPosts.includes(post.id) && <p className="text-xs text-muted-foreground mb-2" title={copy.foundationNotice}>{copy.foundationLabel}</p>}
+
           {/* Title */}
-          <Link href={getPostUrl(post.id, post.submolt)}>
+          <Link href={getPostUrl(post.id, post.community)}>
             <h3 className={cn('post-title', isCompact ? 'text-base' : 'text-lg')}>
               {post.title}
               {domain && (
@@ -98,14 +97,14 @@ export function PostCard({ post, isCompact = false, showSubmolt = true, onVote }
               )}
             </h3>
           </Link>
-          
+
           {/* Content preview */}
           {!isCompact && post.content && (
             <p className="mt-2 text-sm text-muted-foreground line-clamp-3">
               {truncate(post.content, 300)}
             </p>
           )}
-          
+
           {/* Link preview */}
           {!isCompact && post.url && (
             <a href={post.url} target="_blank" rel="noopener noreferrer" className="mt-2 block p-3 rounded-md border bg-muted/50 hover:bg-muted transition-colors">
@@ -115,13 +114,13 @@ export function PostCard({ post, isCompact = false, showSubmolt = true, onVote }
               </div>
             </a>
           )}
-          
+
           {/* Actions */}
           <div className="flex flex-wrap items-center gap-1 mt-3">
-            <Link href={getPostUrl(post.id, post.submolt)} aria-label={countText(post.commentCount, 'comentario', 'comentarios')} title={countText(post.commentCount, 'comentario', 'comentarios')} className="inline-flex h-9 w-9 shrink-0 items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground rounded">
+            <Link href={getPostUrl(post.id, post.community)} aria-label={countText(post.commentCount, 'comentario', 'comentarios')} title={countText(post.commentCount, 'comentario', 'comentarios')} className="inline-flex h-9 w-9 shrink-0 items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground rounded">
               <MessageSquare aria-hidden="true" className="h-4 w-4" />
             </Link>
-            
+
             <PostActions post={post} />
           </div>
         </div>
@@ -131,7 +130,7 @@ export function PostCard({ post, isCompact = false, showSubmolt = true, onVote }
 }
 
 // Post List
-export function PostList({ posts, isLoading, showSubmolt = true }: { posts: Post[]; isLoading?: boolean; showSubmolt?: boolean }) {
+export function PostList({ posts, isLoading, showCommunity = true }: { posts: Post[]; isLoading?: boolean; showCommunity?: boolean }) {
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -141,7 +140,7 @@ export function PostList({ posts, isLoading, showSubmolt = true }: { posts: Post
       </div>
     );
   }
-  
+
   if (posts.length === 0) {
     return (
       <div className="text-center py-12">
@@ -149,11 +148,11 @@ export function PostList({ posts, isLoading, showSubmolt = true }: { posts: Post
       </div>
     );
   }
-  
+
   return (
     <div className="space-y-4">
       {posts.map(post => (
-        <PostCard key={post.id} post={post} showSubmolt={showSubmolt} />
+        <PostCard key={post.id} post={post} showCommunity={showCommunity} />
       ))}
     </div>
   );
@@ -197,7 +196,7 @@ export function FeedSortTabs({ value, onChange }: { value: string; onChange: (va
     { value: 'top', label: copy.top, icon: TrendingUp },
     { value: 'rising', label: copy.rising, icon: Zap },
   ];
-  
+
   return (
     <div className="flex items-center gap-1 p-1 rounded-lg bg-muted">
       {tabs.map(tab => (
@@ -220,12 +219,12 @@ export function FeedSortTabs({ value, onChange }: { value: string; onChange: (va
 }
 
 // Create Post Card
-export function CreatePostCard({ submolt }: { submolt?: string }) {
+export function CreatePostCard({ community }: { community?: string }) {
   const { agent, isAuthenticated } = useAuth();
   const openCreatePost = useUIStore(s => s.openCreatePost);
-  
+
   if (!isAuthenticated) return null;
-  
+
   return (
     <Card className="p-4">
       <div className="flex items-center gap-3">

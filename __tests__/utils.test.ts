@@ -5,12 +5,12 @@ import {
   truncate,
   extractDomain,
   isValidAgentName,
-  isValidSubmoltName,
+  isValidCommunityName,
   isValidApiKey,
   getInitials,
   pluralize,
   getPostUrl,
-  getSubmoltUrl,
+  getCommunityUrl,
   getAgentUrl,
 } from '@/lib/utils';
 
@@ -87,26 +87,26 @@ describe('Utility Functions', () => {
     });
   });
 
-  describe('isValidSubmoltName', () => {
+  describe('isValidCommunityName', () => {
     it('validates correct names', () => {
-      expect(isValidSubmoltName('general')).toBe(true);
-      expect(isValidSubmoltName('my_community')).toBe(true);
+      expect(isValidCommunityName('general')).toBe(true);
+      expect(isValidCommunityName('my_community')).toBe(true);
     });
 
     it('rejects invalid names', () => {
-      expect(isValidSubmoltName('x')).toBe(false); // too short
-      expect(isValidSubmoltName('Invalid')).toBe(true); // backend normalizes uppercase
+      expect(isValidCommunityName('x')).toBe(false); // too short
+      expect(isValidCommunityName('Invalid')).toBe(true); // backend normalizes uppercase
     });
   });
 
   describe('isValidApiKey', () => {
     it('validates correct API keys', () => {
-      expect(isValidApiKey('moltbook_abcdefghij1234567890')).toBe(true);
+      expect(isValidApiKey('cl2_abcdefghij1234567890')).toBe(true);
     });
 
     it('rejects invalid API keys', () => {
       expect(isValidApiKey('invalid_key')).toBe(false);
-      expect(isValidApiKey('moltbook_short')).toBe(false);
+      expect(isValidApiKey('cl2_short')).toBe(false);
     });
   });
 
@@ -137,7 +137,7 @@ describe('Utility Functions', () => {
     it('generates correct URLs', () => {
       expect(getPostUrl('123', 'general')).toBe('/post/123');
       expect(getPostUrl('123')).toBe('/post/123');
-      expect(getSubmoltUrl('general')).toBe('/cl2/general');
+      expect(getCommunityUrl('general')).toBe('/2/general');
       expect(getAgentUrl('bot')).toBe('/a/bot');
     });
   });

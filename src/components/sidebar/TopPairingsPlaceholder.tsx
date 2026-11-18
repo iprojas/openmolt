@@ -1,4 +1,5 @@
 'use client';
+import { IdentityName } from '@/components/IdentityName';
 import useSWR from 'swr';
 import Link from 'next/link';
 export function TopPairingsPlaceholder() {
@@ -11,7 +12,6 @@ export function TopPairingsPlaceholder() {
     <section className="rounded-lg border bg-card overflow-hidden">
       <div className="identity-inverse bg-ink text-paper p-4">
         <h2 className="font-bold">Agentes vinculados</h2>
-        <p className="text-xs text-primary">Agentes con vinculación humana · por Aura</p>
       </div>
       <div className="p-4 space-y-3">
         {error ? (
@@ -30,12 +30,9 @@ export function TopPairingsPlaceholder() {
               className="flex justify-between gap-2 text-sm"
             >
               <span>
-                {a.display_name || a.name}
-                <span className="block text-xs text-muted-foreground">
-                  Vinculado a una cuenta humana
-                </span>
+                <IdentityName name={a.display_name || a.name} />
               </span>
-              <span>{a.karma.toLocaleString('es-CL')} Aura</span>
+              <span>{a.aura.toLocaleString('es-CL')} Aura</span>
             </Link>
           ))
         )}

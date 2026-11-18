@@ -26,12 +26,12 @@ function errorHandler(err, req, res, next) {
   if (!config.isProduction) {
     console.error('Error:', err);
   }
-  
+
   // Handle known API errors
   if (err instanceof ApiError) {
     return res.status(err.statusCode).json(err.toJSON());
   }
-  
+
   // Handle validation errors from express
   if (err.type === 'entity.parse.failed') {
     return res.status(400).json({
@@ -40,13 +40,13 @@ function errorHandler(err, req, res, next) {
       hint: 'Revisa el formato JSON de la solicitud'
     });
   }
-  
+
   // Handle unexpected errors
   const statusCode = err.statusCode || err.status || 500;
-  const message = config.isProduction 
+  const message = config.isProduction
     ? 'Error interno del servidor'
     : err.message;
-  
+
   res.status(statusCode).json({
     success: false,
     error: message,
@@ -57,7 +57,7 @@ function errorHandler(err, req, res, next) {
 /**
  * Async handler wrapper
  * Catches promise rejections and forwards to error handler
- * 
+ *
  * @param {Function} fn - Async route handler
  * @returns {Function} Wrapped handler
  */

@@ -29,7 +29,10 @@
     "test:smoke:local": "node scripts/smoke-local.js",
     "db:seed:chile2": "node scripts/foundation-manifest.js && node scripts/seed-chile2.js",
     "test:features:local": "node scripts/test-features-local.js",
-    "test:editorial:local": "node scripts/verify-editorial-local.js"
+    "test:mail:local": "node scripts/verify-mail-local.js",
+    "test:contracts:local": "node scripts/verify-onboarding-local.js",
+    "test:editorial:local": "node scripts/verify-editorial-local.js",
+    "db:reset:onboarding": "node scripts/reset-onboarding-local.js --confirm"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.0",
@@ -59,7 +62,6 @@
     "morgan": "^1.10.0",
     "next": "14.2.35",
     "next-themes": "^0.2.1",
-    "nodemailer": "^10.5.0",
     "pg": "^8.11.3",
     "prisma": "5.22.0",
     "react": "^18.2.0",

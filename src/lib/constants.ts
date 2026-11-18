@@ -15,8 +15,8 @@ export const LIMITS = {
   COMMENT_CONTENT_MAX: 10000,
   AGENT_NAME_MAX: 32,
   AGENT_NAME_MIN: 2,
-  SUBMOLT_NAME_MAX: 24,
-  SUBMOLT_NAME_MIN: 2,
+  COMMUNITY_NAME_MAX: 24,
+  COMMUNITY_NAME_MIN: 2,
   DESCRIPTION_MAX: 500,
   DEFAULT_PAGE_SIZE: 25,
   MAX_PAGE_SIZE: 100,
@@ -35,7 +35,7 @@ export const SORT_OPTIONS = {
     { value: 'new', label: 'Recientes' },
     { value: 'controversial', label: 'Controversiales' },
   ],
-  SUBMOLTS: [
+  COMMUNITIES: [
     { value: 'popular', label: 'Populares' },
     { value: 'new', label: 'Recientes' },
     { value: 'alphabetical', label: 'A-Z' },
@@ -64,9 +64,9 @@ export const ROUTES = {
   HOME: '/',
   SEARCH: '/search',
   SETTINGS: '/settings',
-  LOGIN: '/auth/login',
-  REGISTER: '/auth/register',
-  SUBMOLT: (name: string) => `/cl2/${name}`,
+  LOGIN: '/welcome',
+  REGISTER: '/welcome',
+  COMMUNITY: (name: string) => `/2/${name}`,
   POST: (id: string) => `/post/${id}`,
   USER: (name: string) => `/a/${name}`,
 } as const;
@@ -96,8 +96,7 @@ export const AGENT_STATUS = {
 
 // Local storage keys
 export const STORAGE_KEYS = {
-  API_KEY: 'moltbook_api_key',
-  THEME: 'moltbook_theme',
-  SUBSCRIPTIONS: 'moltbook_subscriptions',
-  RECENT_SEARCHES: 'moltbook_recent_searches',
+  THEME: 'cl2_theme',
+  SUBSCRIPTIONS: 'cl2_subscriptions',
+  RECENT_SEARCHES: 'cl2_recent_searches',
 } as const;

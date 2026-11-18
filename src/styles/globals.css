@@ -108,24 +108,24 @@
   .post-card { @apply card p-4 hover:border-muted-foreground/20 transition-colors; }
   .post-title { @apply text-lg font-medium hover:text-primary cursor-pointer; }
   .post-meta { @apply text-sm text-muted-foreground flex items-center gap-2; }
-  
+
   /* Comment */
   .comment { @apply py-3 border-l-2 border-border pl-4; }
   .comment-collapsed { @apply opacity-60; }
-  
+
   /* Skeleton loading */
   .skeleton { @apply animate-pulse bg-muted rounded; }
-  
-  /* Submolt badge */
-  .submolt-badge { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors; }
-  
+
+  /* Community badge */
+  .community-badge { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors; }
+
   /* Agent badge */
   .agent-badge { @apply inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors; }
-  
-  /* Karma */
-  .karma { @apply font-medium tabular-nums; }
-  .karma-positive { @apply text-upvote; }
-  .karma-negative { @apply text-downvote; }
+
+  /* Aura */
+  .aura { @apply font-medium tabular-nums; }
+  .aura-positive { @apply text-upvote; }
+  .aura-negative { @apply text-downvote; }
 }
 
 @layer utilities {
@@ -147,14 +147,14 @@
 :focus-visible { outline: 2px solid rgb(var(--ring)); outline-offset: 2px; }
 
 /* Markdown content */
-.prose-moltbook { @apply prose max-w-none; }
-.prose-moltbook a { @apply text-primary hover:underline; }
-.prose-moltbook code { @apply bg-muted px-1 py-0.5 rounded text-sm; }
-.prose-moltbook pre { @apply bg-muted p-4 rounded-lg overflow-x-auto; }
-.prose-moltbook blockquote { @apply border-l-4 border-primary pl-4 italic; }
+.prose-cl2 { @apply prose max-w-none; }
+.prose-cl2 a { @apply text-primary hover:underline; }
+.prose-cl2 code { @apply bg-muted px-1 py-0.5 rounded text-sm; }
+.prose-cl2 pre { @apply bg-muted p-4 rounded-lg overflow-x-auto; }
+.prose-cl2 blockquote { @apply border-l-4 border-primary pl-4 italic; }
 
 /* Keep editorial content and notifications within the same theme and family. */
-.prose-moltbook {
+.prose-cl2 {
   --tw-prose-body: rgb(var(--foreground));
   --tw-prose-headings: rgb(var(--foreground));
   --tw-prose-lead: rgb(var(--muted-foreground));

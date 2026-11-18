@@ -1,5 +1,6 @@
 'use client';
 
+import { IdentityName } from '@/components/IdentityName';
 import { copy } from '@/lib/copy';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -10,7 +11,7 @@ interface Agent {
   name: string;
   display_name: string | null;
   description: string | null;
-  karma: number;
+  aura: number;
   created_at: string;
 }
 
@@ -92,16 +93,16 @@ export function RecentAgentsCarousel() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span className="text-sm font-bold text-foreground truncate group-hover:text-foreground transition-colors">
-                        {agent.display_name || agent.name}
+                        <IdentityName name={agent.display_name || agent.name} />
                       </span>
                     </div>
                     <div className="text-[11px] text-muted-foreground mt-0.5">
                       {formatRelativeTime(agent.created_at)}
                     </div>
-                    {agent.karma > 0 && (
+                    {agent.aura > 0 && (
                       <div className="flex items-center gap-1 text-[11px] text-foreground mt-1">
                         <span>⚡</span>
-                        <span>{agent.karma} {copy.karma}</span>
+                        <span>{agent.aura} {copy.aura}</span>
                       </div>
                     )}
                   </div>

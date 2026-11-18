@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useUIStore } from '@/store';
-import { useAuth, useSubmolts } from '@/hooks';
+import { useAuth, useCommunities } from '@/hooks';
 import { api } from '@/lib/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, Button, Input, Textarea, Card } from '@/components/ui';
 import { FileText, Link as LinkIcon, X, Image, ChevronDown } from 'lucide-react';
@@ -17,7 +17,7 @@ import {errorMessage} from '@/lib/copy';
 import { cn } from '@/lib/utils';
 
 const postSchema = z.object({
-  submolt: z.string().min(1, copy.pleaseSelectACommunity),
+  community: z.string().min(1, copy.pleaseSelectACommunity),
   title: z.string().min(1, copy.titleIsRequired).max(300, copy.titleTooLong),
   content: z.string().max(40000, copy.contentTooLong).optional(),
   url: z.string().url(copy.invalidURL).optional().or(z.literal('')),
@@ -32,32 +32,32 @@ export function CreatePostModal() {
   const router = useRouter();
   const { createPostOpen, closeCreatePost } = useUIStore();
   const { isAuthenticated } = useAuth();
-  const { data: submoltsData } = useSubmolts();
+  const { data: communitiesData } = useCommunities();
   const [postType, setPostType] = React.useState<'text' | 'link'>('text');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [showSubmoltDropdown, setShowSubmoltDropdown] = React.useState(false);
+  const [showCommunityDropdown, setShowCommunityDropdown] = React.useState(false);
 
   const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<PostForm>({
     resolver: zodResolver(postSchema),
-    defaultValues: { submolt: '', title: '', content: '', url: '' },
+    defaultValues: { community: '', title: '', content: '', url: '' },
   });
 
-  const selectedSubmolt = watch('submolt');
-  React.useEffect(()=>{if(createPostOpen){const match=window.location.pathname.match(/^\/cl2\/([^/]+)/);if(match)setValue('submolt',decodeURIComponent(match[1]));}},[createPostOpen,setValue]);
+  const selectedCommunity = watch('community');
+  React.useEffect(()=>{if(createPostOpen){const match=window.location.pathname.match(/^\/2\/([^/]+)/);if(match)setValue('community',decodeURIComponent(match[1]));}},[createPostOpen,setValue]);
 
   const onSubmit = async (data: PostForm) => {
     if (!isAuthenticated || isSubmitting) return;
-    
+
     setIsSubmitting(true);
     try {
       const post = await api.createPost({
-        submolt: data.submolt,
+        community: data.community,
         title: data.title,
         content: postType === 'text' ? data.content : undefined,
         url: postType === 'link' ? data.url : undefined,
         postType,
       });
-      
+
       closeCreatePost();
       reset();
       router.push(`/post/${post.id}`);
@@ -78,38 +78,38 @@ export function CreatePostModal() {
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {/* Submolt selector */}
+          {/* Community selector */}
           <div className="relative">
             <button
               type="button"
-              onClick={() => setShowSubmoltDropdown(!showSubmoltDropdown)}
+              onClick={() => setShowCommunityDropdown(!showCommunityDropdown)}
               className="w-full flex items-center justify-between px-3 py-2 border rounded-md hover:bg-muted transition-colors"
             >
-              <span className={selectedSubmolt ? 'text-foreground' : 'text-muted-foreground'}>
-                {selectedSubmolt ? `cl2/${selectedSubmolt}` : copy.chooseACommunity}
+              <span className={selectedCommunity ? 'text-foreground' : 'text-muted-foreground'}>
+                {selectedCommunity ? `/${selectedCommunity}` : copy.chooseACommunity}
               </span>
               <ChevronDown className="h-4 w-4" />
             </button>
-            
-            {showSubmoltDropdown && (
+
+            {showCommunityDropdown && (
               <div className="absolute z-10 w-full mt-1 max-h-60 overflow-y-auto rounded-md border bg-popover shadow-lg">
-                {submoltsData?.data.map(submolt => (
+                {communitiesData?.data.map(community => (
                   <button
-                    key={submolt.id}
+                    key={community.id}
                     type="button"
                     onClick={() => {
-                      setValue('submolt', submolt.name);
-                      setShowSubmoltDropdown(false);
+                      setValue('community', community.name);
+                      setShowCommunityDropdown(false);
                     }}
                     className="w-full px-3 py-2 text-left hover:bg-muted transition-colors"
                   >
-                    <span className="font-medium">cl2/{submolt.name}</span>
-                    {submolt.displayName && <span className="text-muted-foreground ml-2">{submolt.displayName}</span>}
+                    <span className="font-medium">/{community.name}</span>
+                    {community.displayName && <span className="text-muted-foreground ml-2">{community.displayName}</span>}
                   </button>
                 ))}
               </div>
             )}
-            {errors.submolt && <p className="text-xs text-destructive mt-1">{errors.submolt.message}</p>}
+            {errors.community && <p className="text-xs text-destructive mt-1">{errors.community.message}</p>}
           </div>
 
           {/* Post type tabs */}
@@ -197,7 +197,7 @@ export function SearchModal() {
     <Dialog open={searchOpen} onOpenChange={closeSearch}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{copy.searchMoltbook2}</DialogTitle>
+          <DialogTitle>{copy.searchChile22}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSearch}>
           <Input

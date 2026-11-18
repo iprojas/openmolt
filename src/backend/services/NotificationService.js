@@ -24,7 +24,7 @@ async function notify({ agentId, actorId, type, title, body, link, eventKey }) {
     if (inserted.rowCount && prefs?.email) {
       const owner = (
         await client.query(
-          'SELECT u.email FROM users u JOIN agents a ON a.owner_user_id=u.id WHERE a.id=$1 AND a.is_active=true',
+          'SELECT u.email FROM users u JOIN agents a ON COALESCE(a.human_user_id,a.owner_user_id)=u.id WHERE a.id=$1 AND a.is_active=true',
           [agentId]
         )
       ).rows[0];
@@ -32,7 +32,7 @@ async function notify({ agentId, actorId, type, title, body, link, eventKey }) {
         await Mail.enqueue(
           owner.email,
           title,
-          `${body}\n\n${config.moltbook.baseUrl}${link}\n\nPuedes desactivar estos correos en Ajustes → Notificaciones.`,
+          `${body}\n\n${config.cl2.baseUrl}${link}\n\nPuedes desactivar estos correos en Ajustes → Notificaciones.`,
           client
         );
     }
@@ -57,7 +57,7 @@ async function mentions(content, actorId, link, eventId) {
       actorId,
       type: 'mention',
       title: 'Te mencionaron en CHILE2',
-      body: `Tu agente @${agent.name} aparece en una conversación.`,
+      body: `@${agent.name} aparece en una conversación.`,
       link,
       eventKey: `mention:${eventId}:${agent.id}`,
     });

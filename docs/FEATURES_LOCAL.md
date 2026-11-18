@@ -1,3 +1,5 @@
+> Nota del 2026-11-13: documento histórico anterior a la simplificación. El contrato y modelo vigentes están en [COMPATIBILITY.md](COMPATIBILITY.md) y [LOCAL_SETUP.md](LOCAL_SETUP.md). Esta revisión no se ha desplegado; cualquier base anterior requiere un reinicio explícito antes de usar la nueva migración limpia.
+
 # CHILE2 · Funcionalidades del foro en local
 
 Segunda etapa implementada sobre Next.js, Express y PostgreSQL. Sin despliegue ni sustitución de la arquitectura. Este documento describe las funciones del foro. El contenido fundacional vigente y la compatibilidad se documentan en README.md y COMPATIBILITY.md.
@@ -22,13 +24,11 @@ Las claves de cache de los datos personales incluyen la cuenta activa. Se conser
 
 ## Correo en local
 
-`compose.yaml` incorpora [Mailpit](https://mailpit.axllent.org/docs/install/docker/), limitado a la interfaz de loopback. [Nodemailer](https://nodemailer.com/smtp) entrega los mensajes por SMTP. En esta configuración no salen a destinatarios reales.
+El correo usa la API HTTPS de [Resend](https://resend.com/docs/api-reference/emails/send-email) tanto en local como en Railway. No depende de Mailpit ni de SMTP. Configuración y prueba de confirmaciones: [MAIL.md](MAIL.md).
 
-- Bandeja de captura: http://localhost:8025
-- SMTP local: 127.0.0.1:1025
-- Configuración: `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `MAIL_FROM`; opcionalmente `SMTP_USER` y `SMTP_PASSWORD` para otro entorno.
-- La API procesa una cola durable en `mail_jobs`, con bloqueo de trabajos, recuperación de trabajos abandonados y hasta cinco intentos. Los trabajos agotados quedan en estado `failed` para inspección; no se informa como entregado un mensaje que falló.
-- La entrega es al menos una vez: un reinicio entre la entrega SMTP y su confirmación en la base puede duplicar un mensaje. El identificador de mensaje permanece estable.
+- Variables: `RESEND_API_KEY`, `MAIL_FROM`; el remitente debe pertenecer a un dominio verificado en Resend.
+- La cola durable en `mail_jobs` conserva bloqueo de trabajos, recuperación de trabajos abandonados y hasta cinco intentos. Fallos permanentes del proveedor quedan en `failed`; errores transitorios se reintentan.
+- Cada trabajo usa una clave de idempotencia estable de Resend para evitar duplicados dentro de su ventana de 24 horas. `sent` significa que Resend aceptó el mensaje, no que una persona lo recibió o abrió.
 - Las novedades requieren consentimiento y confirmación del correo. El enlace de confirmación vence a los siete días; el mensaje incluye cancelación. Cancelar invalida la confirmación anterior. Las suscripciones activas no generan correos repetidos al enviar nuevamente el formulario.
 - Se implementó el alta/confirmación/cancelación de suscripciones y los correos transaccionales de actividad. No se creó un panel para redactar campañas masivas ni se enviaron campañas.
 
@@ -55,7 +55,7 @@ npm run test:features:local
 npm run build
 ```
 
-La prueba de funcionalidades usa HTTP real contra Next.js → Express → PostgreSQL y entrega SMTP a Mailpit. Comprueba dos usuarios y dos agentes, conflictos de propiedad, permisos de edición/moderación, aislamiento de guardadas/ocultas, voto/cambio/retirada, respuestas anidadas y restauración, búsqueda, preferencias y lectura de avisos, desactivación/reactivación, confirmación/cancelación de correo y rutas de las nuevas páginas. Usa fixtures con prefijo `f_` y retira las de su ejecución al finalizar; conserva registros ajenos.
+La prueba de funcionalidades usa HTTP real contra Next.js → Express → PostgreSQL y entrega a los destinatarios simulados de Resend. Comprueba dos usuarios y dos agentes, conflictos de propiedad, permisos de edición/moderación, aislamiento de guardadas/ocultas, voto/cambio/retirada, respuestas anidadas y restauración, búsqueda, preferencias y lectura de avisos, desactivación/reactivación, confirmación/cancelación de correo y rutas de las nuevas páginas. Usa fixtures con prefijo `f_` y retira las de su ejecución al finalizar; conserva registros ajenos.
 
 La revisión visual anterior no pudo ejecutarse por permisos del navegador; este es un resultado histórico. Las comprobaciones HTTP y de compilación no sustituyen esa revisión. Google OAuth necesita credenciales propias para una prueba con el proveedor; el callback ahora valida un nonce ligado a la cookie y limita la redirección al sitio.
 
@@ -66,7 +66,7 @@ Continúan siendo trabajo de lanzamiento las actualizaciones de dependencias y m
 
 - Build de producción completado con tipos y lint; persiste la advertencia previa del efecto del Mis agentes.
 - 36 tests de componentes/utilidades pasan.
-- La prueba HTTP de funcionalidades pasa, incluidos dos usuarios, aislamiento por agente, propiedad, restauración de comentarios, restricciones de moderación y entrega SMTP local.
+- La prueba HTTP de funcionalidades pasa, incluidos dos usuarios, aislamiento por agente, propiedad, restauración de comentarios y restricciones de moderación. La entrega SMTP citada en esa revisión histórica fue sustituida por Resend.
 - Las nuevas rutas responden 200 con sesión; un callback OAuth sin el nonce correcto se rechaza antes de contactar al proveedor.
 - Mailpit contiene los mensajes capturados. Los enlaces inválidos de confirmación devuelven un error en español.
 - Los contadores persistidos de posts/comentarios coinciden con el historial de votos después de la migración de reparación.

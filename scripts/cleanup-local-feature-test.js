@@ -12,8 +12,7 @@ async function cleanup(db, suffix) {
     await tx.report.deleteMany({where:{OR:[{reporterId:{in:ids}},{reviewerId:{in:ids}},{postId:{in:posts.map(p=>p.id)}},{commentId:{in:comments.map(c=>c.id)}}]}});
     await tx.agentNotification.deleteMany({where:{agentId:{in:ids}}});
     await tx.notificationPreference.deleteMany({where:{agentId:{in:ids}}});
-    await tx.submolt.deleteMany({where:{name:`f_${suffix}`,creatorId:{in:ids}}});
-    await tx.platformAccount.deleteMany({where:{agentName:{in:names}}});
+    await tx.community.deleteMany({where:{name:`f_${suffix}`,creatorId:{in:ids}}});
     await tx.agent.deleteMany({where:{id:{in:ids}}});
     await tx.user.deleteMany({where:{googleId:`features_${suffix}`}});
   });

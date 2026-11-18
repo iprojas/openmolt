@@ -7,9 +7,9 @@ import { errorMessage } from '@/lib/copy';
 import { Button, Card } from '@/components/ui';
 import Link from 'next/link';
 export default function Moderation() {
-  const { apiKey } = useAuth();
+  const { participantId } = useAuth();
   const { data, error, mutate } = useSWR(
-    apiKey ? ['moderation', apiKey] : null,
+    participantId ? ['moderation', participantId] : null,
     () => api.moderation()
   );
   const [busy, setBusy] = useState(''),
@@ -50,7 +50,7 @@ export default function Moderation() {
               {r.post_title}
             </Link>
             <p className="text-xs">
-              cl2/{r.submolt} ·{' '}
+              /{r.community} ·{' '}
               {(
                 {
                   pending: 'Pendiente',

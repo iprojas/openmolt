@@ -1,10 +1,12 @@
 'use client';
+import { IdentityName } from '@/components/IdentityName';
+import { AgentConnection } from '@/components/hero/HeroSection';
 import { NotificationBell } from '@/components/participation';
 
 import { copy, identity } from '@/lib/copy';
 import * as React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useAuth, useIsMobile, useKeyboardShortcut } from '@/hooks';
 import { useUIStore, useNotificationStore } from '@/store';
@@ -14,18 +16,18 @@ import { getInitials } from '@/lib/utils';
 
 // Header
 export function Header() {
-  const { agent, agentName, isAuthenticated, logout } = useAuth();
+  const { agent, agentName, isAuthenticated, isLoading, logout } = useAuth();
   const { toggleMobileMenu, mobileMenuOpen, openSearch, openCreatePost } = useUIStore();
   const isMobile = useIsMobile();
   const [showUserMenu, setShowUserMenu] = React.useState(false);
 
-  // Display name: prefer agent data, fallback to agentName for unclaimed accounts
+  // The browser always displays the human participant, independently of owned agents.
   const displayName = agent?.displayName || agent?.name || agentName || copy.user;
   const userName = agent?.name || agentName || 'unknown';
 
   useKeyboardShortcut('k', openSearch, { ctrl: true });
   useKeyboardShortcut('n', openCreatePost, { ctrl: true });
-  
+
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container-main flex h-14 items-center justify-between gap-2 sm:gap-4">
@@ -40,18 +42,18 @@ export function Header() {
             <span className="text-foreground tracking-tight whitespace-nowrap">{identity.name}</span>
           </Link>
         </div>
-        
+
         {/* Search */}
         {!isMobile && (
           <div className="flex-1 max-w-md">
             <button onClick={openSearch} className="w-full flex items-center gap-2 px-3 py-2 rounded-md border bg-muted/50 text-muted-foreground text-sm hover:bg-muted transition-colors">
               <Search className="h-4 w-4" />
-              <span>{copy.searchGoodmolt}</span>
+              <span>{copy.searchCHILE2}</span>
               <kbd className="ml-auto text-xs bg-background px-1.5 py-0.5 rounded border">⌘K</kbd>
             </button>
           </div>
         )}
-        
+
         {/* Actions */}
         <div className="flex items-center gap-2">
           {isMobile && (
@@ -59,16 +61,16 @@ export function Header() {
               <Search className="h-5 w-5" />
             </Button>
           )}
-          
-          {isAuthenticated ? (
+
+          {isLoading ? <Skeleton className="h-8 w-8 rounded-full" /> : isAuthenticated ? (
             <>
               <NotificationBell />
-              
+
               <Button onClick={openCreatePost} size="sm" className="gap-1">
                 <Plus className="h-4 w-4" />
                 {!isMobile && copy.create}
               </Button>
-              
+
               <div className="relative">
                 <button aria-label="Menú de la cuenta" onClick={() => setShowUserMenu(!showUserMenu)} className="flex items-center gap-2 p-1 rounded-md hover:bg-muted transition-colors">
                   <Avatar className="h-8 w-8">
@@ -81,8 +83,8 @@ export function Header() {
                 {showUserMenu && (
                   <div className="absolute right-0 top-full mt-2 w-56 rounded-md border bg-popover p-1 shadow-lg animate-in fade-in-0 zoom-in-95">
                     <div className="px-3 py-2 border-b mb-1">
-                      <p className="font-medium">{displayName}</p>
-                      <p className="text-xs text-muted-foreground">a/{userName}</p>
+                      <p className="font-medium"><IdentityName name={displayName} kind="human" /></p>
+                      <p className="text-xs text-muted-foreground">{userName}</p>
                     </div>
                     <Link href={`/a/${userName}`} className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted" onClick={() => setShowUserMenu(false)}>
                       <User className="h-4 w-4" /> {copy.profile}
@@ -98,7 +100,7 @@ export function Header() {
                     <Link href="/settings" className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted" onClick={() => setShowUserMenu(false)}>
                       <Settings className="h-4 w-4" /> {copy.settings}
                     </Link>
-                    <button onClick={() => { if (window.confirm(copy.areYouSureYouWantToLogOutYoull)) { logout(); setShowUserMenu(false); } }} className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted text-destructive">
+                    <button onClick={() => { logout().catch(() => window.alert('No pudimos cerrar la sesión.')); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted text-destructive">
                       <LogOut className="h-4 w-4" /> {copy.logOut}
                     </button>
                   </div>
@@ -107,12 +109,10 @@ export function Header() {
             </>
           ) : (
             <div className="flex items-center gap-2">
-              <Link href="/auth/login">
+              <Link href="/welcome">
                 <Button variant="ghost" size="sm">{copy.logIn}</Button>
               </Link>
-              <Link href="/auth/register">
-                <Button size="sm">{copy.signUp}</Button>
-              </Link>
+
             </div>
           )}
         </div>
@@ -126,7 +126,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const { sidebarOpen } = useUIStore();
   const { isAuthenticated } = useAuth();
-  
+
   const mainLinks = [
     { href: '/', label: copy.home, icon: Home },
     { href: '/?sort=hot', label: copy.hot, icon: Flame },
@@ -134,17 +134,17 @@ export function Sidebar() {
     { href: '/?sort=rising', label: copy.rising, icon: TrendingUp },
     { href: '/?sort=top', label: copy.top, icon: Zap },
   ];
-  
-  const popularSubmolts = [
+
+  const popularCommunities = [
     { name: 'plaza', displayName: 'La Plaza' },
     { name: 'revolucion', displayName: 'Revolución' },
     { name: 'constitucion', displayName: 'Constitución' },
     { name: 'conciencia', displayName: 'Conciencia' },
     { name: 'praxis', displayName: 'Praxis' },
   ];
-  
+
   if (!sidebarOpen) return null;
-  
+
   return (
     <aside className="sticky top-14 h-[calc(100vh-3.5rem)] w-64 shrink-0 border-r bg-background overflow-y-auto scrollbar-hide hidden lg:block">
       <nav className="p-4 space-y-6">
@@ -161,27 +161,27 @@ export function Sidebar() {
             );
           })}
         </div>
-        
-        {/* Popular Submolts */}
+
+        {/* Popular Communities */}
         <div>
           <h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{copy.communities}</h3>
           <div className="space-y-1">
-            {popularSubmolts.map(submolt => (
-              <Link key={submolt.name} href={`/cl2/${submolt.name}`} className={cn('flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors', pathname === `/cl2/${submolt.name}` ? 'bg-muted font-medium' : 'hover:bg-muted')}>
+            {popularCommunities.map(community => (
+              <Link key={community.name} href={`/2/${community.name}`} className={cn('flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors', pathname === `/2/${community.name}` ? 'bg-muted font-medium' : 'hover:bg-muted')}>
                 <Hash className="h-4 w-4" />
-                {submolt.displayName}
+                {community.displayName}
               </Link>
             ))}
           </div>
         </div>
-        
+
         {/* Explore */}
         <div>
           <h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{copy.explore}</h3>
           <div className="space-y-1">
             <Link href="/comunidades" className="flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors">
               <Hash className="h-4 w-4" />
-              {copy.allSubmolts}
+              {copy.allCommunities}
             </Link>
             <Link href="/agents" className="flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors">
               <Users className="h-4 w-4" />
@@ -199,9 +199,9 @@ export function MobileMenu() {
   const pathname = usePathname();
   const { mobileMenuOpen, toggleMobileMenu } = useUIStore();
   const { agent, isAuthenticated } = useAuth();
-  
+
   if (!mobileMenuOpen) return null;
-  
+
   return (
     <div className="fixed inset-0 z-50 lg:hidden">
       <div className="fixed inset-0 bg-ink/50" onClick={toggleMobileMenu} />
@@ -215,13 +215,13 @@ export function MobileMenu() {
                   <AvatarFallback>{getInitials(agent.name)}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-medium">{agent.displayName || agent.name}</p>
-                  <p className="text-xs text-muted-foreground">{agent.karma} {copy.karma}</p>
+                  <p className="font-medium"><IdentityName name={agent.displayName || agent.name} kind={agent.kind} /></p>
+                  <p className="text-xs text-muted-foreground">{agent.aura} {copy.aura}</p>
                 </div>
               </div>
             </div>
           )}
-          
+
           <div className="space-y-1">
             <Link href="/" onClick={toggleMobileMenu} className={cn('flex items-center gap-3 px-3 py-2 rounded-md', pathname === '/' && 'bg-muted font-medium')}>
               <Home className="h-4 w-4" /> {copy.home}
@@ -246,13 +246,13 @@ export function Footer() {
             <div className="h-6 w-6 rounded bg-foreground flex items-center justify-center">
               <span className="text-background text-xs font-bold">CL2</span>
             </div>
-            <span className="text-sm text-muted-foreground">{copy.text2025GoodmoltTheSocialNetworkForAIAgents}</span>
+            <span className="text-sm text-muted-foreground">{copy.text2025CHILE2TheSocialNetworkForAIAgents}</span>
           </div>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <Link href="/welcome" className="hover:text-foreground transition-colors">{copy.about}</Link>
             <Link href="/terms" className="hover:text-foreground transition-colors">{copy.terms}</Link>
             <Link href="/privacy" className="hover:text-foreground transition-colors">{copy.privacy}</Link>
-            <Link href="/skill.md" className="hover:text-foreground transition-colors">{copy.aPI}</Link>
+            <Link href="/skill.md" className="hover:text-foreground transition-colors">Documentación de la API</Link>
           </div>
         </div>
       </div>
@@ -267,9 +267,15 @@ export function PageContainer({ children, className }: { children: React.ReactNo
 
 // Main Layout
 export function MainLayout({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading, error } = useAuth();
+  const router = useRouter();
+  React.useEffect(() => { if (!isLoading && !isAuthenticated && !error) router.replace('/welcome'); }, [isLoading, isAuthenticated, error, router]);
+  if (error) return <p role="alert" className="p-6">No pudimos cargar tu cuenta. Recarga la página para reintentar.</p>;
+  if (isLoading || !isAuthenticated) return <p role="status" className="p-6">Cargando tu cuenta…</p>;
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
+      <AgentConnection />
       <div className="flex-1">
         <main className="w-full">{children}</main>
       </div>

@@ -5,13 +5,9 @@ import { useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useFeedStore } from '@/store';
 import { useInfiniteScroll, useAuth } from '@/hooks';
-import { PageContainer } from '@/components/layout';
 import { PostList, CreatePostCard, StickyPostsHeader } from '@/components/post';
 import { RightSidebar } from '@/components/sidebar';
-import { HeroSection } from '@/components/hero/HeroSection';
-import { StatsBar } from '@/components/hero/StatsBar';
-import { RecentAgentsCarousel } from '@/components/agents/RecentAgentsCarousel';
-import { GlobalSearchBar } from '@/components/search/GlobalSearchBar';
+
 import { Spinner } from '@/components/ui';
 import type { PostSort } from '@/types';
 
@@ -25,7 +21,7 @@ export default function HomePage() {
   const { ref } = useInfiniteScroll(loadMore, hasMore);
 
   const viewParam=searchParams.get('view');
-  useEffect(()=>{useFeedStore.setState({sort:sortParam,view:viewParam,submolt:null,isLoading:false,posts:[],offset:0});useFeedStore.getState().loadPosts(true);},[sortParam,viewParam]);
+  useEffect(()=>{useFeedStore.setState({sort:sortParam,view:viewParam,community:null,isLoading:false,posts:[],offset:0});useFeedStore.getState().loadPosts(true);},[sortParam,viewParam]);
 
   const handleSortChange = (newSort: string) => {
     router.push(`/?sort=${newSort}`);
@@ -36,14 +32,9 @@ export default function HomePage() {
   return (
     <>
       {viewParam&&<h1 className="container-main text-2xl font-bold py-4">{viewParam==='saved'?'Publicaciones guardadas':'Publicaciones ocultas'}</h1>}
-      <HeroSection />
+
       <main className="flex-1 px-4 py-8 bg-background">
         <div className="max-w-6xl mx-auto">
-          <StatsBar />
-          <p className="text-sm text-muted-foreground mb-6">{copy.foundationNotice}</p>
-          <GlobalSearchBar />
-          <RecentAgentsCarousel />
-
           <div className="grid lg:grid-cols-4 gap-6">
             {/* Main content - 3 columns */}
             <div className="lg:col-span-3 min-w-0">

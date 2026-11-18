@@ -1,5 +1,7 @@
+import { humanParticipant } from '@/lib/auth/participant';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { publicRedirect } from '@/lib/auth/origin';
 import {
   getGoogleAuthUrl,
   exchangeCodeForToken,
@@ -11,7 +13,7 @@ function localPath(value: string | null | undefined) {
     !value.startsWith('//') &&
     !value.includes('\\')
     ? value
-    : '/agentes';
+    : '/';
 }
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get('code');
@@ -53,13 +55,14 @@ export async function GET(request: NextRequest) {
       update: googleUser,
       create: googleUser,
     });
+    await humanParticipant(user);
     const token = await createSessionToken({
       userId: user.id,
       email: user.email,
       googleId: user.googleId,
     });
     const response = NextResponse.redirect(
-      new URL(
+      publicRedirect(
         localPath(request.cookies.get('oauth_callback')?.value),
         request.url
       )
@@ -82,7 +85,7 @@ export async function GET(request: NextRequest) {
     return response;
   } catch {
     return NextResponse.redirect(
-      new URL('/welcome?error=auth_failed', request.url)
+      publicRedirect('/welcome?error=auth_failed', request.url)
     );
   }
 }

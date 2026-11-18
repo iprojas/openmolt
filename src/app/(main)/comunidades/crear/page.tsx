@@ -34,15 +34,15 @@ export default function CreateCommunity() {
               setBusy(true);
               setError('');
               try {
-                const sub = await api.createSubmolt({
+                const sub = await api.createCommunity({
                   name,
                   displayName,
                   description,
                 });
                 await mutate(
-                  (key) => Array.isArray(key) && key[0] === 'submolts'
+                  (key) => Array.isArray(key) && key[0] === 'communities'
                 );
-                router.push(`/cl2/${sub.name}`);
+                router.push(`/2/${sub.name}`);
               } catch (err) {
                 setError(errorMessage(err));
               } finally {

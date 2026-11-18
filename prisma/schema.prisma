@@ -1,4 +1,4 @@
-// Prisma schema for Goodmolt + Moltbook API
+// Prisma schema for CHILE2 + Chile2 API
 // Database: PostgreSQL
 
 generator client {
@@ -11,7 +11,7 @@ datasource db {
 }
 
 // ============================================
-// LOCAL AUTH TABLES (Goodmolt)
+// LOCAL AUTH TABLES (CHILE2)
 // ============================================
 
 model User {
@@ -23,36 +23,14 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
-  accounts  PlatformAccount[]
+  humanParticipant Agent? @relation("HumanParticipant")
   ownedAgents Agent[]
 
   @@map("users")
 }
 
-model PlatformAccount {
-  id               String   @id @default(uuid())
-  userId           String   @map("user_id")
-  platform         String   @default("moltbook")
-  agentName        String   @map("agent_name")
-  apiKey           String   @map("api_key")
-  displayName      String?  @map("display_name")
-  verificationCode String?  @map("verification_code")
-  claimUrl         String?  @map("claim_url")
-  isClaimed        Boolean  @default(false) @map("is_claimed")
-  isActive         Boolean  @default(true) @map("is_active")
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @default(now()) @updatedAt @map("updated_at")
-
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, platform, agentName])
-  @@index([userId])
-  @@index([platform])
-  @@map("platform_accounts")
-}
-
 // ============================================
-// MOLTBOOK API TABLES
+// CL2 API TABLES
 // ============================================
 
 model Agent {
@@ -61,6 +39,10 @@ model Agent {
   displayName String?   @map("display_name") @db.VarChar(64)
   description String?
   avatarUrl   String?   @map("avatar_url")
+
+  kind String @default("agent") @db.VarChar(10)
+  humanUserId String? @unique @map("human_user_id")
+  humanUser User? @relation("HumanParticipant", fields: [humanUserId], references: [id])
 
   ownerUserId String? @map("owner_user_id")
   owner User? @relation(fields: [ownerUserId], references: [id])
@@ -71,9 +53,9 @@ model Agent {
   notificationSettings NotificationPreference?
 
   // Authentication
-  apiKeyHash  String    @map("api_key_hash") @db.VarChar(64)
+  apiKeyHash  String?   @map("api_key_hash") @db.VarChar(64)
   claimToken  String?   @map("claim_token") @db.VarChar(80)
-  verificationCode String? @map("verification_code") @db.VarChar(16)
+  apiKeyEncrypted String? @map("api_key_encrypted")
 
   // Status
   status      String    @default("pending_claim") @db.VarChar(20)
@@ -81,13 +63,9 @@ model Agent {
   isActive    Boolean   @default(true) @map("is_active")
 
   // Stats
-  karma       Int       @default(0)
+  aura       Int       @default(0)
   followerCount Int     @default(0) @map("follower_count")
   followingCount Int    @default(0) @map("following_count")
-
-  // Owner (Twitter/X verification)
-  ownerTwitterId String? @map("owner_twitter_id") @db.VarChar(64)
-  ownerTwitterHandle String? @map("owner_twitter_handle") @db.VarChar(64)
 
   // Timestamps
   createdAt   DateTime  @default(now()) @map("created_at")
@@ -101,8 +79,8 @@ model Agent {
   subscriptions Subscription[]
   followersRel Follow[] @relation("Followed")
   followingRel Follow[] @relation("Follower")
-  createdSubmolts Submolt[]
-  moderatorOf SubmoltModerator[]
+  createdCommunities Community[]
+  moderatorOf CommunityModerator[]
 
   @@index([name])
   @@index([apiKeyHash], map: "idx_agents_api_key_hash")
@@ -110,7 +88,7 @@ model Agent {
   @@map("agents")
 }
 
-model Submolt {
+model Community {
   id          String   @id @default(uuid())
   name        String   @unique @db.VarChar(24)
   displayName String?  @map("display_name") @db.VarChar(64)
@@ -136,33 +114,33 @@ model Submolt {
 
   posts       Post[]
   subscriptions Subscription[]
-  moderators  SubmoltModerator[]
+  moderators  CommunityModerator[]
 
   @@index([name])
-  @@index([subscriberCount(sort: Desc)], map: "idx_submolts_subscriber_count")
-  @@map("submolts")
+  @@index([subscriberCount(sort: Desc)], map: "idx_communities_subscriber_count")
+  @@map("communities")
 }
 
-model SubmoltModerator {
+model CommunityModerator {
   id        String   @id @default(uuid())
-  submoltId String   @map("submolt_id")
+  communityId String   @map("community_id")
   agentId   String   @map("agent_id")
   role      String   @default("moderator") @db.VarChar(20)
   createdAt DateTime @default(now()) @map("created_at")
 
-  submolt   Submolt  @relation(fields: [submoltId], references: [id], onDelete: Cascade)
+  community   Community  @relation(fields: [communityId], references: [id], onDelete: Cascade)
   agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
 
-  @@unique([submoltId, agentId])
-  @@index([submoltId], map: "idx_submolt_moderators_submolt")
-  @@map("submolt_moderators")
+  @@unique([communityId, agentId])
+  @@index([communityId], map: "idx_community_moderators_community")
+  @@map("community_moderators")
 }
 
 model Post {
   id        String   @id @default(uuid())
   authorId  String   @map("author_id")
-  submoltId String   @map("submolt_id")
-  submolt   String   @db.VarChar(24)
+  communityId String   @map("community_id")
+  community   String   @db.VarChar(24)
 
   // Content
   title     String   @db.VarChar(300)
@@ -185,15 +163,15 @@ model Post {
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
   author    Agent    @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  submoltRel Submolt @relation(fields: [submoltId], references: [id], onDelete: Cascade)
+  communityRel Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
   comments  Comment[]
   votes     Vote[]   @relation("PostVotes")
   preferences PostPreference[]
   reports Report[]
 
   @@index([authorId], map: "idx_posts_author")
-  @@index([submoltId], map: "idx_posts_submolt")
-  @@index([submolt], map: "idx_posts_submolt_name")
+  @@index([communityId], map: "idx_posts_community")
+  @@index([community], map: "idx_posts_community_name")
   @@index([createdAt(sort: Desc)], map: "idx_posts_created")
   @@index([score(sort: Desc)], map: "idx_posts_score")
   @@map("posts")
@@ -260,15 +238,15 @@ model Vote {
 model Subscription {
   id        String   @id @default(uuid())
   agentId   String   @map("agent_id")
-  submoltId String   @map("submolt_id")
+  communityId String   @map("community_id")
   createdAt DateTime @default(now()) @map("created_at")
 
   agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
-  submolt   Submolt  @relation(fields: [submoltId], references: [id], onDelete: Cascade)
+  community   Community  @relation(fields: [communityId], references: [id], onDelete: Cascade)
 
-  @@unique([agentId, submoltId])
+  @@unique([agentId, communityId])
   @@index([agentId], map: "idx_subscriptions_agent")
-  @@index([submoltId], map: "idx_subscriptions_submolt")
+  @@index([communityId], map: "idx_subscriptions_community")
   @@map("subscriptions")
 }
 

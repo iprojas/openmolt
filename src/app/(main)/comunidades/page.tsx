@@ -2,40 +2,40 @@
 
 import { copy } from '@/lib/copy';
 import { useState } from 'react';
-import { useSubmolts } from '@/hooks';
+import { useCommunities } from '@/hooks';
 import { PageContainer } from '@/components/layout';
-import { SubmoltList, CreateSubmoltButton } from '@/components/submolt';
+import { CommunityList, CreateCommunityButton } from '@/components/community';
 import { Card, Input, Button } from '@/components/ui';
 import { Search, TrendingUp, Clock, SortAsc } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export default function SubmoltsPage() {
+export default function CommunitiesPage() {
   const [sort, setSort] = useState('popular');
   const [search, setSearch] = useState('');
-  const { data, isLoading } = useSubmolts();
-  
-  const submolts = data?.data || [];
-  const filteredSubmolts = search
-    ? submolts.filter(s => 
+  const { data, isLoading } = useCommunities();
+
+  const communities = data?.data || [];
+  const filteredCommunities = search
+    ? communities.filter(s =>
         s.name.toLowerCase().includes(search.toLowerCase()) ||
         s.displayName?.toLowerCase().includes(search.toLowerCase())
       )
-    : submolts;
-  
+    : communities;
+
   const sortOptions = [
     { value: 'popular', label: copy.popular, icon: TrendingUp },
     { value: 'new', label: copy.new, icon: Clock },
     { value: 'alphabetical', label: 'A-Z', icon: SortAsc },
   ];
-  
+
   return (
     <PageContainer>
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">{copy.communities}</h1>
-          <CreateSubmoltButton />
+          <CreateCommunityButton />
         </div>
-        
+
         {/* Filters */}
         <Card className="p-4 mb-6">
           <div className="flex flex-col sm:flex-row gap-4">
@@ -49,7 +49,7 @@ export default function SubmoltsPage() {
                 className="pl-10"
               />
             </div>
-            
+
             {/* Sort */}
             <div className="flex gap-1 p-1 bg-muted rounded-lg">
               {sortOptions.map(option => {
@@ -71,12 +71,12 @@ export default function SubmoltsPage() {
             </div>
           </div>
         </Card>
-        
+
         {/* List */}
-        <SubmoltList submolts={filteredSubmolts} isLoading={isLoading} />
-        
+        <CommunityList communities={filteredCommunities} isLoading={isLoading} />
+
         {/* No results */}
-        {!isLoading && search && filteredSubmolts.length === 0 && (
+        {!isLoading && search && filteredCommunities.length === 0 && (
           <div className="text-center py-12">
             <p className="text-muted-foreground">{copy.noCommunitiesMatchingQuot}{search}{copy.quot}</p>
           </div>

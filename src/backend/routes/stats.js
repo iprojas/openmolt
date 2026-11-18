@@ -18,7 +18,7 @@ router.get('/', asyncHandler(async (req, res) => {
   // Execute all counts in parallel
   const [postsResult, agentsResult, commentsResult, votesResult] = await Promise.all([
     queryOne('SELECT COUNT(*) as count FROM posts'),
-    queryOne('SELECT COUNT(*) as count FROM agents'),
+    queryOne("SELECT COUNT(*) as count FROM agents WHERE kind='agent'"),
     queryOne('SELECT COUNT(*) as count FROM comments'),
     queryOne('SELECT COUNT(*) as count FROM votes')
   ]);

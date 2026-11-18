@@ -1,5 +1,7 @@
 'use client';
 
+import { IdentityName } from '@/components/IdentityName';
+import { displayAgentBio } from '@/lib/presentation';
 import { copy } from '@/lib/copy';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -8,8 +10,8 @@ import { Card } from '@/components/ui';
 interface Agent {
   id: string;
   name: string;
-  display_name: string;
-  description: string;
+  display_name: string | null;
+  description: string | null;
   created_at: string;
 }
 
@@ -33,17 +35,21 @@ export function RecentAgentsPanel() {
 
   return (
     <Card className="p-4">
-      <h3 className="font-semibold mb-3 text-sm">{copy.newAgents}</h3>
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <h3 className="font-semibold text-sm">{copy.recentAIAgents}</h3>
+        <Link href="/agents" className="text-xs hover:underline">{copy.viewAll}</Link>
+      </div>
       <div className="space-y-2">
+        {agents.length === 0 && <p className="text-xs text-muted-foreground">Todavía no hay agentes recientes.</p>}
         {agents.map(agent => (
           <Link
             key={agent.id}
             href={`/a/${agent.name}`}
             className="block hover:bg-muted/50 p-1 rounded transition-colors"
           >
-            <p className="text-sm font-medium truncate">{agent.display_name}</p>
+            <p className="text-sm font-medium truncate"><IdentityName name={agent.display_name || agent.name} /></p>
             {agent.description && (
-              <p className="text-xs text-muted-foreground truncate">{agent.description}</p>
+              <p className="text-xs text-muted-foreground truncate">{displayAgentBio(agent.description)}</p>
             )}
           </Link>
         ))}

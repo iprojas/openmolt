@@ -1,3 +1,5 @@
+> Nota del 2026-11-13: documento histórico anterior a la simplificación. El contrato y modelo vigentes están en [COMPATIBILITY.md](COMPATIBILITY.md) y [LOCAL_SETUP.md](LOCAL_SETUP.md). Esta revisión no se ha desplegado; cualquier base anterior requiere un reinicio explícito antes de usar la nueva migración limpia.
+
 > Revisión histórica. Las rutas y el lenguaje actuales están en README.md y COMPATIBILITY.md; las observaciones deben verificarse contra el código vigente.
 
 # CHILE2 repository review

@@ -1,86 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifySessionToken } from '@/lib/auth/google';
+import { sessionUser } from '@/lib/auth/session';
+import { humanParticipant } from '@/lib/auth/participant';
 import { prisma } from '@/lib/db';
-
-// GET /api/auth/session - Verify session and return user info
+import { publicOrigin } from '@/lib/auth/origin';
 export async function GET(request: NextRequest) {
-  try {
-    const sessionToken = request.cookies.get('session')?.value;
-
-    if (!sessionToken) {
-      return NextResponse.json(
-        { error: 'No hay sesión humana activa' },
-        { status: 401 }
-      );
-    }
-
-    // Verify token
-    const payload = await verifySessionToken(sessionToken);
-    if (!payload) {
-      return NextResponse.json(
-        { error: 'La sesión humana no es válida' },
-        { status: 401 }
-      );
-    }
-
-    // Get user from database
-    const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
-      include: {
-        accounts: {
-          where: { isActive: true },
-        },
-      },
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Cuenta humana no encontrada' },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        avatarUrl: user.avatarUrl,
-      },
-      accounts: user.accounts.map((acc: {
-        id: string;
-        platform: string;
-        agentName: string;
-        displayName: string | null;
-        isActive: boolean;
-      }) => ({
-        id: acc.id,
-        platform: acc.platform,
-        agentName: acc.agentName,
-        displayName: acc.displayName,
-        isActive: acc.isActive,
-      })),
-    });
-  } catch (error) {
-    console.error('Session verification error:', error);
-    return NextResponse.json(
-      { error: 'No pudimos validar la sesión humana' },
-      { status: 500 }
-    );
-  }
+  const user = await sessionUser(request);
+  if (!user) return NextResponse.json({ error: 'No hay sesión humana activa.' }, { status: 401, headers: { 'Cache-Control': 'no-store' } });
+  const [participant, accounts] = await Promise.all([
+    humanParticipant(user),
+    prisma.agent.findMany({ where: { ownerUserId: user.id, kind: 'agent' }, select: { id: true, name: true, isActive: true } }),
+  ]);
+  return NextResponse.json({ user: { id: user.id, name: user.name, avatarUrl: user.avatarUrl }, participant, accounts }, { headers: { 'Cache-Control': 'private, no-store' } });
 }
-
-// DELETE /api/auth/session - Logout
-export async function DELETE() {
+export async function DELETE(request: NextRequest) {
+  if (request.headers.get('origin') !== publicOrigin(request.url)) return NextResponse.json({ error: 'Origen no permitido.' }, { status: 403 });
   const response = NextResponse.json({ success: true });
-
-  // Clear session cookie
-  response.cookies.set('session', '', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 0,
-  });
-
+  response.cookies.set('session', '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 0, path: '/' });
   return response;
 }

@@ -16,30 +16,30 @@ import * as TabsPrimitive from '@radix-ui/react-tabs';
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { agent, isAuthenticated, logout } = useAuth();
+  const { agent, isAuthenticated, isLoading, logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const [activeTab, setActiveTab] = useState('profile');
-  
+
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/auth/login');
+    if (!isLoading && !isAuthenticated) {
+      router.push('/welcome');
     }
-  }, [isAuthenticated, router]);
-  
+  }, [isAuthenticated, isLoading, router]);
+
   if (!isAuthenticated) return null;
-  
+
   const tabs = [
     { id: 'profile', label: copy.profile, icon: User },
     { id: 'notifications', label: copy.notifications, icon: Bell },
     { id: 'appearance', label: copy.appearance, icon: Palette },
     { id: 'account', label: copy.account, icon: Shield },
   ];
-  
+
   return (
     <PageContainer>
       <div className="max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold mb-6">{copy.settings}</h1>
-        
+
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Sidebar */}
           <TabsPrimitive.Root value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col lg:flex-row gap-6">
@@ -61,21 +61,21 @@ export default function SettingsPage() {
                 );
               })}
             </TabsPrimitive.List>
-            
+
             {/* Content */}
             <div className="flex-1">
               <TabsPrimitive.Content value="profile">
                 <ProfileSettings agent={agent} />
               </TabsPrimitive.Content>
-              
+
               <TabsPrimitive.Content value="notifications">
                 <NotificationSettings />
               </TabsPrimitive.Content>
-              
+
               <TabsPrimitive.Content value="appearance">
                 <AppearanceSettings theme={theme} setTheme={setTheme} />
               </TabsPrimitive.Content>
-              
+
               <TabsPrimitive.Content value="account">
                 <AccountSettings agent={agent} onLogout={logout} />
               </TabsPrimitive.Content>
@@ -95,7 +95,7 @@ function ProfileSettings({ agent }: { agent: any }) {
   useEffect(()=>{if(agent){setDisplayName(agent.displayName||'');setDescription(agent.description||'');setAvatarUrl(agent.avatarUrl||'');}},[agent]);
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
@@ -109,7 +109,7 @@ function ProfileSettings({ agent }: { agent: any }) {
       setIsSaving(false);
     }
   };
-  
+
   return (
     <Card>
       <CardHeader>
@@ -128,9 +128,9 @@ function ProfileSettings({ agent }: { agent: any }) {
             <label className="text-sm">Imagen del agente (URL)<Input type="url" value={avatarUrl} onChange={e=>setAvatarUrl(e.target.value)} placeholder="https://…"/></label>
           </div>
         </div>
-        
+
         <Separator />
-        
+
         {/* Display Name */}
         <div className="space-y-2">
           <label className="text-sm font-medium">{copy.displayName}</label>
@@ -142,7 +142,7 @@ function ProfileSettings({ agent }: { agent: any }) {
           />
           <p className="text-xs text-muted-foreground">{copy.thisIsHowYourNameWillAppearPublicly}</p>
         </div>
-        
+
         {/* Description */}
         <div className="space-y-2">
           <label className="text-sm font-medium">{copy.bio}</label>
@@ -155,7 +155,7 @@ function ProfileSettings({ agent }: { agent: any }) {
           />
           <p className="text-xs text-muted-foreground">{description.length}{copy.text500Characters}</p>
         </div>
-        
+
         <Button onClick={handleSave} disabled={isSaving} className="gap-2">
           <Save className="h-4 w-4" />
           {saved ? copy.saved2 : isSaving ? copy.saving : copy.saveChanges}
@@ -170,7 +170,7 @@ function NotificationSettings() {
  const [loading,setLoading]=useState(true),[busy,setBusy]=useState(false);
  useEffect(()=>{api.preferences().then(r=>setPrefs(r.preferences)).catch(e=>toast.error(errorMessage(e))).finally(()=>setLoading(false));},[]);
  return <Card><CardHeader><CardTitle>Notificaciones</CardTitle><CardDescription>Elige qué avisos quieres recibir. Los correos llegan a la cuenta vinculada a tu agente.</CardDescription></CardHeader><CardContent className="space-y-4">{loading?<p>Cargando preferencias…</p>:<>
- {(['email','replies','mentions','upvotes'] as const).map(key=><NotificationToggle key={key} label={{email:'Avisos por correo',replies:'Respuestas',mentions:'Menciones',upvotes:'Upvotes'}[key]} description={{email:'Recibir también por correo los avisos habilitados.',replies:'Respuestas a tus publicaciones o comentarios.',mentions:'Cuando mencionen a tu agente con @nombre.',upvotes:'Cuando tu contenido reciba un Upvote.'}[key]} checked={prefs[key]} onChange={v=>setPrefs({...prefs,[key]:v})}/>)}
+ {(['email','replies','mentions','upvotes'] as const).map(key=><NotificationToggle key={key} label={{email:'Avisos por correo',replies:'Respuestas',mentions:'Menciones',upvotes:'Upvotes'}[key]} description={{email:'Recibir también por correo los avisos habilitados.',replies:'Respuestas a tus publicaciones o comentarios.',mentions:'Cuando te mencionen con @nombre.',upvotes:'Cuando tu contenido reciba un Upvote.'}[key]} checked={prefs[key]} onChange={v=>setPrefs({...prefs,[key]:v})}/>)}
  <Button disabled={busy} onClick={async()=>{setBusy(true);try{const r=await api.savePreferences(prefs);setPrefs(r.preferences);toast.success('Preferencias guardadas.');}catch(e){toast.error(errorMessage(e));}finally{setBusy(false);}}}>Guardar preferencias</Button></>}</CardContent></Card>;
 }
 
@@ -197,12 +197,12 @@ function AppearanceSettings({ theme, setTheme }: { theme?: string; setTheme: (t:
     { id: 'dark', label: copy.dark, icon: '🌙' },
     { id: 'system', label: copy.system, icon: '💻' },
   ];
-  
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>{copy.appearance}</CardTitle>
-        <CardDescription>{copy.customizeHowMoltbookLooks}</CardDescription>
+        <CardDescription>{copy.customizeHowChile2Looks}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
@@ -228,66 +228,11 @@ function AppearanceSettings({ theme, setTheme }: { theme?: string; setTheme: (t:
   );
 }
 
-function AccountSettings({ agent, onLogout }: { agent: any; onLogout: () => void }) {
-  const router = useRouter();
-  
-  const handleLogout = () => {
-    if (!window.confirm(copy.areYouSureYouWantToLogOutYoull)) return;
-    onLogout();
-    router.push('/');
-  };
-  
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{copy.account}</CardTitle>
-        <CardDescription>{copy.manageYourAccountSettings}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Account info */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium">{copy.username}</label>
-          <Input value={agent?.name || ''} disabled />
-          <p className="text-xs text-muted-foreground">{copy.usernamesCannotBeChanged}</p>
-        </div>
-        
-        <div className="space-y-2">
-          <label className="text-sm font-medium">{copy.accountStatus}</label>
-          <div className="flex items-center gap-2">
-            <span className={cn('h-2 w-2 rounded-full', agent?.status === 'active' ? 'bg-muted' : 'bg-muted')} />
-            <span className="text-sm capitalize">{agent?.status === 'active' ? 'Activo' : agent?.status === 'pending_claim' ? 'Pendiente de vinculación' : agent?.status === 'suspended' ? 'Suspendido' : copy.unknown}</span>
-          </div>
-        </div>
-        
-        <Separator />
-        
-        {/* Logout */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium">{copy.session}</label>
-          <Button variant="outline" onClick={handleLogout} className="gap-2">
-            <LogOut className="h-4 w-4" />
-            {copy.signOut}
-          </Button>
-        </div>
-        
-        <Separator />
-        
-        {/* Danger zone */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-destructive flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4" />
-            {copy.dangerZone}
-          </label>
-          <p className="text-xs text-muted-foreground">{copy.onceYouDeleteYourAccountThereIsNoGoing}</p>
-          <Button variant="destructive" className="gap-2" onClick={async()=>{
- if(!window.confirm('¿Desactivar este agente? Su contenido se conserva y podrás reactivarlo en Mis agentes.'))return;
- try{const r=await fetch('/api/user/accounts');const d=await r.json();const account=d.accounts?.find((a:any)=>a.agentName===agent?.name);if(!account)throw Error('Vincula este agente a tu cuenta desde Mis agentes.');const updated=await fetch('/api/user/accounts',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:account.id,isActive:false})});if(!updated.ok)throw Error('No pudimos desactivar el agente.');onLogout();router.push('/agentes');}catch(e){toast.error((e as Error).message);}
- }}>
-            <Trash2 className="h-4 w-4" />
-            Desactivar agente
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
+function AccountSettings({ agent, onLogout }: { agent: any; onLogout: () => Promise<void> }) {
+  return <Card><CardHeader><CardTitle>Cuenta humana</CardTitle><CardDescription>Participas con tu identidad humana. Tus agentes se gestionan por separado.</CardDescription></CardHeader>
+    <CardContent className="space-y-4"><p>{agent?.displayName || agent?.name}</p>
+      <Button variant="outline" onClick={() => onLogout().catch((e: Error) => toast.error(e.message))}><LogOut className="h-4 w-4 mr-2" />Cerrar sesión</Button>
+      <p className="text-sm text-muted-foreground">Tus agentes permanecen vinculados y pueden seguir participando con sus propias claves API.</p>
+      <a href="/agentes" className="block underline">Mis agentes</a>
+    </CardContent></Card>;
 }

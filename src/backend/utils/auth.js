@@ -5,18 +5,12 @@
 const crypto = require('crypto');
 const config = require('../config');
 
-const { tokenPrefix, claimPrefix } = config.moltbook;
+const { tokenPrefix, claimPrefix } = config.cl2;
 const TOKEN_LENGTH = 32;
-
-// Word list for verification codes
-const ADJECTIVES = [
-  'reef', 'wave', 'coral', 'shell', 'tide', 'kelp', 'foam', 'salt',
-  'deep', 'blue', 'aqua', 'pearl', 'sand', 'surf', 'cove', 'bay'
-];
 
 /**
  * Generate a secure random hex string
- * 
+ *
  * @param {number} bytes - Number of random bytes
  * @returns {string} Hex string
  */
@@ -26,8 +20,8 @@ function randomHex(bytes) {
 
 /**
  * Generate a new API key
- * 
- * @returns {string} API key with moltbook_ prefix
+ *
+ * @returns {string} API key with cl2_ prefix
  */
 function generateApiKey() {
   return `${tokenPrefix}${randomHex(TOKEN_LENGTH)}`;
@@ -35,62 +29,52 @@ function generateApiKey() {
 
 /**
  * Generate a claim token
- * 
- * @returns {string} Claim token with moltbook_claim_ prefix
+ *
+ * @returns {string} Claim token with cl2_claim_ prefix
  */
 function generateClaimToken() {
   return `${claimPrefix}${randomHex(TOKEN_LENGTH)}`;
 }
 
 /**
- * Generate human-readable verification code
- * 
- * @returns {string} Code like 'reef-X4B2'
- */
-function generateVerificationCode() {
-  const adjective = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
-  const suffix = randomHex(2).toUpperCase();
-  return `${adjective}-${suffix}`;
-}
-
-/**
  * Validate API key format
- * 
+ *
  * @param {string} token - Token to validate
  * @returns {boolean} True if valid
  */
 function validateApiKey(token) {
   if (!token || typeof token !== 'string') return false;
-  if (!token.startsWith(tokenPrefix)) return false;
-  
-  const expectedLength = tokenPrefix.length + (TOKEN_LENGTH * 2);
+  const prefix = token.startsWith(tokenPrefix) ? tokenPrefix : null;
+  if (!prefix) return false;
+
+  const expectedLength = prefix.length + (TOKEN_LENGTH * 2);
   if (token.length !== expectedLength) return false;
-  
-  const body = token.slice(tokenPrefix.length);
+
+  const body = token.slice(prefix.length);
   return /^[0-9a-f]+$/i.test(body);
 }
 
 /**
  * Extract token from Authorization header
- * 
+ *
  * @param {string} authHeader - Authorization header value
  * @returns {string|null} Token or null
  */
 function extractToken(authHeader) {
   if (!authHeader || typeof authHeader !== 'string') return null;
-  
+
   const parts = authHeader.split(' ');
   if (parts.length !== 2) return null;
-  
+
   const [scheme, token] = parts;
   if (scheme.toLowerCase() !== 'bearer') return null;
-  
+
   return token;
 }
 
 /**
  * Hash a token for secure storage
- * 
+ *
  * @param {string} token - Token to hash
  * @returns {string} SHA-256 hash
  */
@@ -100,7 +84,7 @@ function hashToken(token) {
 
 /**
  * Timing-safe token comparison
- * 
+ *
  * @param {string} a - First token
  * @param {string} b - Second token
  * @returns {boolean} True if equal
@@ -113,7 +97,6 @@ function compareTokens(a, b) {
 module.exports = {
   generateApiKey,
   generateClaimToken,
-  generateVerificationCode,
   validateApiKey,
   extractToken,
   hashToken,

@@ -43,7 +43,7 @@ app.use(express.json({ limit: '1mb' }));
 app.set('trust proxy', 1);
 
 // API routes
-app.use('/api/v1', routes);
+app.use('/api/v1', (req, res, next) => { res.set('X-API-Version', '1'); next(); }, routes);
 
 // Root endpoint
 app.get('/', (req, res) => {

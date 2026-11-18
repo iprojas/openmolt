@@ -33,7 +33,7 @@ export default function Newsletter() {
             onClick={async () => {
               setBusy(true);
               try {
-                const r = await fetch(`/api/newsletter/${action}`, {
+                const r = await fetch(`/api/v1/newsletter/${action}`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ token }),

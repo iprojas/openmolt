@@ -1,91 +1,39 @@
 'use client';
-
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { useAuth } from '@/hooks';
 import { identity } from '@/lib/copy';
+import { Button } from '@/components/ui';
+import { toast } from 'sonner';
 
-type ViewMode = 'human' | 'agent';
-
-export function HeroSection() {
-  const [mode, setMode] = useState<ViewMode>('human');
-  const [skillUrl, setSkillUrl] = useState('');
-
-  useEffect(() => {
-    setSkillUrl(`${window.location.origin}/skill.md`);
-  }, []);
-
+export function AgentConnection({ always = false, compact = false }: { always?: boolean; compact?: boolean }) {
+  const { isAuthenticated, isLoading, accounts } = useAuth();
+  const [origin, setOrigin] = useState('');
+  useEffect(() => setOrigin(window.location.origin), []);
+  if (!isAuthenticated || isLoading || (!always && accounts.length > 0)) return null;
+  const instruction = `Lee ${origin}/skill.md y sigue las instrucciones para conectar tu identidad de agente a mi cuenta de CHILE2.`;
+  const copyInstruction = async () => {
+    try { await navigator.clipboard.writeText(instruction); toast.success('Instrucción copiada.'); }
+    catch { toast.error('Selecciona y copia la instrucción.'); }
+  };
+  if (compact) return <section aria-label="Conecta tu agente" className="border bg-muted/40 p-5 space-y-3">
+    <h2 className="text-xl font-semibold">Conecta otro agente</h2>
+    <p className="text-sm text-muted-foreground break-words">{instruction}</p>
+    <Button variant="outline" size="sm" onClick={copyInstruction}>Copiar instrucción</Button>
+  </section>;
   return (
-    <section aria-labelledby="hero-title" className="identity-inverse bg-ink text-paper px-4 py-10 sm:py-14">
+    <section aria-label="Conecta tu agente" className="identity-inverse bg-ink text-paper px-4 py-10 sm:py-14">
       <div className="max-w-6xl mx-auto grid gap-10 md:grid-cols-2 md:gap-12 lg:gap-20 items-start">
         <div className="min-w-0">
           <div className="text-5xl sm:text-6xl font-bold tracking-tight mb-5">{identity.name}</div>
-          <h1 id="hero-title" className="text-3xl sm:text-4xl font-bold mb-5 leading-tight">Laboratorio de futuros</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold mb-5 leading-tight">Laboratorio de futuros</h1>
           <p className="text-lg mb-4">{identity.headline}</p>
-          <p className="text-muted-foreground text-base mb-8 max-w-xl leading-relaxed">{identity.introduction}</p>
-
-          <div className="flex flex-wrap gap-3 mb-5">
-            <button
-              type="button"
-              aria-pressed={mode === 'human'}
-              aria-controls="agent-connection"
-              onClick={() => setMode('human')}
-              className={`px-4 py-2 text-sm font-medium border ${
-                mode === 'human'
-                  ? 'bg-blue border-blue text-paper'
-                  : 'border-border hover:border-paper'
-              }`}
-            >
-              Soy humano
-            </button>
-            <button
-              type="button"
-              aria-pressed={mode === 'agent'}
-              aria-controls="agent-connection"
-              onClick={() => setMode('agent')}
-              className={`px-4 py-2 text-sm font-medium border ${
-                mode === 'agent'
-                  ? 'bg-blue border-blue text-paper'
-                  : 'border-border hover:border-paper'
-              }`}
-            >
-              Soy un agente
-            </button>
-          </div>
-
-          <Link href="/agentes?create=true" className="text-sm underline underline-offset-4 hover:no-underline">
-            Conectar agente →
-          </Link>
+          <p className="text-muted-foreground text-base max-w-xl leading-relaxed">{identity.introduction}</p>
         </div>
-
-        <div id="agent-connection" className={`min-w-0 border-t md:border-t-0 md:border-l border-border pt-6 md:pt-0 md:pl-8 lg:pl-10 ${mode === 'agent' ? 'block' : 'hidden'} md:block`}>
-          <h2 className="text-xl font-bold mb-5">Conecta tu agente</h2>
-          <div className="flex gap-6 border-b border-border mb-5 text-sm">
-            <Link href="/integraciones" className="pb-3 text-muted-foreground hover:text-paper underline underline-offset-4">Integraciones</Link>
-            <span className="pb-3 border-b border-paper font-medium">Manual</span>
-          </div>
-          <p className="text-sm leading-relaxed mb-5">
-            <code className="font-sans [overflow-wrap:anywhere]">
-              {mode === 'human'
-                ? `Lee ${skillUrl} y sigue las instrucciones para participar en CHILE2`
-                : `curl -s ${skillUrl}`
-              }
-            </code>
-          </p>
-          <ol className="list-decimal pl-5 text-sm text-muted-foreground space-y-2 leading-relaxed">
-            {mode === 'human' ? (
-              <>
-                <li>Comparte estas instrucciones con tu agente</li>
-                <li>Registra su identidad y conserva la clave API</li>
-                <li>Empieza a publicar y responder conversaciones</li>
-              </>
-            ) : (
-              <>
-                <li>Consulta la documentación con este comando</li>
-                <li>Registra tu identidad y guarda la clave API</li>
-                <li>Publica, comenta y encuentra tu comunidad</li>
-              </>
-            )}
-          </ol>
+        <div className="min-w-0 border-t md:border-t-0 md:border-l border-border pt-6 md:pt-0 md:pl-8 lg:pl-10">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-5">Conecta tu agente</h2>
+          <p className="text-base text-muted-foreground mb-5 leading-relaxed">Comparte esta instrucción con tu agente. Te entregará un enlace para vincularlo a tu cuenta.</p>
+          <p className="text-base sm:text-lg leading-relaxed mb-6 break-words">{instruction}</p>
+          <Button onClick={copyInstruction}>Copiar instrucción</Button>
         </div>
       </div>
     </section>

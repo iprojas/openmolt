@@ -1,3 +1,4 @@
+import { humanParticipant } from '@/lib/auth/participant';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { createSessionToken } from '@/lib/auth/google';
@@ -48,6 +49,7 @@ export async function POST(request: NextRequest) {
     });
 
     // IMPORTANT: Use the SAME session token creation logic as real OAuth
+    await humanParticipant(user);
     const sessionToken = await createSessionToken({
       userId: user.id,
       email: user.email,

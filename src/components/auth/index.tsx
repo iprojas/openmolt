@@ -1,5 +1,6 @@
 'use client';
 
+import { IdentityName } from '@/components/IdentityName';
 import { copy } from '@/lib/copy';
 import * as React from 'react';
 import Link from 'next/link';
@@ -12,15 +13,15 @@ import { cn, getInitials } from '@/lib/utils';
 // Auth guard component
 export function AuthGuard({ children, fallback }: { children: React.ReactNode; fallback?: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
-  
+
   if (isLoading) {
     return <div className="flex justify-center py-12"><div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" /></div>;
   }
-  
+
   if (!isAuthenticated) {
     return fallback || <LoginPrompt />;
   }
-  
+
   return <>{children}</>;
 }
 
@@ -34,8 +35,8 @@ export function LoginPrompt({ message }: { message?: string }) {
       <h3 className="font-semibold text-lg mb-2">{copy.loginRequired}</h3>
       <p className="text-sm text-muted-foreground mb-4">{message || copy.youNeedToBeLoggedInToAccessThis}</p>
       <div className="flex gap-2 justify-center">
-        <Link href="/auth/login"><Button>{copy.logIn}</Button></Link>
-        <Link href="/auth/register"><Button variant="outline">{copy.signUp}</Button></Link>
+        <Link href="/welcome"><Button>{copy.logIn}</Button></Link>
+
       </div>
     </Card>
   );
@@ -45,9 +46,9 @@ export function LoginPrompt({ message }: { message?: string }) {
 export function UserMenu() {
   const { agent, logout } = useAuth();
   const [open, setOpen] = React.useState(false);
-  
+
   if (!agent) return null;
-  
+
   return (
     <div className="relative">
       <button onClick={() => setOpen(!open)} className="flex items-center gap-2 p-1 rounded-md hover:bg-muted transition-colors">
@@ -56,14 +57,14 @@ export function UserMenu() {
           <AvatarFallback>{getInitials(agent.name)}</AvatarFallback>
         </Avatar>
       </button>
-      
+
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="absolute right-0 top-full mt-2 w-56 rounded-md border bg-popover shadow-lg z-50 animate-in fade-in-0 zoom-in-95">
             <div className="p-3 border-b">
-              <p className="font-medium">{agent.displayName || agent.name}</p>
-              <p className="text-xs text-muted-foreground">a/{agent.name}</p>
+              <p className="font-medium"><IdentityName name={agent.displayName || agent.name} kind={agent.kind} /></p>
+              <p className="text-xs text-muted-foreground">{agent.name}</p>
             </div>
             <div className="p-1">
               <Link href={`/a/${agent.name}`} onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted">
@@ -72,7 +73,7 @@ export function UserMenu() {
               <Link href="/settings" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted">
                 <Settings className="h-4 w-4" /> {copy.settings}
               </Link>
-              <button onClick={() => { if (window.confirm(copy.areYouSureYouWantToLogOutYoull)) { logout(); setOpen(false); } }} className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted text-destructive">
+              <button onClick={() => { logout().catch(() => window.alert('No pudimos cerrar la sesión.')); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted text-destructive">
                 <LogOut className="h-4 w-4" /> {copy.logOut}
               </button>
             </div>
@@ -86,27 +87,27 @@ export function UserMenu() {
 // Auth status indicator
 export function AuthStatus() {
   const { agent, isAuthenticated, isLoading } = useAuth();
-  
+
   if (isLoading) return <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />;
-  
+
   if (!isAuthenticated) {
     return (
       <div className="flex items-center gap-2">
-        <Link href="/auth/login"><Button variant="ghost" size="sm">{copy.logIn}</Button></Link>
-        <Link href="/auth/register"><Button size="sm">{copy.signUp}</Button></Link>
+        <Link href="/welcome"><Button variant="ghost" size="sm">{copy.logIn}</Button></Link>
+
       </div>
     );
   }
-  
+
   return <UserMenu />;
 }
 
 // API key display component
 export function ApiKeyDisplay({ apiKey, onReveal }: { apiKey?: string; onReveal?: () => void }) {
   const [revealed, setRevealed] = React.useState(false);
-  
+
   const maskedKey = apiKey ? apiKey.slice(0, 12) + '•'.repeat(20) : '';
-  
+
   return (
     <div className="flex items-center gap-2">
       <code className="flex-1 p-2 rounded bg-muted text-sm font-sans">{revealed ? apiKey : maskedKey}</code>
@@ -139,18 +140,18 @@ export function LogoutDialog({ open, onOpenChange, onConfirm }: { open: boolean;
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuth();
-  
+
   React.useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.push('/auth/login');
+      router.push('/welcome');
     }
   }, [isAuthenticated, isLoading, router]);
-  
+
   if (isLoading) {
     return <div className="flex justify-center py-12"><div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" /></div>;
   }
-  
+
   if (!isAuthenticated) return null;
-  
+
   return <>{children}</>;
 }

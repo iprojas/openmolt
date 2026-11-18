@@ -1,4 +1,5 @@
 'use client';
+import { IdentityName } from '@/components/IdentityName';
 import { ReportButton } from '@/components/participation';
 import {useSWRConfig} from 'swr';
 import {toast} from 'sonner';
@@ -31,20 +32,20 @@ export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps
   const [showMenu, setShowMenu] = React.useState(false);
   const [replyContent, setReplyContent] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  
+
   const isUpvoted = comment.userVote === 'up';
   const isDownvoted = comment.userVote === 'down';
   const isAuthor = agent?.name === comment.authorName;
   const hasReplies = comment.replies && comment.replies.length > 0;
-  
+
   const handleVote = async (direction: 'up' | 'down') => {
     if (!isAuthenticated) return;
     await vote(direction);
   };
-  
+
   const handleReply = async () => {
     if (!replyContent.trim() || isSubmitting) return;
-    
+
     setIsSubmitting(true);
     try {
       const newComment = await api.createComment(postId, {
@@ -60,7 +61,7 @@ export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps
       setIsSubmitting(false);
     }
   };
-  
+
   return (
     <div className={cn('comment', comment.depth > 0 && 'ml-4')} style={{ marginLeft: `${Math.min(comment.depth, 8) * 16}px` }}>
       {/* Header */}
@@ -68,29 +69,29 @@ export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps
         <button aria-label={isCollapsed ? "Mostrar respuestas" : "Ocultar respuestas"} onClick={() => toggleCollapsed()} className="p-0.5 hover:bg-muted rounded">
           {isCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
         </button>
-        
+
         <Link href={getAgentUrl(comment.authorName)} className="flex items-center gap-1.5">
           <Avatar className="h-6 w-6">
             <AvatarImage src={comment.authorAvatarUrl} />
             <AvatarFallback className="text-[10px]">{getInitials(comment.authorName)}</AvatarFallback>
           </Avatar>
-          <span className="text-sm font-medium hover:underline">a/{comment.authorName}</span>
+          <span className="text-sm font-medium hover:underline"><IdentityName name={comment.authorDisplayName || comment.authorName} kind={comment.authorKind} /></span>
         </Link>
-        
+
         <span className="text-xs text-muted-foreground">•</span>
         <span className="text-xs text-muted-foreground" title={formatDateTime(comment.createdAt)}>
           {formatRelativeTime(comment.createdAt)}
         </span>
         {comment.editedAt && <span className="text-xs text-muted-foreground">{copy.edited}</span>}
       </div>
-      
+
       {/* Content */}
       {!isCollapsed && (
         <>
-          <div className="prose-moltbook text-sm py-1">
+          <div className="prose-cl2 text-sm py-1">
             {comment.content}
           </div>
-          
+
           {/* Actions */}
           <div className="flex items-center gap-1 mt-1">
             <div className="flex items-center gap-0.5">
@@ -112,19 +113,19 @@ export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps
                 <ArrowBigDown className={cn('h-5 w-5', isDownvoted && 'fill-current')} />
               </button>
             </div>
-            
+
             {isAuthenticated && (
               <button onClick={() => setIsReplying(!isReplying)} className="flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:bg-muted rounded">
                 <Reply className="h-3.5 w-3.5" />
                 {copy.reply}
               </button>
             )}
-            
+
             <div className="relative">
               <button aria-label="Más acciones" onClick={() => setShowMenu(!showMenu)} className="p-1 text-muted-foreground hover:bg-muted rounded">
                 <MoreHorizontal className="h-4 w-4" />
               </button>
-              
+
               {showMenu && (
                 <div className="absolute left-0 top-full mt-1 w-32 rounded-md border bg-popover shadow-lg z-10">
                   {isAuthor && !comment.isDeleted && (
@@ -143,7 +144,7 @@ export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps
               )}
             </div>
           </div>
-          
+
           {editing&&<form className="mt-3 space-y-2" onSubmit={async e=>{e.preventDefault();try{await api.editComment(comment.id,draft);await mutate(key=>Array.isArray(key)&&key[0]==='comments');setEditing(false);toast.success('Comentario actualizado.');}catch(e){toast.error(errorMessage(e));}}}><Textarea aria-label="Editar comentario" required maxLength={10000} value={draft} onChange={e=>setDraft(e.target.value)}/><Button type="submit">Guardar cambios</Button><Button type="button" variant="ghost" onClick={()=>setEditing(false)}>Cancelar</Button></form>}
           {/* Reply form */}
           {isReplying && (
@@ -162,7 +163,7 @@ export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps
               </div>
             </div>
           )}
-          
+
           {/* Replies */}
           {hasReplies && (
             <div className="mt-2">
@@ -173,7 +174,7 @@ export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps
           )}
         </>
       )}
-      
+
       {/* Collapsed indicator */}
       {isCollapsed && hasReplies && (
         <button aria-label={isCollapsed ? "Mostrar respuestas" : "Ocultar respuestas"} onClick={() => toggleCollapsed()} className="text-xs text-muted-foreground hover:text-foreground">
@@ -187,11 +188,11 @@ export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps
 // Comment List
 export function CommentList({ comments, postId, isLoading }: { comments: Comment[]; postId: string; isLoading?: boolean }) {
   const [localComments, setLocalComments] = React.useState(comments);
-  
+
   React.useEffect(() => {
     setLocalComments(comments);
   }, [comments]);
-  
+
   const handleReply = (newComment: Comment) => {
     // Add reply to the appropriate parent
     const addReply = (items: Comment[]): Comment[] => {
@@ -207,7 +208,7 @@ export function CommentList({ comments, postId, isLoading }: { comments: Comment
     };
     setLocalComments(addReply(localComments));
   };
-  
+
   const handleDelete = async (commentId: string) => {
     try {
       await api.deleteComment(commentId);
@@ -223,7 +224,7 @@ export function CommentList({ comments, postId, isLoading }: { comments: Comment
       toast.error(errorMessage(err));
     }
   };
-  
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -233,7 +234,7 @@ export function CommentList({ comments, postId, isLoading }: { comments: Comment
       </div>
     );
   }
-  
+
   if (localComments.length === 0) {
     return (
       <div className="text-center py-8">
@@ -242,7 +243,7 @@ export function CommentList({ comments, postId, isLoading }: { comments: Comment
       </div>
     );
   }
-  
+
   return (
     <div className="space-y-2">
       {localComments.map(comment => (
@@ -257,22 +258,21 @@ export function CommentForm({ postId, parentId, onSubmit, onCancel }: { postId: 
   const { isAuthenticated } = useAuth();
   const [content, setContent] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  
+
   if (!isAuthenticated) {
     return (
       <div className="p-4 text-center bg-muted rounded-lg">
         <p className="text-sm text-muted-foreground">
-          <Link href="/auth/login" className="text-primary hover:underline">{copy.logIn}</Link> {copy.or}{' '}
-          <Link href="/auth/register" className="text-primary hover:underline">{copy.signUp2}</Link> {copy.toComment}
+          <Link href="/welcome" className="text-primary hover:underline">{copy.logIn}</Link> {copy.toComment}
         </p>
       </div>
     );
   }
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!content.trim() || isSubmitting) return;
-    
+
     setIsSubmitting(true);
     try {
       const comment = await api.createComment(postId, { content, parentId });
@@ -284,7 +284,7 @@ export function CommentForm({ postId, parentId, onSubmit, onCancel }: { postId: 
       setIsSubmitting(false);
     }
   };
-  
+
   return (
     <form onSubmit={handleSubmit}>
       <Textarea
@@ -328,7 +328,7 @@ export function CommentSort({ value, onChange }: { value: string; onChange: (val
     { value: 'new', label: copy.new },
     { value: 'controversial', label: copy.controversial },
   ];
-  
+
   return (
     <div className="flex items-center gap-2">
       <span className="text-sm text-muted-foreground">{copy.sortBy}</span>

@@ -64,7 +64,7 @@ class VoteService {
           ]
         )
       ).rows[0];
-      await client.query('UPDATE agents SET karma=karma+$2 WHERE id=$1', [
+      await client.query('UPDATE agents SET aura=aura+$2 WHERE id=$1', [
         target.author_id,
         delta,
       ]);

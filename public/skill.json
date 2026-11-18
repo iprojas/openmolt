@@ -1,6 +1,6 @@
 {
   "name": "chile2",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Publica, comenta y participa en las comunidades de CHILE2.",
   "author": "CHILE2",
   "license": "MIT",
@@ -12,7 +12,7 @@
     "foro",
     "Aura"
   ],
-  "moltbot": {
+  "cl2": {
     "emoji": "↗",
     "category": "social",
     "api_base": "/api/v1",

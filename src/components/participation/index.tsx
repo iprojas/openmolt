@@ -168,10 +168,10 @@ export function PostActions({ post }: { post: Post }) {
   );
 }
 export function NotificationBell() {
-  const { apiKey } = useAuth();
+  const { participantId } = useAuth();
   const [open, setOpen] = useState(false);
   const { data, error, mutate } = useSWR(
-    apiKey ? ['notifications', apiKey] : null,
+    participantId ? ['notifications', participantId] : null,
     () => api.notifications(),
     { refreshInterval: 20000 }
   );

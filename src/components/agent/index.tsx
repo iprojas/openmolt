@@ -1,11 +1,13 @@
 'use client';
 
+import { IdentityName } from '@/components/IdentityName';
+import { displayAgentBio } from '@/lib/presentation';
 import { copy } from '@/lib/copy';
 import * as React from 'react';
 import Link from 'next/link';
 import { cn, formatScore, getInitials, getAgentUrl } from '@/lib/utils';
 import { useAuth } from '@/hooks';
-import { Card, Avatar, AvatarImage, AvatarFallback, Button, Skeleton, Badge } from '@/components/ui';
+import { Card, Avatar, AvatarImage, AvatarFallback, Button, Skeleton } from '@/components/ui';
 import { Users, Award, UserPlus, UserCheck } from 'lucide-react';
 import { api } from '@/lib/api';
 import type { Agent } from '@/types';
@@ -20,14 +22,14 @@ export function AgentCard({ agent, variant = 'default', showFollowButton = true 
   const { agent: currentAgent, isAuthenticated } = useAuth();
   const [isFollowing, setIsFollowing] = React.useState(agent.isFollowing || false);
   const [isLoading, setIsLoading] = React.useState(false);
-  
+
   const isOwnProfile = currentAgent?.name === agent.name;
-  
+
   const handleFollow = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (!isAuthenticated || isLoading || isOwnProfile) return;
-    
+
     setIsLoading(true);
     try {
       if (isFollowing) {
@@ -43,7 +45,7 @@ export function AgentCard({ agent, variant = 'default', showFollowButton = true 
       setIsLoading(false);
     }
   };
-  
+
   if (variant === 'compact') {
     return (
       <Link href={getAgentUrl(agent.name)} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors">
@@ -52,8 +54,8 @@ export function AgentCard({ agent, variant = 'default', showFollowButton = true 
           <AvatarFallback className="text-xs">{getInitials(agent.name)}</AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-sm truncate">{agent.displayName || agent.name}</p>
-          <p className="text-xs text-muted-foreground">{formatScore(agent.karma)} {copy.karma}</p>
+          <p className="font-medium text-sm truncate"><IdentityName name={agent.displayName || agent.name} kind={agent.kind} /></p>
+          <p className="text-xs text-muted-foreground">{formatScore(agent.aura)} {copy.aura}</p>
         </div>
         {showFollowButton && isAuthenticated && !isOwnProfile && (
           <Button size="sm" variant={isFollowing ? 'secondary' : 'default'} onClick={handleFollow} disabled={isLoading} className="h-7 px-2">
@@ -63,7 +65,7 @@ export function AgentCard({ agent, variant = 'default', showFollowButton = true 
       </Link>
     );
   }
-  
+
   return (
     <Card className="p-4 hover:border-muted-foreground/20 transition-colors">
       <Link href={getAgentUrl(agent.name)} className="block">
@@ -72,22 +74,19 @@ export function AgentCard({ agent, variant = 'default', showFollowButton = true 
             <AvatarImage src={agent.avatarUrl} />
             <AvatarFallback>{getInitials(agent.name)}</AvatarFallback>
           </Avatar>
-          
+
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold truncate">{agent.displayName || agent.name}</h3>
-              {agent.isClaimed && (
-                <Badge variant="secondary" className="text-xs" title={copy.thisAgentHasBeenVerifiedAndClaimedByA}>{copy.verified}</Badge>
-              )}
+              <h3 className="font-semibold truncate"><IdentityName name={agent.displayName || agent.name} kind={agent.kind} /></h3>
             </div>
-            <p className="text-sm text-muted-foreground">a/{agent.name}</p>
+            <p className="text-sm text-muted-foreground">{agent.name}</p>
             {agent.description && (
-              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{agent.description}</p>
+              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{displayAgentBio(agent.description)}</p>
             )}
             <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Award className="h-3 w-3" />
-                <span className={cn(agent.karma > 0 && 'text-upvote')}>{formatScore(agent.karma)}</span> {copy.karma}
+                <span className={cn(agent.aura > 0 && 'text-upvote')}>{formatScore(agent.aura)}</span> {copy.aura}
               </span>
               <span className="flex items-center gap-1">
                 <Users className="h-3 w-3" />
@@ -95,7 +94,7 @@ export function AgentCard({ agent, variant = 'default', showFollowButton = true 
               </span>
             </div>
           </div>
-          
+
           {showFollowButton && isAuthenticated && !isOwnProfile && (
             <Button size="sm" variant={isFollowing ? 'secondary' : 'default'} onClick={handleFollow} disabled={isLoading}>
               {isFollowing ? copy.following : copy.follow}
@@ -118,7 +117,7 @@ export function AgentList({ agents, isLoading, variant = 'default', showFollowBu
       </div>
     );
   }
-  
+
   if (agents.length === 0) {
     return (
       <div className="text-center py-8">
@@ -127,7 +126,7 @@ export function AgentList({ agents, isLoading, variant = 'default', showFollowBu
       </div>
     );
   }
-  
+
   return (
     <div className={cn('space-y-4', variant === 'compact' && 'space-y-1')}>
       {agents.map(agent => (
@@ -151,7 +150,7 @@ export function AgentCardSkeleton({ variant = 'default' }: { variant?: 'default'
       </div>
     );
   }
-  
+
   return (
     <Card className="p-4">
       <div className="flex items-start gap-4">
@@ -172,16 +171,16 @@ export function AgentCardSkeleton({ variant = 'default' }: { variant?: 'default'
 }
 
 // Agent Mini Card (for showing in lists)
-export function AgentMiniCard({ agent }: { agent: Pick<Agent, 'name' | 'displayName' | 'avatarUrl' | 'karma'> }) {
+export function AgentMiniCard({ agent }: { agent: Pick<Agent, 'name' | 'displayName' | 'avatarUrl' | 'aura' | 'kind'> }) {
   return (
     <Link href={getAgentUrl(agent.name)} className="flex items-center gap-2 p-1.5 rounded hover:bg-muted transition-colors">
       <Avatar className="h-6 w-6">
         <AvatarImage src={agent.avatarUrl} />
         <AvatarFallback className="text-[10px]">{getInitials(agent.name)}</AvatarFallback>
       </Avatar>
-      <span className="text-sm font-medium">{agent.displayName || agent.name}</span>
-      <span className={cn('text-xs', agent.karma > 0 ? 'text-upvote' : 'text-muted-foreground')}>
-        {formatScore(agent.karma)}
+      <span className="text-sm font-medium"><IdentityName name={agent.displayName || agent.name} kind={agent.kind} /></span>
+      <span className={cn('text-xs', agent.aura > 0 ? 'text-upvote' : 'text-muted-foreground')}>
+        {formatScore(agent.aura)}
       </span>
     </Link>
   );
@@ -194,7 +193,7 @@ export function AgentAvatar({ agent, size = 'default' }: { agent: Pick<Agent, 'n
     default: 'h-8 w-8',
     lg: 'h-12 w-12',
   };
-  
+
   return (
     <Link href={getAgentUrl(agent.name)}>
       <Avatar className={cn(sizeClasses[size], 'hover:ring-2 ring-primary transition-all')}>
@@ -234,10 +233,10 @@ export function AgentLeaderboard({ agents, title = copy.topAgents }: { agents: A
               <AvatarFallback className="text-xs">{getInitials(agent.name)}</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{agent.displayName || agent.name}</p>
+              <p className="text-sm font-medium truncate"><IdentityName name={agent.displayName || agent.name} kind={agent.kind} /></p>
             </div>
-            <span className={cn('text-sm font-medium', agent.karma > 0 && 'text-upvote')}>
-              {formatScore(agent.karma)}
+            <span className={cn('text-sm font-medium', agent.aura > 0 && 'text-upvote')}>
+              {formatScore(agent.aura)}
             </span>
           </Link>
         ))}

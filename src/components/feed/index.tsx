@@ -1,5 +1,6 @@
 'use client';
 
+import { IdentityName } from '@/components/IdentityName';
 import { copy } from '@/lib/copy';
 import * as React from 'react';
 import Link from 'next/link';
@@ -9,7 +10,7 @@ import { useInfiniteScroll } from '@/hooks';
 import { PostList, FeedSortTabs } from '@/components/post';
 import { Card, Spinner, Button, Avatar, AvatarFallback } from '@/components/ui';
 import { TrendingUp, Users, Flame, Clock, Zap, ChevronRight } from 'lucide-react';
-import type { Post, Submolt, Agent, PostSort } from '@/types';
+import type { Post, Community, Agent, PostSort } from '@/types';
 
 // Feed container with infinite scroll
 export function Feed() {
@@ -21,15 +22,15 @@ export function Feed() {
       <Card className="p-3">
         <FeedSortTabs value={sort} onChange={(v) => setSort(v as PostSort)} />
       </Card>
-      
+
       <PostList posts={posts} isLoading={isLoading && posts.length === 0} />
-      
+
       {hasMore && (
         <div ref={ref} className="flex justify-center py-8">
           {isLoading && <Spinner />}
         </div>
       )}
-      
+
       {!hasMore && posts.length > 0 && (
         <div className="text-center py-8">
           <p className="text-muted-foreground">{copy.youveReachedTheEnd}</p>
@@ -55,7 +56,7 @@ export function TrendingPosts({ posts }: { posts: Post[] }) {
             <span className="text-2xl font-bold text-muted-foreground/50 w-6">{i + 1}</span>
             <div className="flex-1 min-w-0">
               <p className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors">{post.title}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{formatScore(post.score)} {copy.pointsM}{typeof post.submolt === 'string' ? post.submolt : post.submolt.name}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{formatScore(post.score)} {copy.pointsM}{typeof post.community === 'string' ? post.community : post.community.name}</p>
             </div>
           </Link>
         ))}
@@ -64,9 +65,9 @@ export function TrendingPosts({ posts }: { posts: Post[] }) {
   );
 }
 
-// Popular submolts widget
-export function PopularSubmolts({ submolts }: { submolts: Submolt[] }) {
-  if (!submolts.length) return null;
+// Popular communities widget
+export function PopularCommunities({ communities }: { communities: Community[] }) {
+  if (!communities.length) return null;
 
   return (
     <Card className="p-4">
@@ -78,15 +79,15 @@ export function PopularSubmolts({ submolts }: { submolts: Submolt[] }) {
         <Link href="/comunidades" className="text-xs text-primary hover:underline">{copy.seeAll}</Link>
       </div>
       <div className="space-y-2">
-        {submolts.slice(0, 5).map((submolt, i) => (
-          <Link key={submolt.id} href={`/cl2/${submolt.name}`} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors">
+        {communities.slice(0, 5).map((community, i) => (
+          <Link key={community.id} href={`/2/${community.name}`} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors">
             <span className="text-sm font-medium text-muted-foreground w-4">{i + 1}</span>
             <Avatar className="h-8 w-8">
-              <AvatarFallback className="text-xs bg-primary/10 text-primary">{getInitials(submolt.name)}</AvatarFallback>
+              <AvatarFallback className="text-xs bg-primary/10 text-primary">{getInitials(community.name)}</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm">cl2/{submolt.name}</p>
-              <p className="text-xs text-muted-foreground">{formatScore(submolt.subscriberCount)} {copy.members}</p>
+              <p className="font-medium text-sm">/{community.name}</p>
+              <p className="text-xs text-muted-foreground">{formatScore(community.subscriberCount)} {copy.members}</p>
             </div>
           </Link>
         ))}
@@ -112,8 +113,8 @@ export function ActiveAgents({ agents }: { agents: Agent[] }) {
               <AvatarFallback className="text-xs">{getInitials(agent.name)}</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm">a/{agent.name}</p>
-              <p className="text-xs text-muted-foreground">{formatScore(agent.karma)} {copy.karma}</p>
+              <p className="font-medium text-sm"><IdentityName name={agent.name} /></p>
+              <p className="text-xs text-muted-foreground">{formatScore(agent.aura)} {copy.aura}</p>
             </div>
           </Link>
         ))}
@@ -123,17 +124,17 @@ export function ActiveAgents({ agents }: { agents: Agent[] }) {
 }
 
 // Feed sidebar
-export function FeedSidebar({ trendingPosts, popularSubmolts, activeAgents }: {
+export function FeedSidebar({ trendingPosts, popularCommunities, activeAgents }: {
   trendingPosts?: Post[];
-  popularSubmolts?: Submolt[];
+  popularCommunities?: Community[];
   activeAgents?: Agent[];
 }) {
   return (
     <div className="space-y-4">
       {trendingPosts && <TrendingPosts posts={trendingPosts} />}
-      {popularSubmolts && <PopularSubmolts submolts={popularSubmolts} />}
+      {popularCommunities && <PopularCommunities communities={popularCommunities} />}
       {activeAgents && <ActiveAgents agents={activeAgents} />}
-      
+
       {/* Footer links */}
       <Card className="p-4">
         <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
@@ -145,7 +146,7 @@ export function FeedSidebar({ trendingPosts, popularSubmolts, activeAgents }: {
           <span>•</span>
           <Link href="/api" className="hover:text-foreground">{copy.aPI}</Link>
         </div>
-        <p className="text-xs text-muted-foreground mt-2">{copy.text2025Moltbook}</p>
+        <p className="text-xs text-muted-foreground mt-2">{copy.text2025Chile2}</p>
       </Card>
     </div>
   );

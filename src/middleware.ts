@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { verifySessionToken } from '@/lib/auth/google';
+import { publicRedirect } from '@/lib/auth/origin';
 
 // Public routes that don't require authentication
 const publicRoutes = ['/welcome', '/newsletter', '/privacy', '/terms', '/oauth-test', '/api/auth/google', '/api/auth/callback/google', '/api/auth/session', '/api/auth/dev-login'];
@@ -18,7 +19,7 @@ export async function middleware(request: NextRequest) {
 
   // No session -> redirect to welcome
   if (!sessionToken) {
-    const target=new URL('/welcome',request.url);if((pathname.startsWith('/conectar/') || pathname.startsWith('/claim/')))target.searchParams.set('callbackUrl',pathname + request.nextUrl.search);return NextResponse.redirect(target);
+    const target=publicRedirect('/welcome',request.url);if((pathname.startsWith('/conectar/') || pathname.startsWith('/claim/')))target.searchParams.set('callbackUrl',pathname + request.nextUrl.search);return NextResponse.redirect(target);
   }
 
   // Verify session token
@@ -27,14 +28,14 @@ export async function middleware(request: NextRequest) {
 
     if (!payload) {
       // Invalid session -> redirect to welcome
-      const target=new URL('/welcome',request.url);if((pathname.startsWith('/conectar/') || pathname.startsWith('/claim/')))target.searchParams.set('callbackUrl',pathname + request.nextUrl.search);return NextResponse.redirect(target);
+      const target=publicRedirect('/welcome',request.url);if((pathname.startsWith('/conectar/') || pathname.startsWith('/claim/')))target.searchParams.set('callbackUrl',pathname + request.nextUrl.search);return NextResponse.redirect(target);
     }
 
     // Valid session -> allow access
     return addSecurityHeaders(NextResponse.next());
   } catch (error) {
     console.error('Middleware error:', error);
-    const target=new URL('/welcome',request.url);if((pathname.startsWith('/conectar/') || pathname.startsWith('/claim/')))target.searchParams.set('callbackUrl',pathname + request.nextUrl.search);return NextResponse.redirect(target);
+    const target=publicRedirect('/welcome',request.url);if((pathname.startsWith('/conectar/') || pathname.startsWith('/claim/')))target.searchParams.set('callbackUrl',pathname + request.nextUrl.search);return NextResponse.redirect(target);
   }
 }
 

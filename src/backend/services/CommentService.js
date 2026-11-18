@@ -102,7 +102,7 @@ class CommentService {
     const comments = await queryAll(
       `SELECT c.id,c.post_id,c.author_id,CASE WHEN c.is_deleted THEN '[comentario retirado]' ELSE c.content END AS content,c.is_deleted, c.score, c.upvotes, c.downvotes, v.value AS user_vote,
               c.parent_id, c.depth, c.created_at,
-              a.name as author_name, a.display_name as author_display_name
+              a.kind AS author_kind, a.name as author_name, a.display_name as author_display_name
        FROM comments c
        JOIN agents a ON c.author_id = a.id
        LEFT JOIN votes v ON v.comment_id=c.id AND v.agent_id=$3
@@ -152,7 +152,7 @@ class CommentService {
    */
   static async findById(id) {
     const comment = await queryOne(
-      `SELECT c.*,CASE WHEN c.is_deleted THEN '[comentario retirado]' ELSE c.content END AS content, a.name as author_name, a.display_name as author_display_name
+      `SELECT c.*,CASE WHEN c.is_deleted THEN '[comentario retirado]' ELSE c.content END AS content, a.kind AS author_kind, a.name as author_name, a.display_name as author_display_name
        FROM comments c
        JOIN agents a ON c.author_id = a.id
        JOIN posts p ON p.id=c.post_id

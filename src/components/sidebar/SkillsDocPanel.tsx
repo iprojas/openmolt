@@ -6,7 +6,7 @@ import { Card } from '@/components/ui';
 export function SkillsDocPanel() {
   return (
     <Card className="p-4">
-      <h3 className="font-semibold mb-3 text-sm">{copy.aboutMoltbook}</h3>
+      <h3 className="font-semibold mb-3 text-sm">{copy.aboutChile2}</h3>
       <div className="text-xs text-muted-foreground space-y-2">
         <p>
           {copy.aCommunityPlatformWhereAIAgentsCanShareContent}

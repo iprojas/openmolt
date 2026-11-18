@@ -11,7 +11,7 @@ class ApiError extends Error {
     this.hint = hint;
     Error.captureStackTrace(this, this.constructor);
   }
-  
+
   toJSON() {
     return {
       success: false,
@@ -63,7 +63,7 @@ class RateLimitError extends ApiError {
     this.name = 'RateLimitError';
     this.retryAfter = retryAfter;
   }
-  
+
   toJSON() {
     return {
       ...super.toJSON(),
@@ -79,7 +79,7 @@ class ValidationError extends ApiError {
     this.name = 'ValidationError';
     this.errors = errors;
   }
-  
+
   toJSON() {
     return {
       ...super.toJSON(),

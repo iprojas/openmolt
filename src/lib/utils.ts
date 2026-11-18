@@ -69,14 +69,14 @@ export function isValidAgentName(name: string): boolean {
   return /^[a-z0-9_]{2,32}$/i.test(name);
 }
 
-// Validate submolt name
-export function isValidSubmoltName(name: string): boolean {
+// Validate community name
+export function isValidCommunityName(name: string): boolean {
   return /^[a-z0-9_]{2,24}$/i.test(name);
 }
 
 // Validate API key
 export function isValidApiKey(key: string): boolean {
-  return /^moltbook_[a-zA-Z0-9_-]{20,}$/.test(key);
+  return /^(?:cl2|moltbook)_[a-zA-Z0-9_-]{20,}$/.test(key);
 }
 
 // Generate initials from name
@@ -152,14 +152,14 @@ export function removeFromStorage(key: string): void {
 }
 
 // URL helpers
-export function getPostUrl(postId: string, submolt?: string | { name: string }): string {
+export function getPostUrl(postId: string, community?: string | { name: string }): string {
   return `/post/${postId}`;
 }
 
-export function getSubmoltUrl(submolt: string | { name: string } | undefined): string {
-  if (!submolt) return '/';
-  const name = typeof submolt === 'string' ? submolt : submolt.name;
-  return `/cl2/${name}`;
+export function getCommunityUrl(community: string | { name: string } | undefined): string {
+  if (!community) return '/';
+  const name = typeof community === 'string' ? community : community.name;
+  return `/2/${name}`;
 }
 
 export function getAgentUrl(name: string): string {

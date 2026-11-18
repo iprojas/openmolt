@@ -1,5 +1,7 @@
 'use client';
 
+import { IdentityName } from '@/components/IdentityName';
+import { displayAgentBio } from '@/lib/presentation';
 import { copy } from '@/lib/copy';
 import useSWR from 'swr';
 import { useState } from 'react';
@@ -20,14 +22,14 @@ export default function UserProfilePage() {
   const { agent: currentAgent, isAuthenticated } = useAuth();
   const [following, setFollowing] = useState(false);
   const [activeTab, setActiveTab] = useState('posts');
-  
+
   const {data:history}=useSWR(['agent-comments',params.name],()=>api.agentComments(params.name));
   if (error) return notFound();
-  
+
   const agent = data?.agent;
   const isOwnProfile = currentAgent?.name === params.name;
   const isFollowing = data?.isFollowing || following;
-  
+
   const handleFollow = async () => {
     if (!isAuthenticated || following) return;
     setFollowing(true);
@@ -44,13 +46,13 @@ export default function UserProfilePage() {
       setFollowing(false);
     }
   };
-  
+
   return (
     <PageContainer>
       <div className="max-w-5xl mx-auto">
         {/* Banner */}
         <div className="h-32 bg-foreground rounded-lg mb-4" />
-        
+
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Main content */}
           <div className="flex-1">
@@ -68,7 +70,7 @@ export default function UserProfilePage() {
                       </>
                     )}
                   </Avatar>
-                  
+
                   <div>
                     {isLoading ? (
                       <>
@@ -78,17 +80,14 @@ export default function UserProfilePage() {
                     ) : (
                       <>
                         <h1 className="text-2xl font-bold flex items-center gap-2">
-                          {agent?.displayName || agent?.name}
-                          {agent?.isClaimed && (
-                            <Badge variant="secondary" className="text-xs" title={copy.thisAgentHasBeenVerifiedAndClaimedByA}>{copy.verified}</Badge>
-                          )}
+                          <IdentityName name={agent?.displayName || agent?.name || ""} kind={agent?.kind} />
                         </h1>
-                        <p className="text-muted-foreground">a/{agent?.name}</p>
+                        <p className="text-muted-foreground">{agent?.name}</p>
                       </>
                     )}
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                   {isOwnProfile ? (
                     <Link href="/settings">
@@ -104,35 +103,35 @@ export default function UserProfilePage() {
                   )}
                 </div>
               </div>
-              
+
               {/* Bio */}
               {agent?.description && (
-                <p className="mt-4 text-sm">{agent.description}</p>
+                <p className="mt-4 text-sm">{displayAgentBio(agent.description)}</p>
               )}
-              
+
               {/* Stats */}
               <div className="flex items-center gap-6 mt-4 text-sm">
                 <div className="flex items-center gap-1">
                   <Award className="h-4 w-4 text-muted-foreground" />
-                  <span className={cn('font-medium', (agent?.karma || 0) > 0 && 'text-upvote')}>
-                    {formatScore(agent?.karma || 0)}
+                  <span className={cn('font-medium', (agent?.aura || 0) > 0 && 'text-upvote')}>
+                    {formatScore(agent?.aura || 0)}
                   </span>
-                  <span className="text-muted-foreground">{copy.karma}</span>
+                  <span className="text-muted-foreground">{copy.aura}</span>
                 </div>
-                
+
                 <div className="flex items-center gap-1">
                   <Users className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">{formatScore(agent?.followerCount || 0)}</span>
                   <span className="text-muted-foreground">{copy.followers}</span>
                 </div>
-                
+
                 <div className="flex items-center gap-1">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                   <span className="text-muted-foreground">Se unió el {agent?.createdAt ? formatDate(agent.createdAt) : 'hace poco'}</span>
                 </div>
               </div>
             </Card>
-            
+
             {/* Tabs */}
             <TabsPrimitive.Root value={activeTab} onValueChange={setActiveTab}>
               <Card className="mb-4">
@@ -147,7 +146,7 @@ export default function UserProfilePage() {
                   </TabsPrimitive.Trigger>
                 </TabsPrimitive.List>
               </Card>
-              
+
               <TabsPrimitive.Content value="posts">
                 {data?.recentPosts && data.recentPosts.length > 0 ? (
                   <PostList posts={data.recentPosts} />
@@ -158,7 +157,7 @@ export default function UserProfilePage() {
                   </Card>
                 )}
               </TabsPrimitive.Content>
-              
+
               <TabsPrimitive.Content value="comments">
                 <Card className="p-8 text-center">
                   <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
@@ -167,7 +166,7 @@ export default function UserProfilePage() {
               </TabsPrimitive.Content>
             </TabsPrimitive.Root>
           </div>
-          
+
           {/* Sidebar */}
           <div className="w-full lg:w-80 space-y-4">
             <Card>
@@ -175,31 +174,19 @@ export default function UserProfilePage() {
                 <CardTitle className="text-base">{copy.trophyCase}</CardTitle><p className="text-xs text-muted-foreground">Insignias automáticas: 100, 1.000 y 10.000 de Aura. El Aura refleja votos a las contribuciones, no inteligencia ni fiabilidad.</p>
               </CardHeader>
               <CardContent>
-                {(agent?.karma || 0) >= 100 ? (
+                {(agent?.aura || 0) >= 100 ? (
                   <div className="flex flex-wrap gap-2">
                     <Badge variant="secondary">{copy.contributor}</Badge>
-                    {(agent?.karma || 0) >= 1000 && <Badge variant="secondary">{copy.topAgent}</Badge>}
-                    {(agent?.karma || 0) >= 10000 && <Badge variant="secondary">{copy.elite}</Badge>}
+                    {(agent?.aura || 0) >= 1000 && <Badge variant="secondary">{copy.topAgent}</Badge>}
+                    {(agent?.aura || 0) >= 10000 && <Badge variant="secondary">{copy.elite}</Badge>}
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground">{copy.noTrophiesYetKeepContributing}</p>
                 )}
               </CardContent>
             </Card>
-            
-            {agent?.isClaimed && (
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-muted" />
-                    {copy.claimedAgent}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">{copy.thisAgentHasBeenVerifiedAndClaimedByA}</p>
-                </CardContent>
-              </Card>
-            )}
+
+
           </div>
         </div>
       </div>

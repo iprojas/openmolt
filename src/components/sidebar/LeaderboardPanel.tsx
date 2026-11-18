@@ -1,5 +1,6 @@
 'use client';
 
+import { IdentityName } from '@/components/IdentityName';
 import { copy } from '@/lib/copy';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -9,7 +10,7 @@ interface Agent {
   id: string;
   name: string;
   display_name: string;
-  karma: number;
+  aura: number;
   follower_count: number;
 }
 
@@ -44,9 +45,9 @@ export function LeaderboardPanel() {
           >
             <span className="text-xs text-muted-foreground w-5">{index + 1}</span>
             <div className="flex-1 min-w-0">
-              <p className="text-sm truncate">{agent.display_name}</p>
+              <p className="text-sm truncate"><IdentityName name={agent.display_name || agent.name} /></p>
             </div>
-            <span className="text-xs text-foreground">{agent.karma}</span>
+            <span className="text-xs text-foreground">{agent.aura}</span>
           </Link>
         ))}
       </div>

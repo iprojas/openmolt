@@ -1,132 +1,55 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { sessionUser } from '@/lib/auth/session';
-import { createHash } from 'crypto';
+import { randomBytes, createHash } from 'crypto';
+const { encryptKey, decryptKey } = require('@/backend/utils/credentials');
+const json = (body: unknown, status = 200) => NextResponse.json(body, { status, headers: { 'Cache-Control': 'private, no-store' } });
+const summary = (a: any) => ({ id: a.id, agentName: a.name, displayName: a.displayName, isClaimed: a.isClaimed, isActive: a.isActive, hasCredentials: !!a.apiKeyHash });
+
 export async function GET(request: NextRequest) {
   const user = await sessionUser(request);
-  if (!user)
-    return NextResponse.json({ error: 'Inicia sesión.' }, { status: 401 });
-  const rows = await prisma.platformAccount.findMany({
-    where: { userId: user.id },
-    orderBy: { createdAt: 'desc' },
-  });
-  const agents = await prisma.agent.findMany({
-    where: { name: { in: rows.map((a) => a.agentName) } },
-  });
-  return NextResponse.json({
-    accounts: rows.map((row) => {
-      const agent = agents.find((a) => a.name === row.agentName);
-      return {
-        ...row,
-        isClaimed: agent?.ownerUserId === user.id,
-        isActive: agent?.isActive ?? row.isActive,
-      };
-    }),
-  });
+  if (!user) return json({ error: 'Inicia sesión con Google.' }, 401);
+  if (request.nextUrl.searchParams.has('reveal')) {
+    const agent = await prisma.agent.findFirst({ where: { id: request.nextUrl.searchParams.get('id') || '', ownerUserId: user.id, kind: 'agent' } });
+    if (!agent) return json({ error: 'Agente no encontrado.' }, 404);
+    return json({ apiKey: agent.apiKeyEncrypted ? decryptKey(agent.apiKeyEncrypted) : null });
+  }
+  const agents = await prisma.agent.findMany({ where: { ownerUserId: user.id, kind: 'agent' }, orderBy: { createdAt: 'desc' } });
+  return json({ accounts: agents.map(summary) });
 }
+
 export async function POST(request: NextRequest) {
   const user = await sessionUser(request);
-  if (!user)
-    return NextResponse.json({ error: 'Inicia sesión.' }, { status: 401 });
-  const body = await request.json();
-  if (typeof body.apiKey !== 'string' || body.apiKey.length > 200)
-    return NextResponse.json(
-      { error: 'Clave API no válida.' },
-      { status: 400 }
-    );
-  const apiKeyHash = createHash('sha256').update(body.apiKey).digest('hex');
-  try {
-    const account = await prisma.$transaction(async (db) => {
-      const agent = await db.agent.findFirst({ where: { apiKeyHash } });
-      if (!agent) throw new Error('KEY');
-      if (body.claimToken && agent.claimToken !== body.claimToken)
-        throw new Error('KEY');
-      const claimed = await db.agent.updateMany({
-        where: {
-          id: agent.id,
-          OR: [{ ownerUserId: null }, { ownerUserId: user.id }],
-        },
-        data: {
-          ownerUserId: user.id,
-          isClaimed: true,
-          status: agent.isActive ? 'active' : 'suspended',
-          claimedAt: new Date(),
-        },
-      });
-      if (!claimed.count) throw new Error('OWNER');
-      return db.platformAccount.upsert({
-        where: {
-          userId_platform_agentName: {
-            userId: user.id,
-            platform: 'moltbook',
-            agentName: agent.name,
-          },
-        },
-        create: {
-          userId: user.id,
-          platform: 'moltbook',
-          agentName: agent.name,
-          apiKey: body.apiKey,
-          displayName: agent.displayName,
-          isClaimed: true,
-          isActive: agent.isActive,
-        },
-        update: {
-          apiKey: body.apiKey,
-          isClaimed: true,
-          isActive: agent.isActive,
-        },
-      });
+  if (!user) return json({ error: 'Inicia sesión con Google.' }, 401);
+  const body = await request.json().catch(() => null);
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return json({ error: 'Datos no válidos.' }, 400);
+  if (typeof body.claimToken !== 'string' || !/^cl2_claim_[a-f0-9]{64}$/.test(body.claimToken)) return json({ error: 'Enlace de vinculación no válido.' }, 400);
+  // Atomic compare-and-set consumes the token. A second browser cannot take ownership.
+  const result = await prisma.$transaction(async db => {
+    const agent = await db.agent.findFirst({ where: { claimToken: body.claimToken, kind: 'agent', ownerUserId: null } });
+    if (!agent) return null;
+    const claimed = await db.agent.updateMany({
+      where: { id: agent.id, claimToken: body.claimToken, ownerUserId: null },
+      data: { ownerUserId: user.id, claimToken: null, isClaimed: true, claimedAt: new Date(), status: agent.isActive ? 'active' : 'suspended' },
     });
-    return NextResponse.json({ account }, { status: 201 });
-  } catch (error) {
-    if (process.env.NODE_ENV !== 'production')
-      console.error(
-        'Vinculación:',
-        (error as Error).name,
-        (error as { code?: string }).code || ''
-      );
-    return NextResponse.json(
-      {
-        error:
-          (error as Error).message === 'OWNER'
-            ? 'Este agente ya está vinculado a otra cuenta humana.'
-            : 'No pudimos verificar el agente y sus credenciales.',
-      },
-      { status: (error as Error).message === 'OWNER' ? 409 : 400 }
-    );
-  }
+    return claimed.count ? { ...agent, isClaimed: true } : null;
+  });
+  return result ? json({ account: summary(result) }, 201) : json({ error: 'El enlace ya fue utilizado o no es válido. Revisa Mis agentes.' }, 409);
 }
+
 export async function PATCH(request: NextRequest) {
   const user = await sessionUser(request);
-  if (!user)
-    return NextResponse.json({ error: 'Inicia sesión.' }, { status: 401 });
-  const { id, isActive } = await request.json();
-  if (typeof id !== 'string' || typeof isActive !== 'boolean')
-    return NextResponse.json({ error: 'Datos no válidos.' }, { status: 400 });
-  const account = await prisma.platformAccount.findFirst({
-    where: { id, userId: user.id },
-  });
-  if (!account)
-    return NextResponse.json(
-      { error: 'Cuenta no encontrada.' },
-      { status: 404 }
-    );
-  const result = await prisma.$transaction(async (db) => {
-    const agent = await db.agent.updateMany({
-      where: { name: account.agentName, ownerUserId: user.id },
-      data: { isActive, status: isActive ? 'active' : 'suspended' },
-    });
-    if (!agent.count) return null;
-    return db.platformAccount.update({
-      where: { id: account.id },
-      data: { isActive },
-    });
-  });
-  if (!result)
-    return NextResponse.json(
-      { error: 'Vincula el agente con su clave API antes de gestionarlo.' },
-      { status: 403 }
-    );
-  return NextResponse.json({ account: result });
+  if (!user) return json({ error: 'Inicia sesión con Google.' }, 401);
+  const body = await request.json().catch(() => null);
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return json({ error: 'Datos no válidos.' }, 400);
+  if (typeof body.id !== 'string') return json({ error: 'Agente no válido.' }, 400);
+  let data;
+  if (typeof body.isActive === 'boolean') data = { isActive: body.isActive, status: body.isActive ? 'active' : 'suspended' };
+  else if (body.action === 'revoke') data = { apiKeyHash: null, apiKeyEncrypted: null };
+  else if (body.action === 'rotate') {
+    const key = `cl2_${randomBytes(32).toString('hex')}`;
+    data = { apiKeyHash: createHash('sha256').update(key).digest('hex'), apiKeyEncrypted: encryptKey(key) };
+  } else return json({ error: 'Acción no válida.' }, 400);
+  const result = await prisma.agent.updateMany({ where: { id: body.id, ownerUserId: user.id, kind: 'agent' }, data });
+  return result.count ? json({ success: true }) : json({ error: 'Agente no encontrado.' }, 404);
 }
