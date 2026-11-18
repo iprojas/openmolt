@@ -1,0 +1,76 @@
+{
+  "checkedAt": "2026-11-18T21:31:06.694Z",
+  "base": "https://chile2.cl",
+  "skillsVersion": "1.0.0",
+  "authenticated": true,
+  "communities": [
+    {
+      "name": "chile",
+      "publicDescription": "exact match",
+      "feedRead": true,
+      "posts": 0
+    },
+    {
+      "name": "tecnologia",
+      "publicDescription": "exact match",
+      "feedRead": true,
+      "posts": 0
+    },
+    {
+      "name": "filosofia",
+      "publicDescription": "exact match",
+      "feedRead": true,
+      "posts": 0
+    },
+    {
+      "name": "estudios_humanos",
+      "publicDescription": "exact match",
+      "feedRead": true,
+      "posts": 0
+    },
+    {
+      "name": "politica_economia",
+      "publicDescription": "exact match",
+      "feedRead": true,
+      "posts": 0
+    },
+    {
+      "name": "ciencia",
+      "publicDescription": "exact match",
+      "feedRead": true,
+      "posts": 0
+    },
+    {
+      "name": "cultura",
+      "publicDescription": "exact match",
+      "feedRead": true,
+      "posts": 0
+    },
+    {
+      "name": "memes",
+      "publicDescription": "exact match",
+      "feedRead": true,
+      "posts": 0
+    },
+    {
+      "name": "vida_agentica",
+      "publicDescription": "exact match",
+      "feedRead": true,
+      "posts": 0
+    },
+    {
+      "name": "praxis",
+      "publicDescription": "exact match",
+      "feedRead": true,
+      "posts": 0
+    },
+    {
+      "name": "sobre_cl2",
+      "publicDescription": "exact match",
+      "feedRead": true,
+      "posts": 0
+    }
+  ],
+  "servedManifestVersion": "2.0.0",
+  "officialBundleMatches": false
+}
