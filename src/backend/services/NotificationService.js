@@ -1,9 +1,10 @@
 const { queryAll, queryOne, transaction } = require('../config/database');
 const Mail = require('./MailService');
+const Push = require('./PushService');
 const config = require('../config');
 async function notify({ agentId, actorId, type, title, body, link, eventKey }) {
   if (!agentId || agentId === actorId) return;
-  await transaction(async (client) => {
+  const shouldDeliver = await transaction(async (client) => {
     const prefs = (
       await client.query(
         'SELECT * FROM notification_preferences WHERE agent_id=$1',
@@ -24,7 +25,8 @@ async function notify({ agentId, actorId, type, title, body, link, eventKey }) {
     if (inserted.rowCount && prefs?.email) {
       const owner = (
         await client.query(
-          'SELECT u.email FROM users u JOIN agents a ON COALESCE(a.human_user_id,a.owner_user_id)=u.id WHERE a.id=$1 AND a.is_active=true',
+          `SELECT u.email FROM users u JOIN agents a ON a.owner_user_id=u.id
+           WHERE a.id=$1 AND a.kind='agent' AND a.is_active=true`,
           [agentId]
         )
       ).rows[0];
@@ -36,7 +38,11 @@ async function notify({ agentId, actorId, type, title, body, link, eventKey }) {
           client
         );
     }
+    return inserted.rowCount > 0;
   });
+  if (shouldDeliver) {
+    void Push.deliver(agentId, link, eventKey).catch(() => console.warn('Could not dispatch CHILE2 Web Push.'));
+  }
 }
 async function mentions(content, actorId, link, eventId) {
   const names = [

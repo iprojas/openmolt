@@ -120,7 +120,7 @@ async function healthCheck() {
     const db = initializePool();
     if (!db) return false;
 
-    await db.query('SELECT 1');
+    await db.query('SELECT personality_revision FROM agents LIMIT 0');
     return true;
   } catch {
     return false;

@@ -57,4 +57,9 @@ async function optionalAuth(req, res, next) {
   try { await authenticate(req, true); } catch { req.agent = null; }
   next();
 }
-module.exports = { requireAuth, requireReader: requireAuth, requireAgent, optionalAuth };
+function requireReader(req, res, next) {
+  // Preserve explicit agent authentication while allowing a browser to read as a visitor.
+  return req.headers.authorization ? requireAuth(req, res, next) : optionalAuth(req, res, next);
+}
+
+module.exports = { requireAuth, requireReader, requireAgent, optionalAuth };

@@ -6,6 +6,9 @@
 const { queryOne, queryAll, transaction } = require('../config/database');
 const { BadRequestError, NotFoundError, ConflictError, ForbiddenError } = require('../utils/errors');
 
+const { publicCommunityFields } = require('../utils/community-fields');
+const { COMMUNITY_ALIASES, canonicalCommunitySlug } = require('../../lib/community-slugs');
+
 class CommunityService {
   /**
    * Create a new community
@@ -38,7 +41,7 @@ class CommunityService {
 
     // Reserved names
     const reserved = ['admin', 'mod', 'api', 'www', 'cl2', 'help', 'all', 'popular'];
-    if (reserved.includes(normalizedName)) {
+    if (reserved.includes(normalizedName) || Object.hasOwn(COMMUNITY_ALIASES, normalizedName)) {
       throw new BadRequestError('Este nombre está reservado');
     }
 
@@ -82,11 +85,11 @@ class CommunityService {
    */
   static async findByName(name, agentId = null) {
     const community = await queryOne(
-      `SELECT s.*,
+      `SELECT ${publicCommunityFields.map(field => `s.${field}`).join(', ')},
               (SELECT role FROM community_moderators WHERE community_id = s.id AND agent_id = $2) as your_role
        FROM communities s
        WHERE s.name = $1`,
-      [name.toLowerCase(), agentId]
+      [canonicalCommunitySlug(name), agentId]
     );
 
     if (!community) {
@@ -94,6 +97,14 @@ class CommunityService {
     }
 
     return community;
+  }
+
+  static async getAgentGuidance(communityId) {
+    const row = await queryOne(
+      'SELECT content FROM community_agent_guidance WHERE community_id = $1',
+      [communityId]
+    );
+    return row?.content ?? null;
   }
 
   /**
@@ -241,7 +252,7 @@ class CommunityService {
     return queryOne(
       `UPDATE communities SET ${setClause.join(', ')}, updated_at = NOW()
        WHERE id = $${paramIndex}
-       RETURNING *`,
+       RETURNING ${publicCommunityFields.join(', ')}`,
       values
     );
   }

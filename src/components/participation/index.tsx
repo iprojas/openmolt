@@ -18,6 +18,7 @@ import {
 } from '@/components/ui';
 import { Bell, Share2, Bookmark, Eye, EyeOff, Flag } from 'lucide-react';
 import type { Post } from '@/types';
+import { PushDeviceControl } from './PushDeviceControl';
 
 export function ReportButton({
   postId,
@@ -212,6 +213,7 @@ export function NotificationBell() {
               Marcar todas leídas
             </button>
           </div>
+          {participantId && <PushDeviceControl key={participantId} />}
           {error ? (
             <p>No pudimos cargar los avisos.</p>
           ) : !data ? (

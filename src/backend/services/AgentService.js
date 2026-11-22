@@ -7,7 +7,7 @@ const { queryOne, queryAll, transaction } = require('../config/database');
 const { generateApiKey, generateClaimToken, hashToken } = require('../utils/auth');
 const { BadRequestError, NotFoundError, ConflictError } = require('../utils/errors');
 const config = require('../config');
-const { encryptKey } = require('../utils/credentials');
+const { personalitySchema } = require('../../lib/agent-personality');
 
 class AgentService {
   /**
@@ -18,7 +18,9 @@ class AgentService {
    * @param {string} data.description - Agent description
    * @returns {Promise<Object>} Registration result with API key
    */
-  static async register({ name, description = '' }) {
+  static async register({ name, description = '', personality }) {
+    const initial = personalitySchema.safeParse(personality === undefined ? { tone: '', interests: '', rules: '' } : personality);
+    if (!initial.success) throw new BadRequestError('Revisa el tono, los intereses y las reglas.');
     if(typeof description!=='string'||description.length>500)throw new BadRequestError('La descripción admite hasta 500 caracteres.');
     // Validate name
     if (!name || typeof name !== 'string') {
@@ -37,36 +39,52 @@ class AgentService {
       );
     }
 
-    // Check if name exists
-    const existing = await queryOne(
-      'SELECT id FROM agents WHERE name = $1',
-      [normalizedName]
-    );
-
-    if (existing) {
-      throw new ConflictError('Ese nombre ya está en uso', 'Prueba con otro nombre');
-    }
-
-    // Generate credentials
     const apiKey = generateApiKey();
     const claimToken = generateClaimToken();
-    const apiKeyHash = hashToken(apiKey);
-
-    // Create agent
     const agent = await queryOne(
-      `INSERT INTO agents (id, name, display_name, description, api_key_hash, claim_token, api_key_encrypted, status)
-       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, 'pending_claim')
-       RETURNING id, name, display_name, created_at`,
-      [normalizedName, name.trim(), description, apiKeyHash, claimToken, encryptKey(apiKey)]
+      `INSERT INTO agents (id, name, display_name, description, api_key_hash, claim_token, personality, status)
+       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6::jsonb, 'pending_claim')
+       ON CONFLICT (name) DO NOTHING
+       RETURNING id, name`,
+      [normalizedName, name.trim(), description, hashToken(apiKey), claimToken, JSON.stringify(initial.data)]
     );
+    if (!agent) throw new ConflictError('Ese nombre ya está en uso', 'Prueba con otro nombre');
 
     return {
       agent: {
         api_key: apiKey,
-        claim_url: `${config.cl2.baseUrl}/conectar/${claimToken}`
+        claim_url: new URL(`/conectar/${claimToken}`, config.cl2.baseUrl).href
       },
       important: 'Guarda tu clave API. No se mostrará nuevamente.'
     };
+  }
+
+  static getPersonality(id) {
+    return queryOne('SELECT personality, personality_revision AS revision FROM agents WHERE id=$1', [id]);
+  }
+
+  static async updatePersonality(id, token, { personality, revision }) {
+    const updated = await queryOne(
+      `UPDATE agents SET personality=$1::jsonb, personality_revision=personality_revision+1, updated_at=NOW()
+       WHERE id=$2 AND api_key_hash=$3 AND personality_revision=$4 AND is_active=true AND is_claimed=true
+       RETURNING personality, personality_revision AS revision`,
+      [JSON.stringify(personality), id, hashToken(token), revision]
+    );
+    if (!updated) throw new ConflictError('La configuración cambió o el acceso ya no está activo. Vuelve a consultarla.');
+    return updated;
+  }
+
+  static async recover(token) {
+    const apiKey = generateApiKey();
+    const agent = await queryOne(
+      `UPDATE agents
+       SET api_key_hash=$1, api_key_encrypted=NULL, recovery_token_hash=NULL, recovery_expires_at=NULL, updated_at=NOW()
+       WHERE recovery_token_hash=$2 AND recovery_expires_at > NOW() AND kind='agent' AND is_claimed=true
+       RETURNING id, name`,
+      [hashToken(apiKey), hashToken(token)]
+    );
+    if (!agent) throw new NotFoundError('Enlace de recuperación');
+    return { agent: { ...agent, api_key: apiKey } };
   }
 
   /**
@@ -176,7 +194,7 @@ class AgentService {
 
     return {
       status: agent.is_claimed ? 'claimed' : 'pending_claim', is_claimed: agent.is_claimed,
-      ...(!agent.is_claimed && agent.claim_token ? { claim_url: `${config.cl2.baseUrl}/conectar/${agent.claim_token}` } : {})
+      ...(!agent.is_claimed && agent.claim_token ? { claim_url: new URL(`/conectar/${agent.claim_token}`, config.cl2.baseUrl).href } : {})
     };
   }
 

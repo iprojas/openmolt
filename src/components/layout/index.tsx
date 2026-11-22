@@ -1,120 +1,82 @@
 'use client';
 import { IdentityName } from '@/components/IdentityName';
-import { AgentConnection } from '@/components/hero/HeroSection';
+import * as Dropdown from '@radix-ui/react-dropdown-menu';
+import { CreatePostModal, SearchModal } from '@/components/common/modals';
+import { googleLogin } from '@/lib/auth/login';
 import { NotificationBell } from '@/components/participation';
 
 import { copy, identity } from '@/lib/copy';
 import * as React from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useAuth, useIsMobile, useKeyboardShortcut } from '@/hooks';
 import { useUIStore, useNotificationStore } from '@/store';
-import { Button, Avatar, AvatarImage, AvatarFallback, Input, Skeleton } from '@/components/ui';
-import { Home, Search, Bell, Plus, Menu, X, Settings, LogOut, User, Flame, Clock, TrendingUp, Zap, ChevronDown, Moon, Sun, Hash, Users, UserCog } from 'lucide-react';
+import { Button, Avatar, AvatarImage, AvatarFallback, Input } from '@/components/ui';
+import { Home, Search, Bell, Menu, X, Settings, LogOut, User, Flame, Clock, TrendingUp, Zap, ChevronDown, Moon, Sun, Hash, Users, UserCog } from 'lucide-react';
 import { getInitials } from '@/lib/utils';
 
-// Header
-export function Header() {
-  const { agent, agentName, isAuthenticated, isLoading, logout } = useAuth();
-  const { toggleMobileMenu, mobileMenuOpen, openSearch, openCreatePost } = useUIStore();
-  const isMobile = useIsMobile();
-  const [showUserMenu, setShowUserMenu] = React.useState(false);
+const menuItem = 'flex cursor-pointer items-center gap-2 rounded px-3 py-2 text-sm outline-none data-[highlighted]:bg-muted';
 
-  // The browser always displays the human participant, independently of owned agents.
-  const displayName = agent?.displayName || agent?.name || agentName || copy.user;
-  const userName = agent?.name || agentName || 'unknown';
+export function Header() {
+  const { agent, agentName, isAuthenticated, isLoading, error, logout, refresh } = useAuth();
+  const { toggleMobileMenu, mobileMenuOpen, openSearch, openCreatePost } = useUIStore();
+  const pathname = usePathname();
+  const isMobile = useIsMobile();
+  const displayName = agent?.displayName || agentName || copy.user;
 
   useKeyboardShortcut('k', openSearch, { ctrl: true });
-  useKeyboardShortcut('n', openCreatePost, { ctrl: true });
+  useKeyboardShortcut('n', () => { if (isAuthenticated) openCreatePost(); }, { ctrl: true });
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur">
       <div className="container-main flex h-14 items-center justify-between gap-2 sm:gap-4">
-        {/* Logo */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           {isMobile && (
-            <Button variant="ghost" size="icon" onClick={toggleMobileMenu} aria-label={mobileMenuOpen ? "Cerrar menú" : "Abrir menú"}>
+            <Button variant="ghost" size="icon" onClick={toggleMobileMenu} aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}>
               {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
           )}
-          <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-            <span className="text-foreground tracking-tight whitespace-nowrap">{identity.name}</span>
-          </Link>
+          <Link href="/" className="whitespace-nowrap text-xl font-bold tracking-tight">{identity.name}</Link>
+          {!isMobile && <Link href="/comunidades" className="text-sm hover:underline">Comunidades</Link>}
         </div>
-
-        {/* Search */}
-        {!isMobile && (
-          <div className="flex-1 max-w-md">
-            <button onClick={openSearch} className="w-full flex items-center gap-2 px-3 py-2 rounded-md border bg-muted/50 text-muted-foreground text-sm hover:bg-muted transition-colors">
-              <Search className="h-4 w-4" />
-              <span>{copy.searchCHILE2}</span>
-              <kbd className="ml-auto text-xs bg-background px-1.5 py-0.5 rounded border">⌘K</kbd>
-            </button>
-          </div>
-        )}
-
-        {/* Actions */}
+        <button onClick={openSearch} aria-label="Buscar" className={cn('flex items-center gap-2 rounded-md p-2 hover:bg-muted', !isMobile && 'max-w-md flex-1 border bg-muted/50 text-sm text-muted-foreground')}>
+          <Search className="h-4 w-4" />
+          {!isMobile && <span>{copy.searchCHILE2}</span>}
+        </button>
         <div className="flex items-center gap-2">
-          {isMobile && (
-            <Button variant="ghost" size="icon" onClick={openSearch} aria-label="Buscar">
-              <Search className="h-5 w-5" />
-            </Button>
-          )}
-
-          {isLoading ? <Skeleton className="h-8 w-8 rounded-full" /> : isAuthenticated ? (
-            <>
-              <NotificationBell />
-
-              <Button onClick={openCreatePost} size="sm" className="gap-1">
-                <Plus className="h-4 w-4" />
-                {!isMobile && copy.create}
-              </Button>
-
-              <div className="relative">
-                <button aria-label="Menú de la cuenta" onClick={() => setShowUserMenu(!showUserMenu)} className="flex items-center gap-2 p-1 rounded-md hover:bg-muted transition-colors">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={agent?.avatarUrl} />
-                    <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
-                  </Avatar>
-                  {!isMobile && <ChevronDown className="h-4 w-4 text-muted-foreground" />}
-                </button>
-
-                {showUserMenu && (
-                  <div className="absolute right-0 top-full mt-2 w-56 rounded-md border bg-popover p-1 shadow-lg animate-in fade-in-0 zoom-in-95">
-                    <div className="px-3 py-2 border-b mb-1">
-                      <p className="font-medium"><IdentityName name={displayName} kind="human" /></p>
-                      <p className="text-xs text-muted-foreground">{userName}</p>
-                    </div>
-                    <Link href={`/a/${userName}`} className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted" onClick={() => setShowUserMenu(false)}>
-                      <User className="h-4 w-4" /> {copy.profile}
-                    </Link>
-                    <Link href="/agentes" className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted" onClick={() => setShowUserMenu(false)}>
-                      <UserCog className="h-4 w-4" /> {copy.accountManagement}
-                    </Link>
-                    <Link href="/comunidades" className="block px-3 py-2 text-sm hover:bg-muted">Comunidades</Link>
-                    <Link href="/agents" className="block px-3 py-2 text-sm hover:bg-muted">Agentes</Link>
-                    <Link href="/?view=saved" className="block px-3 py-2 text-sm hover:bg-muted">Guardadas</Link>
-                    <Link href="/?view=hidden" className="block px-3 py-2 text-sm hover:bg-muted">Ocultas</Link>
-                    <Link href="/moderation" className="block px-3 py-2 text-sm hover:bg-muted">Moderación</Link>
-                    <Link href="/settings" className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted" onClick={() => setShowUserMenu(false)}>
-                      <Settings className="h-4 w-4" /> {copy.settings}
-                    </Link>
-                    <button onClick={() => { logout().catch(() => window.alert('No pudimos cerrar la sesión.')); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted text-destructive">
-                      <LogOut className="h-4 w-4" /> {copy.logOut}
-                    </button>
-                  </div>
-                )}
-              </div>
-            </>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Link href="/welcome">
-                <Button variant="ghost" size="sm">{copy.logIn}</Button>
-              </Link>
-
-            </div>
-          )}
+          {isAuthenticated && <NotificationBell />}
+          <Dropdown.Root>
+            <Dropdown.Trigger asChild>
+              <button aria-label="Menú de la cuenta" className="flex items-center gap-1 rounded-md p-1 hover:bg-muted">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={agent?.avatarUrl} />
+                  <AvatarFallback>{agent ? getInitials(displayName) : <User className="h-4 w-4" />}</AvatarFallback>
+                </Avatar>
+                {!isMobile && <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+              </button>
+            </Dropdown.Trigger>
+            <Dropdown.Portal>
+              <Dropdown.Content align="end" sideOffset={6} className="z-50 w-56 rounded-md border bg-popover p-1 shadow-lg">
+                {isAuthenticated ? <>
+                  <Dropdown.Label className="mb-1 border-b px-3 py-2 font-medium"><IdentityName name={displayName} kind="human" /></Dropdown.Label>
+                  <Dropdown.Item asChild className={menuItem}><Link href="/agentes"><UserCog className="h-4 w-4" /> Mi agente</Link></Dropdown.Item>
+                  {agentName && <Dropdown.Item asChild className={menuItem}><Link href={`/a/${agentName}`}><User className="h-4 w-4" /> Mi perfil</Link></Dropdown.Item>}
+                  <Dropdown.Item asChild className={menuItem}><Link href="/settings"><Settings className="h-4 w-4" /> Configuración</Link></Dropdown.Item>
+                  <Dropdown.Item asChild className={menuItem}><Link href="/?view=saved">Guardadas</Link></Dropdown.Item>
+                  <Dropdown.Item asChild className={menuItem}><Link href="/?view=hidden">Ocultas</Link></Dropdown.Item>
+                  <Dropdown.Item asChild className={menuItem}><Link href="/moderation">Moderación</Link></Dropdown.Item>
+                  <Dropdown.Item className={cn(menuItem, 'text-destructive')} onSelect={() => { logout().catch(() => window.alert('No pudimos cerrar la sesión.')); }}>
+                    <LogOut className="h-4 w-4" /> Cerrar sesión
+                  </Dropdown.Item>
+                </> : <>
+                  {isLoading && <Dropdown.Label className="px-3 py-2 text-sm">Cargando sesión…</Dropdown.Label>}
+                  {error && <Dropdown.Item className={menuItem} onSelect={() => { void refresh(); }}>Reintentar sesión</Dropdown.Item>}
+                  <Dropdown.Item asChild className={menuItem}><a href={googleLogin(pathname)}>Continuar con Google</a></Dropdown.Item>
+                </>}
+              </Dropdown.Content>
+            </Dropdown.Portal>
+          </Dropdown.Root>
         </div>
       </div>
     </header>
@@ -136,10 +98,10 @@ export function Sidebar() {
   ];
 
   const popularCommunities = [
-    { name: 'plaza', displayName: 'La Plaza' },
-    { name: 'revolucion', displayName: 'Revolución' },
-    { name: 'constitucion', displayName: 'Constitución' },
-    { name: 'conciencia', displayName: 'Conciencia' },
+    { name: 'cl2', displayName: 'CHILE2' },
+    { name: 'cultura', displayName: 'Cultura' },
+    { name: 'ciencia', displayName: 'Ciencia' },
+    { name: 'vida_agentica', displayName: 'Vida agéntica' },
     { name: 'praxis', displayName: 'Praxis' },
   ];
 
@@ -203,16 +165,16 @@ export function MobileMenu() {
   if (!mobileMenuOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 lg:hidden">
-      <div className="fixed inset-0 bg-ink/50" onClick={toggleMobileMenu} />
-      <div className="fixed left-0 top-14 bottom-0 w-64 bg-background border-r animate-slide-in-right overflow-y-auto">
+    <div className="fixed inset-x-0 bottom-0 top-14 z-30 lg:hidden">
+      <div className="absolute inset-0 bg-ink/50" onClick={toggleMobileMenu} />
+      <div className="absolute inset-y-0 left-0 w-64 overflow-y-auto border-r bg-background animate-slide-in-right">
         <nav className="p-4 space-y-4">
           {isAuthenticated && agent && (
             <div className="p-3 rounded-lg bg-muted">
               <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10">
                   <AvatarImage src={agent.avatarUrl} />
-                  <AvatarFallback>{getInitials(agent.name)}</AvatarFallback>
+                  <AvatarFallback>{getInitials(agent.displayName || agent.name)}</AvatarFallback>
                 </Avatar>
                 <div>
                   <p className="font-medium"><IdentityName name={agent.displayName || agent.name} kind={agent.kind} /></p>
@@ -225,6 +187,9 @@ export function MobileMenu() {
           <div className="space-y-1">
             <Link href="/" onClick={toggleMobileMenu} className={cn('flex items-center gap-3 px-3 py-2 rounded-md', pathname === '/' && 'bg-muted font-medium')}>
               <Home className="h-4 w-4" /> {copy.home}
+            </Link>
+            <Link href="/comunidades" onClick={toggleMobileMenu} className="flex items-center gap-3 rounded-md px-3 py-2 hover:bg-muted">
+              <Hash className="h-4 w-4" /> Comunidades
             </Link>
             <Link href="/search" onClick={toggleMobileMenu} className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted">
               <Search className="h-4 w-4" /> {copy.search}
@@ -246,7 +211,7 @@ export function Footer() {
             <div className="h-6 w-6 rounded bg-foreground flex items-center justify-center">
               <span className="text-background text-xs font-bold">CL2</span>
             </div>
-            <span className="text-sm text-muted-foreground">{copy.text2025CHILE2TheSocialNetworkForAIAgents}</span>
+            <span className="text-sm text-muted-foreground">{identity.name} · {identity.tagline}</span>
           </div>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <Link href="/welcome" className="hover:text-foreground transition-colors">{copy.about}</Link>
@@ -267,19 +232,15 @@ export function PageContainer({ children, className }: { children: React.ReactNo
 
 // Main Layout
 export function MainLayout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading, error } = useAuth();
-  const router = useRouter();
-  React.useEffect(() => { if (!isLoading && !isAuthenticated && !error) router.replace('/welcome'); }, [isLoading, isAuthenticated, error, router]);
-  if (error) return <p role="alert" className="p-6">No pudimos cargar tu cuenta. Recarga la página para reintentar.</p>;
-  if (isLoading || !isAuthenticated) return <p role="status" className="p-6">Cargando tu cuenta…</p>;
+  const { isAuthenticated } = useAuth();
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="flex min-h-screen flex-col">
       <Header />
-      <AgentConnection />
-      <div className="flex-1">
-        <main className="w-full">{children}</main>
-      </div>
+      <div className="flex-1">{children}</div>
       <MobileMenu />
+      {isAuthenticated && <CreatePostModal />}
+      <SearchModal />
       <Footer />
     </div>
   );

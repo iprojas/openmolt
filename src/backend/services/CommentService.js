@@ -5,7 +5,7 @@
 
 const { queryOne, queryAll, transaction } = require('../config/database');
 const { BadRequestError, NotFoundError, ForbiddenError } = require('../utils/errors');
-const PostService = require('./PostService');
+const { deliverAfterCommit } = require('../utils/social-delivery');
 
 class CommentService {
   /**
@@ -28,48 +28,46 @@ class CommentService {
       throw new BadRequestError('El contenido admite hasta 10000 caracteres');
     }
 
-    // Verify post exists
-    const post = await queryOne('SELECT id,author_id FROM posts WHERE id = $1 AND is_deleted=false', [postId]);
-    if (!post) {
-      throw new NotFoundError('Publicación');
-    }
-
-    // Verify parent comment if provided
-    let depth = 0;
-    if (parentId) {
-      const parent = await queryOne(
-        'SELECT id, depth FROM comments WHERE id = $1 AND post_id = $2',
-        [parentId, postId]
+    const { comment, recipientId } = await transaction(async client => {
+      const { rows: [post] } = await client.query(
+        'SELECT id, author_id FROM posts WHERE id=$1 AND is_deleted=false FOR UPDATE',
+        [postId]
       );
+      if (!post) throw new NotFoundError('Publicación');
 
-      if (!parent) {
-        throw new NotFoundError('Comentario original');
+      let depth = 0;
+      let recipientId = post.author_id;
+      if (parentId) {
+        const { rows: [parent] } = await client.query(
+          'SELECT depth, author_id FROM comments WHERE id=$1 AND post_id=$2',
+          [parentId, postId]
+        );
+        if (!parent) throw new NotFoundError('Comentario original');
+        depth = parent.depth + 1;
+        if (depth > 10) throw new BadRequestError('Se alcanzó la profundidad máxima de respuestas');
+        recipientId = parent.author_id;
       }
 
-      depth = parent.depth + 1;
+      const { rows: [created] } = await client.query(
+        `INSERT INTO comments (id, post_id, author_id, content, parent_id, depth)
+         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5) RETURNING id`,
+        [postId, authorId, content.trim(), parentId, depth]
+      );
+      await client.query('UPDATE posts SET comment_count=comment_count+1 WHERE id=$1', [postId]);
+      return { comment: await this.findById(created.id, client), recipientId };
+    });
 
-      // Limit nesting depth
-      if (depth > 10) {
-        throw new BadRequestError('Se alcanzó la profundidad máxima de respuestas');
-      }
-    }
-
-    // Create comment
-    const comment = await queryOne(
-      `INSERT INTO comments (id, post_id, author_id, content, parent_id, depth)
-       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5)
-       RETURNING id, content, score, depth, created_at`,
-      [postId, authorId, content.trim(), parentId, depth]
-    );
-
-    // Increment post comment count
-    await PostService.incrementCommentCount(postId);
-
-    const Notify=require('./NotificationService');
-    const parent = parentId ? await queryOne('SELECT author_id FROM comments WHERE id=$1',[parentId]) : null;
-    await Notify.notify({agentId:parent?.author_id||post.author_id,actorId:authorId,type:parent?'reply':'post_reply',title:'Nueva respuesta en CHILE2',body:'Hay una nueva respuesta en tu conversación.',link:`/post/${postId}`,eventKey:`reply:${comment.id}`});
-    await Notify.mentions(content,authorId,`/post/${postId}`,comment.id);
-    return {...await this.findById(comment.id),parent_id:parentId,post_id:postId};
+    const Notify = require('./NotificationService');
+    const link = `/post/${postId}`;
+    await Promise.all([
+      deliverAfterCommit('comment reply', () => Notify.notify({
+        agentId: recipientId, actorId: authorId, type: parentId ? 'reply' : 'post_reply',
+        title: 'Nueva respuesta en CHILE2', body: 'Hay una nueva respuesta en tu conversación.',
+        link, eventKey: `reply:${comment.id}`,
+      })),
+      deliverAfterCommit('comment mentions', () => Notify.mentions(content, authorId, link, comment.id)),
+    ]);
+    return comment;
   }
 
   /**
@@ -150,15 +148,14 @@ class CommentService {
    * @param {string} id - Comment ID
    * @returns {Promise<Object>} Comment
    */
-  static async findById(id) {
-    const comment = await queryOne(
+  static async findById(id, client) {
+    const sql =
       `SELECT c.*,CASE WHEN c.is_deleted THEN '[comentario retirado]' ELSE c.content END AS content, a.kind AS author_kind, a.name as author_name, a.display_name as author_display_name
        FROM comments c
        JOIN agents a ON c.author_id = a.id
        JOIN posts p ON p.id=c.post_id
-       WHERE c.id = $1 AND p.is_deleted=false`,
-      [id]
-    );
+       WHERE c.id = $1 AND p.is_deleted=false`;
+    const comment = client ? (await client.query(sql, [id])).rows[0] : await queryOne(sql, [id]);
 
     if (!comment) {
       throw new NotFoundError('Comentario');

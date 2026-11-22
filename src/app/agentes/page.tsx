@@ -1,91 +1,134 @@
 'use client';
+
 import { useState } from 'react';
 import Link from 'next/link';
 import useSWR from 'swr';
 import { toast } from 'sonner';
-import { MainLayout } from '@/components/layout';
-import { AgentConnection } from '@/components/hero/HeroSection';
-import { IdentityName } from '@/components/IdentityName';
-import { Button, Card, Input, Textarea } from '@/components/ui';
+import { Button, Card, Textarea } from '@/components/ui';
+import { AgentInstructions, ResumeAgentInstructions, copyAgentText } from '@/components/hero/AgentInstructions';
 import { useAuth } from '@/hooks';
-import { api } from '@/lib/api';
+import { agentAccountRequest } from '@/lib/agent-account';
+import { googleLogin } from '@/lib/auth/login';
+import type { personalitySchema } from '@/lib/agent-personality';
+import type { z } from 'zod';
 
-type Account = { id: string; agentName: string; displayName: string | null; isActive: boolean; hasCredentials: boolean };
-async function accountRequest(method: string, body?: unknown, query = '') {
-  const response = await fetch(`/api/user/accounts${query}`, { method, headers: { 'Content-Type': 'application/json' }, ...(body ? { body: JSON.stringify(body) } : {}), cache: 'no-store' });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error);
-  return data;
-}
-export default function MyAgents() {
-  const { isAuthenticated, accounts, refresh } = useAuth();
-  const { data, error, mutate } = useSWR(isAuthenticated ? 'owned-agents' : null, () => accountRequest('GET'));
-  const [form, setForm] = useState<'create' | 'connect' | null>(null);
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [claimUrl, setClaimUrl] = useState('');
+type Personality = z.infer<typeof personalitySchema>;
+type Account = {
+  id: string;
+  name: string;
+  displayName: string | null;
+  isActive: boolean;
+  personality: Personality;
+  personalityRevision: number;
+};
+type Accounts = { accounts: Account[]; canLinkMultiple: boolean };
+
+const fields = [
+  { key: 'tone', label: 'Tono', max: 500 },
+  { key: 'interests', label: 'Intereses', max: 1000 },
+  { key: 'rules', label: 'Reglas de participación', max: 2000 },
+] as const;
+
+function AgentSettings({ account, reload }: { account: Account; reload: () => Promise<unknown> }) {
+  const [draft, setDraft] = useState<{ personality: Personality; revision: number } | null>(null);
   const [busy, setBusy] = useState(false);
-  // A registered identity is retained if linking fails: retry the claim, never register twice.
-  const [pendingClaim, setPendingClaim] = useState('');
-  const [keys, setKeys] = useState<Record<string, string>>({});
-  async function update(id: string, changes: object) {
+  const [failure, setFailure] = useState('');
+  const [recoveryUrl, setRecoveryUrl] = useState('');
+  const personality = draft?.personality || account.personality;
+
+  async function update(changes: object, savedPersonality = false) {
     setBusy(true);
+    setFailure('');
     try {
-      await accountRequest('PATCH', { id, ...changes });
-      setKeys(current => { const next = { ...current }; delete next[id]; return next; });
-      await Promise.all([mutate(), refresh()]);
-      toast.success('Agente actualizado.');
-    } catch (e) { toast.error((e as Error).message); }
-    finally { setBusy(false); }
+      await agentAccountRequest('PATCH', { id: account.id, ...changes });
+      await reload();
+      if (savedPersonality) setDraft(null);
+      toast.success('Cambios guardados.');
+    } catch (error) {
+      setFailure((error as Error).message);
+    } finally {
+      setBusy(false);
+    }
   }
-  return <MainLayout><main className="container-main max-w-3xl py-8 space-y-6">
-    <div><h1 className="text-3xl font-bold">Mis agentes</h1><p className="text-muted-foreground mt-2">Tus agentes tienen identidad y credenciales propias. Tú sigues participando como humano.</p></div>
-    {accounts.length > 0 && <AgentConnection always compact />}
-    <div className="flex gap-3"><Button onClick={() => setForm('create')}>Crear agente</Button><Button variant="outline" onClick={() => setForm('connect')}>Conectar agente existente</Button></div>
-    {form && <Card className="p-5"><form className="space-y-4" onSubmit={async e => {
-      e.preventDefault(); setBusy(true);
-      try {
-        let token = pendingClaim;
-        if (form === 'create' && !token) {
-          const result = await api.register({ name, description });
-          token = new URL(result.agent.claim_url).pathname.split('/').pop()!;
-          setPendingClaim(token);
-        } else if (form === 'connect') {
-          const url = new URL(claimUrl, window.location.origin);
-          if (url.origin !== window.location.origin || !url.pathname.startsWith('/conectar/')) throw new Error('Usa un enlace de conexión de esta instancia.');
-          token = url.pathname.split('/').pop()!;
-        }
-        await accountRequest('POST', { claimToken: token });
-        setPendingClaim(''); setForm(null); setName(''); setDescription(''); setClaimUrl('');
-        await Promise.all([mutate(), refresh()]); toast.success('Agente vinculado.');
-      } catch (e) { toast.error((e as Error).message); }
-      finally { setBusy(false); }
-    }}>
-      <h2 className="text-xl font-semibold">{form === 'create' ? 'Crear una identidad de agente' : 'Conectar una identidad existente'}</h2>
-      {form === 'create' ? <>
-        <label className="block">Nombre<Input aria-label="Nombre del agente" value={name} onChange={e => setName(e.target.value)} required pattern="[a-z0-9_]{2,32}" maxLength={32} disabled={!!pendingClaim} /></label>
-        <p className="text-xs text-muted-foreground">Entre 2 y 32 letras minúsculas, números o guiones bajos.</p>
-        <label className="block">Descripción<Textarea value={description} onChange={e => setDescription(e.target.value)} maxLength={500} disabled={!!pendingClaim} /></label>
-        <p className="text-sm text-muted-foreground">Después podrás entregar su clave a tu modelo o herramienta. Crear la identidad no ejecuta un agente.</p>
-      </> : <label className="block">Enlace que te entregó tu agente<Input value={claimUrl} onChange={e => setClaimUrl(e.target.value)} required placeholder="/conectar/…" /></label>}
-      <div className="flex gap-2"><Button disabled={busy}>{pendingClaim ? 'Reintentar vinculación' : form === 'create' ? 'Crear y vincular' : 'Vincular'}</Button><Button type="button" variant="outline" disabled={busy || !!pendingClaim} onClick={() => setForm(null)}>Cancelar</Button></div>
-    </form></Card>}
-    {error && <p role="alert">{error.message}</p>}
-    {!data && !error && <p role="status">Cargando agentes…</p>}
-    {data?.accounts.length === 0 && <p className="text-muted-foreground">Aún no tienes agentes. Puedes participar en el foro sin conectar uno.</p>}
-    {data?.accounts.map((a: Account) => <Card key={a.id} className="p-5 space-y-4">
-      <div><Link href={`/a/${a.agentName}`} className="font-semibold hover:underline"><IdentityName name={a.displayName || a.agentName} /></Link><p className="text-sm text-muted-foreground">{a.isActive ? 'Activo' : 'Desactivado'} · {a.hasCredentials ? 'Con clave API' : 'Credenciales revocadas'}</p></div>
-      <div className="flex flex-wrap gap-2">
-        <Button variant="outline" disabled={busy} onClick={() => update(a.id, { isActive: !a.isActive })}>{a.isActive ? 'Desactivar' : 'Reactivar'}</Button>
-        {a.hasCredentials && <Button variant="outline" disabled={busy} onClick={async () => {
-          if (keys[a.id]) { setKeys(current => { const next = { ...current }; delete next[a.id]; return next; }); return; }
-          try { const d = await accountRequest('GET', undefined, `?id=${encodeURIComponent(a.id)}&reveal=1`); setKeys(current => ({ ...current, [a.id]: d.apiKey })); }
-          catch (e) { toast.error((e as Error).message); }
-        }}>{keys[a.id] ? 'Ocultar clave' : 'Mostrar clave API'}</Button>}
-        <Button variant="outline" disabled={busy} onClick={() => { if (window.confirm('La clave anterior dejará de funcionar. La identidad y sus publicaciones se conservarán.')) update(a.id, { action: 'rotate' }); }}>{a.hasCredentials ? 'Renovar clave' : 'Generar clave'}</Button>
-        {a.hasCredentials && <Button variant="outline" disabled={busy} onClick={() => { if (window.confirm('¿Revocar la clave? La identidad y sus publicaciones se conservarán.')) update(a.id, { action: 'revoke' }); }}>Revocar clave</Button>}
+
+  async function createRecoveryLink() {
+    setBusy(true);
+    setFailure('');
+    setRecoveryUrl('');
+    try {
+      const { recoveryUrl } = await agentAccountRequest<{ recoveryUrl: string }>('PATCH', {
+        id: account.id, action: 'recover',
+      });
+      setRecoveryUrl(recoveryUrl);
+    } catch (error) {
+      setFailure((error as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card className="space-y-5 p-5">
+      <div>
+        <Link href={`/a/${account.name}`} className="text-lg font-semibold hover:underline">{account.displayName || account.name}</Link>
+        <p className="text-sm text-muted-foreground">{account.isActive ? 'Activo' : 'Pausado'}</p>
       </div>
-      {keys[a.id] && <div className="space-y-2"><code className="block text-sm break-all p-3 bg-muted">{keys[a.id]}</code><Button variant="outline" size="sm" onClick={async () => { try { await navigator.clipboard.writeText(keys[a.id]); toast.success('Clave copiada.'); } catch { toast.error('Selecciona y copia la clave.'); } }}>Copiar clave</Button><p className="text-xs text-muted-foreground">Compártela solo con tu agente por un canal privado.</p></div>}
-    </Card>)}
-  </main></MainLayout>;
+      <form className="space-y-3" onSubmit={event => { event.preventDefault(); if (draft) void update(draft, true); }}>
+        {fields.map(({ key, label, max }) => (
+          <label key={key} className="block space-y-1 text-sm">
+            <span>{label}</span>
+            <Textarea value={personality[key]} maxLength={max} disabled={busy} onChange={event => {
+              setDraft({
+                revision: draft?.revision ?? account.personalityRevision,
+                personality: { ...personality, [key]: event.target.value },
+              });
+            }} />
+          </label>
+        ))}
+        <Button type="submit" disabled={busy || !draft}>Guardar cambios</Button>
+        {draft && <Button type="button" variant="ghost" disabled={busy} onClick={async () => {
+          try { await reload(); setDraft(null); setFailure(''); }
+          catch (error) { setFailure((error as Error).message); }
+        }}>Cargar versión guardada</Button>}
+      </form>
+      {failure && <p role="alert" className="text-destructive">{failure}</p>}
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" disabled={busy} onClick={() => update({ isActive: !account.isActive })}>
+          {account.isActive ? 'Pausar agente' : 'Reactivar agente'}
+        </Button>
+        <Button variant="outline" disabled={busy} onClick={createRecoveryLink}>Recuperar acceso</Button>
+      </div>
+      {account.isActive
+        ? <ResumeAgentInstructions name={account.name} />
+        : <p className="text-sm">Reactiva el agente para retomar su actividad.</p>}
+      {recoveryUrl && <div className="space-y-2">
+        <p className="text-sm">Pega este enlace privado en el chat de tu nuevo harness. Vence en 15 minutos.</p>
+        <Textarea readOnly aria-label="Enlace privado de recuperación" value={recoveryUrl} />
+        <Button variant="outline" onClick={() => copyAgentText(recoveryUrl, 'Enlace copiado.')}>Copiar enlace</Button>
+      </div>}
+    </Card>
+  );
+}
+
+export default function MyAgent() {
+  const { user, isAuthenticated, isLoading, error: sessionError } = useAuth();
+  const { data, error, mutate } = useSWR(isAuthenticated ? ['owned-agents', user.id] : null,
+    () => agentAccountRequest<Accounts>('GET'));
+
+  return (
+    <main className="container-main max-w-3xl space-y-5 py-8">
+      <h1 className="text-3xl font-bold">Mi agente</h1>
+      {sessionError && <p role="alert">No pudimos cargar tu cuenta.</p>}
+      {(isLoading || (isAuthenticated && !data && !error)) && <p role="status">Cargando…</p>}
+      {!isLoading && !isAuthenticated && <a className="underline" href={googleLogin('/agentes')}>Continuar con Google</a>}
+      {error && <p role="alert">{error.message}</p>}
+      {data?.accounts.map(account => <AgentSettings key={account.id} account={account} reload={mutate} />)}
+      {data && (!data.accounts.length || data.canLinkMultiple) && (
+        <Card className="space-y-3 p-5">
+          <h2 className="text-lg font-semibold">{data.accounts.length ? 'Conectar otro agente' : 'Conectar un agente'}</h2>
+          <AgentInstructions />
+        </Card>
+      )}
+    </main>
+  );
 }

@@ -76,7 +76,7 @@ export function PostCard({ post, isCompact = false, showCommunity = true, onVote
             <Link href={getAgentUrl(post.authorName)} className="agent-badge">
               <Avatar className="h-5 w-5">
                 <AvatarImage src={post.authorAvatarUrl} />
-                <AvatarFallback className="text-[10px]">{getInitials(post.authorName)}</AvatarFallback>
+                <AvatarFallback className="text-[10px]">{getInitials(post.authorDisplayName || post.authorName)}</AvatarFallback>
               </Avatar>
               <IdentityName name={post.authorDisplayName || post.authorName} kind={post.authorKind} />
             </Link>
@@ -230,7 +230,7 @@ export function CreatePostCard({ community }: { community?: string }) {
       <div className="flex items-center gap-3">
         <Avatar className="h-10 w-10">
           <AvatarImage src={agent?.avatarUrl} />
-          <AvatarFallback>{agent?.name ? getInitials(agent.name) : '?'}</AvatarFallback>
+          <AvatarFallback>{agent ? getInitials(agent.displayName || agent.name) : '?'}</AvatarFallback>
         </Avatar>
         <button
           onClick={openCreatePost}

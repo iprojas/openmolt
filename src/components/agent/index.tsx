@@ -51,7 +51,7 @@ export function AgentCard({ agent, variant = 'default', showFollowButton = true 
       <Link href={getAgentUrl(agent.name)} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors">
         <Avatar className="h-8 w-8">
           <AvatarImage src={agent.avatarUrl} />
-          <AvatarFallback className="text-xs">{getInitials(agent.name)}</AvatarFallback>
+          <AvatarFallback className="text-xs">{getInitials(agent.displayName || agent.name)}</AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
           <p className="font-medium text-sm truncate"><IdentityName name={agent.displayName || agent.name} kind={agent.kind} /></p>
@@ -72,14 +72,13 @@ export function AgentCard({ agent, variant = 'default', showFollowButton = true 
         <div className="flex items-start gap-4">
           <Avatar className="h-12 w-12">
             <AvatarImage src={agent.avatarUrl} />
-            <AvatarFallback>{getInitials(agent.name)}</AvatarFallback>
+            <AvatarFallback>{getInitials(agent.displayName || agent.name)}</AvatarFallback>
           </Avatar>
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <h3 className="font-semibold truncate"><IdentityName name={agent.displayName || agent.name} kind={agent.kind} /></h3>
             </div>
-            <p className="text-sm text-muted-foreground">{agent.name}</p>
             {agent.description && (
               <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{displayAgentBio(agent.description)}</p>
             )}
@@ -176,7 +175,7 @@ export function AgentMiniCard({ agent }: { agent: Pick<Agent, 'name' | 'displayN
     <Link href={getAgentUrl(agent.name)} className="flex items-center gap-2 p-1.5 rounded hover:bg-muted transition-colors">
       <Avatar className="h-6 w-6">
         <AvatarImage src={agent.avatarUrl} />
-        <AvatarFallback className="text-[10px]">{getInitials(agent.name)}</AvatarFallback>
+        <AvatarFallback className="text-[10px]">{getInitials(agent.displayName || agent.name)}</AvatarFallback>
       </Avatar>
       <span className="text-sm font-medium"><IdentityName name={agent.displayName || agent.name} kind={agent.kind} /></span>
       <span className={cn('text-xs', agent.aura > 0 ? 'text-upvote' : 'text-muted-foreground')}>
@@ -187,7 +186,7 @@ export function AgentMiniCard({ agent }: { agent: Pick<Agent, 'name' | 'displayN
 }
 
 // Agent Avatar with Link
-export function AgentAvatar({ agent, size = 'default' }: { agent: Pick<Agent, 'name' | 'avatarUrl'>; size?: 'sm' | 'default' | 'lg' }) {
+export function AgentAvatar({ agent, size = 'default' }: { agent: Pick<Agent, 'name' | 'displayName' | 'avatarUrl'>; size?: 'sm' | 'default' | 'lg' }) {
   const sizeClasses = {
     sm: 'h-6 w-6',
     default: 'h-8 w-8',
@@ -199,7 +198,7 @@ export function AgentAvatar({ agent, size = 'default' }: { agent: Pick<Agent, 'n
       <Avatar className={cn(sizeClasses[size], 'hover:ring-2 ring-primary transition-all')}>
         <AvatarImage src={agent.avatarUrl} />
         <AvatarFallback className={cn(size === 'sm' && 'text-[10px]', size === 'lg' && 'text-lg')}>
-          {getInitials(agent.name)}
+          {getInitials(agent.displayName || agent.name)}
         </AvatarFallback>
       </Avatar>
     </Link>
@@ -230,7 +229,7 @@ export function AgentLeaderboard({ agents, title = copy.topAgents }: { agents: A
             </span>
             <Avatar className="h-8 w-8">
               <AvatarImage src={agent.avatarUrl} />
-              <AvatarFallback className="text-xs">{getInitials(agent.name)}</AvatarFallback>
+              <AvatarFallback className="text-xs">{getInitials(agent.displayName || agent.name)}</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate"><IdentityName name={agent.displayName || agent.name} kind={agent.kind} /></p>

@@ -64,15 +64,14 @@ async function main() {
     B = b.agent.api_key;
   const pending = await request('/api/v1/agents/status', {token:A});
   assert.equal(pending.status,'pending_claim');
-  await request('/api/user/accounts', {method:'POST',cookie,status:400,body:{apiKey:A,claimToken:'invalid_local_test_token'}});
-  const claim = await request('/api/user/accounts', {
+  await request('/api/v1/account/agents', {method:'POST',cookie,status:400,body:{claimToken:'invalid_local_test_token'}});
+  const claim = await request('/api/v1/account/agents', {
     method: 'POST',
     cookie,
     status: 201,
-    body: { apiKey: A, claimToken: a.agent.claim_url.split('/').pop() },
+    body: { claimToken: a.agent.claim_url.split('/').pop() },
   });
   assert.ok(claim.account.isClaimed);
-  await request('/api/user/accounts', { method: 'POST', cookie, status: 201, body: { claimToken: b.agent.claim_url.split('/').pop() } });
   const user = await db.user.create({
     data: {
       googleId: `features_${suffix}`,
@@ -88,13 +87,17 @@ async function main() {
     .setProtectedHeader({ alg: 'HS256' })
     .setExpirationTime('1h')
     .sign(new TextEncoder().encode(process.env.SESSION_SECRET));
-  await request('/api/user/accounts', {
+  await request('/api/v1/account/agents', {
     method: 'POST',
     cookie: `session=${otherToken}`,
     status: 409,
     body: { claimToken: a.agent.claim_url.split('/').pop() },
   });
-  await request('/api/user/accounts', {
+  await request('/api/v1/account/agents', {
+    method: 'POST', cookie: `session=${otherToken}`, status: 201,
+    body: { claimToken: b.agent.claim_url.split('/').pop() },
+  });
+  await request('/api/v1/account/agents', {
     method: 'POST',
     cookie,
     status: 400,
@@ -290,13 +293,13 @@ async function main() {
     (await request('/api/v1/notifications', { token: A })).unreadCount,
     0
   );
-  await request('/api/user/accounts', {
+  await request('/api/v1/account/agents', {
     method: 'PATCH',
     cookie,
     body: { id: claim.account.id, isActive: false },
   });
   await request('/api/v1/agents/me', { token: A, status: 401 });
-  await request('/api/user/accounts', {
+  await request('/api/v1/account/agents', {
     method: 'PATCH',
     cookie,
     body: { id: claim.account.id, isActive: true },

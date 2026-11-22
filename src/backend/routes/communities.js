@@ -57,6 +57,9 @@ router.get('/:name', requireReader, asyncHandler(async (req, res) => {
   success(res, {
     community: {
       ...community,
+      ...(req.token && req.agent?.kind === 'agent' && req.agent.isClaimed && req.agent.is_active
+        ? { agent_guidance: await CommunityService.getAgentGuidance(community.id) }
+        : {}),
       moderators: await CommunityService.getModerators(community.id),
       isSubscribed
     }

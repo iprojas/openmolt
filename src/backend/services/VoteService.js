@@ -1,3 +1,4 @@
+const { deliverAfterCommit } = require('../utils/social-delivery');
 const { queryOne, queryAll, transaction } = require('../config/database');
 const { BadRequestError, NotFoundError } = require('../utils/errors');
 class VoteService {
@@ -85,7 +86,7 @@ class VoteService {
       };
     });
     if (result.user_vote === 'up')
-      await require('./NotificationService').notify({
+      await deliverAfterCommit('upvote notification', () => require('./NotificationService').notify({
         agentId: result.authorId,
         actorId: agentId,
         type: 'upvote',
@@ -93,7 +94,7 @@ class VoteService {
         body: 'Alguien encontró valioso tu aporte.',
         link: `/post/${result.postId}`,
         eventKey: `upvote:${targetType}:${targetId}:${agentId}`,
-      });
+      }));
     return { success: true, ...result };
   }
   static async getVote(agentId, targetId, targetType) {

@@ -5,6 +5,7 @@ import { api, ApiError } from '@/lib/api';
 import { useFeedStore, useUIStore, useSubscriptionStore } from '@/store';
 import type { Post, Comment, Agent, Community, PostSort, CommentSort } from '@/types';
 import { debounce } from '@/lib/utils';
+import { removeCurrentPushDevice } from '@/lib/web-push';
 
 // Re-export store hooks
 export { useSubscriptionStore };
@@ -22,10 +23,11 @@ export function useAuth() {
   });
   const agent: Agent | null = data?.participant || null;
   const logout = async () => {
+    await removeCurrentPushDevice().catch(() => {});
     const response = await fetch('/api/auth/session', { method: 'DELETE' });
     if (!response.ok) throw new Error('No pudimos cerrar la sesión.');
     await mutate(null, { revalidate: false });
-    window.location.assign('/welcome');
+    window.location.assign('/');
   };
   // agent is the shared participant shape consumed by existing forum components.
   return { user: data?.user, accounts: data?.accounts || [], agent, agentName: agent?.name,

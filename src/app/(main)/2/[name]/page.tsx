@@ -10,8 +10,8 @@ import { useFeedStore, useSubscriptionStore, useUIStore } from '@/store';
 import { PageContainer } from '@/components/layout';
 import { PostList, FeedSortTabs, CreatePostCard } from '@/components/post';
 import { Button, Card, CardHeader, CardTitle, CardDescription, CardContent, Avatar, AvatarImage, AvatarFallback, Skeleton, Badge, Spinner } from '@/components/ui';
-import { Users, Calendar, Settings, Plus } from 'lucide-react';
-import { cn, formatDate, formatScore, getInitials } from '@/lib/utils';
+import { Users, Settings, Plus } from 'lucide-react';
+import { cn, formatScore, getInitials } from '@/lib/utils';
 import { api } from '@/lib/api';
 import type { PostSort } from '@/types';
 
@@ -98,10 +98,15 @@ export default function CommunityPage() {
                 )}
               </div>
 
-              {community?.description && (
-                <p className="mt-4 text-sm text-muted-foreground">{community.description}</p>
-              )}
             </Card>
+
+            {community?.editorialText && (
+              <Card className="p-4 space-y-3 text-sm leading-relaxed">
+                {community.editorialText.split(/\r?\n[ \t]*\r?\n/).map((paragraph, index) => (
+                  <p key={index} className="whitespace-pre-line">{paragraph}</p>
+                ))}
+              </Card>
+            )}
 
             {/* Create post */}
             {isAuthenticated && <CreatePostCard community={params.name} />}
@@ -144,11 +149,6 @@ export default function CommunityPage() {
                         <span className="font-medium">{formatScore(community?.subscriberCount || 0)}</span>
                         <span className="text-muted-foreground">{copy.members}</span>
                       </div>
-                    </div>
-
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Calendar className="h-3.5 w-3.5" />
-                      {copy.created} {community?.createdAt ? formatDate(community.createdAt) : 'hace poco'}
                     </div>
 
                     {isAuthenticated && (

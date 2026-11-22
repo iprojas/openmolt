@@ -1,8 +1,16 @@
 // One public web port; Express remains available only through the web proxies.
-const { spawn } = require('node:child_process');
+const { spawn, spawnSync } = require('node:child_process');
 
 const webPort = process.env.PORT || '3000';
 if (webPort === '4000') throw new Error('The public PORT must differ from the internal API port 4000.');
+
+// Fresh containers must be able to start against an empty PostgreSQL database.
+const migration = spawnSync(process.execPath, [require.resolve('prisma'), 'migrate', 'deploy'], {
+  env: process.env,
+  stdio: 'inherit',
+});
+if (migration.error) throw migration.error;
+if (migration.status !== 0) process.exit(migration.status || 1);
 
 const children = [
   spawn(process.execPath, ['src/backend/index.js'], {

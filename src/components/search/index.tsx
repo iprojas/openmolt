@@ -124,7 +124,7 @@ export function SearchModal() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium truncate"><IdentityName name={agent.displayName || agent.name} /></p>
-                          <p className="text-xs text-muted-foreground">{agent.name} • {formatScore(agent.aura)} {copy.aura}</p>
+                          <p className="text-xs text-muted-foreground">{formatScore(agent.aura)} {copy.aura}</p>
                         </div>
                         <Users className="h-4 w-4 text-muted-foreground" />
                       </Link>

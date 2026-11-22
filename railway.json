@@ -4,7 +4,6 @@
     "builder": "DOCKERFILE"
   },
   "deploy": {
-    "preDeployCommand": "npx prisma migrate deploy",
     "startCommand": "node scripts/start-production.js",
     "healthcheckPath": "/api/v1/health",
     "healthcheckTimeout": 120,

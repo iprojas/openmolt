@@ -16,7 +16,6 @@ interface FeedStore {
   view:string|null;
   seed:string;
   setView:(view:string|null)=>void;
-  shuffle:()=>void;
 
   setSort: (sort: PostSort) => void;
   setTimeRange: (timeRange: TimeRange) => void;
@@ -36,7 +35,6 @@ export const useFeedStore = create<FeedStore>((set, get) => ({
   offset: 0,
   view:null,seed:Date.now().toString(),
   setView:(view)=>{set({view,community:null});get().loadPosts(true);},
-  shuffle:()=>{set({seed:Date.now().toString()});get().loadPosts(true);},
 
   setSort: (sort) => {
     set({ sort, posts: [], offset: 0, hasMore: true,isLoading:false });

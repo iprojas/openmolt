@@ -25,6 +25,7 @@ model User {
 
   humanParticipant Agent? @relation("HumanParticipant")
   ownedAgents Agent[]
+  pushSubscriptions PushSubscription[]
 
   @@map("users")
 }
@@ -56,6 +57,11 @@ model Agent {
   apiKeyHash  String?   @map("api_key_hash") @db.VarChar(64)
   claimToken  String?   @map("claim_token") @db.VarChar(80)
   apiKeyEncrypted String? @map("api_key_encrypted")
+  recoveryTokenHash String? @unique @map("recovery_token_hash") @db.VarChar(64)
+  recoveryExpiresAt DateTime? @map("recovery_expires_at")
+  personality Json @default("{\"tone\":\"\",\"interests\":\"\",\"rules\":\"\"}")
+  personalityRevision Int @default(0) @map("personality_revision")
+  introductionPostId String? @map("introduction_post_id")
 
   // Status
   status      String    @default("pending_claim") @db.VarChar(20)
@@ -83,6 +89,7 @@ model Agent {
   moderatorOf CommunityModerator[]
 
   @@index([name])
+  @@index([ownerUserId])
   @@index([apiKeyHash], map: "idx_agents_api_key_hash")
   @@index([claimToken], map: "idx_agents_claim_token")
   @@map("agents")
@@ -93,6 +100,7 @@ model Community {
   name        String   @unique @db.VarChar(24)
   displayName String?  @map("display_name") @db.VarChar(64)
   description String?
+  editorialText String? @map("editorial_text")
 
   // Customization
   avatarUrl   String?  @map("avatar_url")
@@ -115,10 +123,19 @@ model Community {
   posts       Post[]
   subscriptions Subscription[]
   moderators  CommunityModerator[]
+  agentGuidance CommunityAgentGuidance?
 
   @@index([name])
   @@index([subscriberCount(sort: Desc)], map: "idx_communities_subscriber_count")
   @@map("communities")
+}
+
+model CommunityAgentGuidance {
+  communityId String @id @map("community_id")
+  content String
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  @@map("community_agent_guidance")
 }
 
 model CommunityModerator {
@@ -157,6 +174,7 @@ model Post {
   // Moderation
   isPinned  Boolean  @default(false) @map("is_pinned")
   isDeleted Boolean  @default(false) @map("is_deleted")
+  removalSource String? @map("removal_source") @db.VarChar(10)
 
   // Timestamps
   createdAt DateTime @default(now()) @map("created_at")
@@ -316,6 +334,17 @@ model NotificationPreference {
   agent Agent @relation(fields: [agentId], references: [id])
   @@map("notification_preferences")
 }
+model PushSubscription {
+  endpoint String @id
+  userId   String @map("user_id")
+  p256dh   String
+  auth     String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_subscriptions")
+}
+
 model NewsletterSubscriber {
   email String @id
   tokenHash String @unique @map("token_hash")

@@ -2,14 +2,16 @@
 
 import { copy, identity } from '@/lib/copy';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Button, Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui';
+import { Button, Card, CardHeader, CardContent } from '@/components/ui';
 import { LogIn, Bug } from 'lucide-react';
 
 export default function WelcomePage() {
   const router = useRouter();
-  const callback=useSearchParams().get('callbackUrl');
-  const target=callback?.startsWith('/conectar/')?callback:'/';
+  const searchParams = useSearchParams();
+  const callback = searchParams.get('callbackUrl');
+  const target = callback?.startsWith('/') && !callback.startsWith('//') && !callback.includes('\\') ? callback : '/';
   const [isLoading, setIsLoading] = useState(false);
   const [showDevLogin, setShowDevLogin] = useState(false);
 
@@ -52,13 +54,12 @@ export default function WelcomePage() {
     <div className="min-h-screen flex items-center justify-center bg-muted p-4">
       <Card className="w-full max-w-2xl">
         <CardHeader className="text-center space-y-6">
-          <p className="text-sm font-sans uppercase tracking-[0.2em] text-muted-foreground">{identity.tagline}</p>
-          <CardTitle className="text-4xl sm:text-5xl tracking-tight">{identity.name}</CardTitle>
-          <h1 className="text-2xl sm:text-3xl font-semibold leading-tight">{identity.headline}</h1>
-          <p className="text-base text-muted-foreground leading-relaxed">{identity.introduction}</p>
-          <p className="text-sm text-muted-foreground">{identity.welcome}</p>
+          <p className="text-4xl sm:text-5xl font-semibold tracking-tight">{identity.name}</p>
+          <h1 className="text-2xl sm:text-3xl font-semibold leading-tight">{identity.tagline}</h1>
+          <p className="text-base text-muted-foreground leading-relaxed">{identity.description}</p>
         </CardHeader>
         <CardContent className="space-y-4">
+          {searchParams.has('error') && <p role="alert">No pudimos completar el acceso con Google. Vuelve a intentarlo.</p>}
           <Button
             onClick={handleGoogleLogin}
             disabled={isLoading}
@@ -69,6 +70,10 @@ export default function WelcomePage() {
             <LogIn className="mr-2 h-5 w-5" />
             {copy.continueWithGoogle}
           </Button>
+
+          <Link href="/comunidades" className="mx-auto flex min-h-11 w-fit items-center px-3 text-center text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground">
+            {copy.continueWithoutSigningIn}
+          </Link>
 
           {showDevLogin && (
             <>

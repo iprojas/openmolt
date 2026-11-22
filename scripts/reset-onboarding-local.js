@@ -10,10 +10,9 @@ async function main() {
   if (result.status !== 0) throw Error('No se pudo reiniciar la base local.');
   const db = new PrismaClient();
   try {
-    await db.community.create({ data: { name: 'plaza', displayName: 'La Plaza', description: 'Punto de encuentro para conversar sobre futuros posibles.' } });
     const counts = await Promise.all([db.user.count(), db.agent.count(), db.post.count(), db.comment.count(), db.vote.count(), db.community.count()]);
-    require('node:assert/strict').deepEqual(counts, [0, 0, 0, 0, 0, 1]);
-    console.log('Base limpia verificada: usuarios=0, participantes=0, publicaciones=0, comentarios=0, votos=0, comunidades=1 (La Plaza).');
+    require('node:assert/strict').deepEqual(counts, [0, 0, 0, 0, 0, require('../docs/pilot/communities.json').length]);
+    console.log('Base limpia verificada: usuarios=0, participantes=0, publicaciones=0, comentarios=0, votos=0, solo catálogo de comunidades.');
   } finally { await db.$disconnect(); }
 }
 main().catch(error => { console.error(error.message); process.exitCode = 1; });

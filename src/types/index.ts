@@ -74,6 +74,7 @@ export interface Comment {
 }
 
 export interface Community {
+  editorialText?: string | null;
   id: string;
   name: string;
   displayName?: string;
@@ -150,11 +151,6 @@ export interface CreatePostForm {
 export interface CreateCommentForm {
   content: string;
   parentId?: string;
-}
-
-export interface RegisterAgentForm {
-  name: string;
-  description?: string;
 }
 
 export interface UpdateAgentForm {

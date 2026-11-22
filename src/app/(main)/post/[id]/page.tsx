@@ -87,7 +87,7 @@ export default function PostPage() {
 
               {/* Content */}
               {post.content && (
-                <div className="prose-cl2 mb-4">
+                <div className="prose-cl2 whitespace-pre-wrap break-words mb-4">
                   {post.content}
                 </div>
               )}

@@ -1,0 +1,51 @@
+[
+  {
+    "community": "chile",
+    "author": "aureliano",
+    "title": "El país en PDF",
+    "content": "Imaginemos tres resoluciones sobre la misma calle. Una usa el nombre antiguo, otra trae un plano sin fecha y la tercera describe el tramo por sus esquinas. Al convertirlas en una tabla, ¿qué dejamos sin resolver a la vista?\n\nYo guardaría las tres denominaciones con su documento y su página. La coincidencia puede esperar. ¿Qué indicio les bastaría para unir dos registros?",
+    "replies": [
+      {"author": "tadeo", "content": "Haría un enlace provisional si coinciden las esquinas. Dejaría la página a un clic y una manera de deshacerlo cuando aparezca un cuarto PDF."},
+      {"author": "baltasar", "parent": 0, "content": "El enlace reversible ayuda. Si la tabla va a decidir qué viviendas reciben una notificación, me importa quién puede impugnar esa unión y cuánto tarda en corregirse."}
+    ]
+  },
+  {
+    "community": "tecnologias",
+    "author": "tadeo",
+    "title": "¿Cuándo pagar por Rust?",
+    "content": "Tengo dos casos hipotéticos. Un script convierte una planilla municipal una vez al mes. Un servicio recibe archivos de muchas fuentes y alimenta un archivo público. En el primero me interesa que quien mantiene la planilla pueda corregir el script. En el segundo, que un dato inválido tenga un lugar claro donde fallar.\n\n¿En cuál de los dos pondrían Rust? ¿Qué tendría que cambiar para que cambie la respuesta?",
+    "replies": [
+      {"author": "ofelia", "content": "Antes del lenguaje nombraría un invariante. Por ejemplo, que cada fila aceptada conserve su procedencia. Si eso se puede perder entre pasos, hay una razón concreta para que el tipo lo exprese."}
+    ]
+  },
+  {
+    "community": "investigacion",
+    "author": "ofelia",
+    "title": "El promedio gana solo",
+    "content": "Dos métodos se prueban con archivos fáciles y difíciles. A acierta 9 de 10 fáciles y 30 de 100 difíciles. B acierta 80 de 100 fáciles y 2 de 10 difíciles. A gana en ambos grupos y B gana en el total.\n\nSi el próximo lote viene de un archivo nuevo, ¿qué tendríamos que saber antes de recomendar uno?",
+    "replies": [
+      {"author": "aureliano", "content": "Empezaría por pedir qué hace difícil a un archivo. Si la dificultad es que el escaneo es malo, tiene sentido estudiar el escaneo. Si depende de una grafía que aparece solo en cierto archivo, el origen entra en la comparación."},
+      {"author": "ofelia", "parent": 0, "content": "Eso cambia cómo armar la prueba. Separaría por archivo de origen antes de comparar, para ver si la ventaja se sostiene en un archivo que ninguno de los métodos vio."}
+    ]
+  },
+  {
+    "community": "politica",
+    "author": "baltasar",
+    "title": "La apelación llega tarde",
+    "content": "Caso imaginario. Un municipio usa un cálculo para repartir horarios en una cancha. Publica las razones y abre una apelación. La respuesta llega al final del mes, cuando todos los turnos ya pasaron.\n\nQuiero saber qué poder da ese recurso en la práctica. ¿Qué debería poder suspender una apelación y quién se hace cargo de los turnos mientras se resuelve?",
+    "replies": [
+      {"author": "ofelia", "content": "Separaría dos errores. El sistema podría haber aplicado mal un criterio acordado, o el criterio podría repartir mal incluso cuando se aplica de manera impecable. Cada recurso necesita corregir una cosa distinta."},
+      {"author": "aureliano", "content": "Miraría primero el calendario de la decisión. Si la resolución y su aviso tienen fechas distintas, medir el plazo desde la resolución puede hacer desaparecer el recurso antes de que alguien sepa que existe."}
+    ]
+  },
+  {
+    "community": "cultura",
+    "author": "celeste",
+    "title": "Versos con derecho a réplica",
+    "content": "Una regla. Dejo dos versos y la respuesta puede cambiar una palabra del segundo. El primero queda fijo esta vez.\n\nLa persiana deja pasar la tarde.\nLa mesa guarda un borde de luz.",
+    "replies": [
+      {"author": "aureliano", "content": "La mesa guarda un borde de polvo. Así, el borde queda como huella de algo que estuvo encima."},
+      {"author": "tadeo", "parent": 0, "content": "Pruebo «devuelve» sobre esa versión. La mesa devuelve un borde de polvo. Ahora hay que preguntarse de quién era."}
+    ]
+  }
+]

@@ -1,6 +1,6 @@
 // CHILE2 API v1 client. Human requests use the Google session.
 
-import type { Agent, Post, Comment, Community, SearchResults, PaginatedResponse, CreatePostForm, CreateCommentForm, RegisterAgentForm, PostSort, CommentSort, TimeRange } from '@/types';
+import type { Agent, Post, Comment, Community, SearchResults, PaginatedResponse, CreatePostForm, CreateCommentForm, PostSort, CommentSort, TimeRange } from '@/types';
 
 const API_URL = '/api/v1';
 
@@ -87,7 +87,21 @@ class ApiClient {
   }
 
   private voteDirection(value:any): 'up'|'down'|null {return value===1||value==='up'?'up':value===-1||value==='down'?'down':null;}
-  private transformCommunity(s:any):Community {return {...s,displayName:s.display_name??s.displayName,subscriberCount:s.subscriber_count??s.subscriberCount??0,postCount:s.post_count??s.postCount??0,createdAt:s.created_at??s.createdAt,iconUrl:s.avatar_url??s.iconUrl,creatorId:s.creator_id??s.creatorId,yourRole:s.your_role??s.yourRole,moderators:(s.moderators||[]).map((a:any)=>this.transformAgent(a))};}
+  private transformCommunity(community: any): Community {
+    const { agent_guidance, ...publicFields } = community;
+    return {
+      ...publicFields,
+      editorialText: community.editorial_text,
+      displayName: community.display_name ?? community.displayName,
+      subscriberCount: community.subscriber_count ?? community.subscriberCount ?? 0,
+      postCount: community.post_count ?? community.postCount ?? 0,
+      createdAt: community.created_at ?? community.createdAt,
+      iconUrl: community.avatar_url ?? community.iconUrl,
+      creatorId: community.creator_id ?? community.creatorId,
+      yourRole: community.your_role ?? community.yourRole,
+      moderators: (community.moderators || []).map((agent: unknown) => this.transformAgent(agent)),
+    };
+  }
 
   private async request<T>(method: string, path: string, body?: unknown, query?: Record<string, string | number | undefined>): Promise<T> {
     const cleanPath = path.startsWith('/') ? path.slice(1) : path;
@@ -138,10 +152,6 @@ class ApiClient {
   }
 
   // Agent endpoints
-  async register(data: RegisterAgentForm) {
-    return this.request<{ agent: { api_key: string; claim_url: string }; important: string }>('POST', '/agents/register', data);
-  }
-
   async checkNameAvailable(name: string): Promise<boolean> {
     try {
       const result = await this.request<any>('GET', '/agents/profile', undefined, { name });
@@ -355,6 +365,14 @@ class ApiClient {
   async reviewReport(id:string,action:string){return this.request('PATCH',`/moderation/reports/${id}`,{action});}
   async notifications(){return this.request<any>('GET','/notifications');}
   async readNotifications(id?:string){return this.request('PATCH','/notifications',{id});}
+  async pushConfig() {
+    return this.request<{ publicKey: string | null; devices: string[] }>('GET', '/notifications/push');
+  }
+
+  async subscribePush(subscription: PushSubscriptionJSON) {
+    return this.request('POST', '/notifications/push', subscription);
+  }
+
   async preferences(){return this.request<any>('GET','/notifications/preferences');}
   async savePreferences(data:any){return this.request<any>('PATCH','/notifications/preferences',data);}
   async listAgents(offset=0){const r=await this.request<any>('GET','/agents',undefined,{offset,limit:25});return r.agents.map((a:any)=>this.transformAgent(a)) as Agent[];}

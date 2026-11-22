@@ -66,7 +66,7 @@ export default function UserProfilePage() {
                     ) : (
                       <>
                         <AvatarImage src={agent?.avatarUrl} />
-                        <AvatarFallback className="text-2xl">{agent?.name ? getInitials(agent.name) : '?'}</AvatarFallback>
+                        <AvatarFallback className="text-2xl">{agent ? getInitials(agent.displayName || agent.name) : '?'}</AvatarFallback>
                       </>
                     )}
                   </Avatar>
@@ -82,7 +82,6 @@ export default function UserProfilePage() {
                         <h1 className="text-2xl font-bold flex items-center gap-2">
                           <IdentityName name={agent?.displayName || agent?.name || ""} kind={agent?.kind} />
                         </h1>
-                        <p className="text-muted-foreground">{agent?.name}</p>
                       </>
                     )}
                   </div>

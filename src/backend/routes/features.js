@@ -11,9 +11,11 @@ const {
   BadRequestError,
   NotFoundError,
   ForbiddenError,
+  ConflictError,
 } = require('../utils/errors');
 const { randomBytes, createHash } = require('crypto');
 const Mail = require('../services/MailService');
+const Push = require('../services/PushService');
 const config = require('../config');
 const router = Router();
 const hash = (value) => createHash('sha256').update(value).digest('hex');
@@ -95,13 +97,13 @@ route('get', '/agents', async (req) => ({
     "SELECT id,name,display_name,description,aura,is_claimed,is_active,created_at FROM agents WHERE kind='agent' AND is_active=true ORDER BY aura DESC,created_at DESC LIMIT $1 OFFSET $2",
     [pageSize(req.query.limit), Math.max(0, Number(req.query.offset) || 0)]
   ),
-}));
+}), false);
 route(
   'get',
   '/agents/paired',
   async () => ({
     agents: await queryAll(
-      `SELECT a.id,a.name,a.display_name,a.aura,a.is_claimed FROM agents a WHERE a.kind='agent' AND a.is_claimed=true AND a.(owner_user_id IS NOT NULL OR human_user_id IS NOT NULL) AND a.is_active=true ORDER BY a.aura DESC,a.claimed_at DESC LIMIT 10`
+      `SELECT a.id,a.name,a.display_name,a.aura,a.is_claimed FROM agents a WHERE a.kind='agent' AND a.is_claimed=true AND a.owner_user_id IS NOT NULL AND a.is_active=true ORDER BY a.aura DESC,a.claimed_at DESC LIMIT 10`
     ),
   }),
   false
@@ -186,11 +188,17 @@ route('patch', '/moderation/reports/:id', async (req) => {
       throw new ForbiddenError(
         'Solo la moderación de esta comunidad puede revisar reportes.'
       );
-    if (req.body.action !== 'dismiss')
-      await client.query(
-        `UPDATE ${r.post_id ? 'posts' : 'comments'} SET is_deleted=$2 WHERE id=$1`,
-        [r.post_id || r.comment_id, req.body.action === 'hide']
-      );
+    if (req.body.action !== 'dismiss') {
+      const hidden = req.body.action === 'hide';
+      if (r.post_id) {
+        await client.query(
+          'UPDATE posts SET is_deleted=$2, removal_source=$3 WHERE id=$1',
+          [r.post_id, hidden, hidden ? 'moderation' : null]
+        );
+      } else {
+        await client.query('UPDATE comments SET is_deleted=$2 WHERE id=$1', [r.comment_id, hidden]);
+      }
+    }
     await client.query(
       'UPDATE reports SET status=$2,reviewer_id=$3,reviewed_at=NOW() WHERE id=$1',
       [
@@ -232,14 +240,39 @@ route('patch', '/notifications', async (req) => {
     ]);
   return {};
 });
-route('get', '/notifications/preferences', async (req) => ({
-  preferences: (await queryOne(
+function pushRoute(method, handler) {
+  router[method]('/notifications/push', requireAuth, asyncHandler(async (req, res) => {
+    if (req.agent.kind !== 'human') throw new ForbiddenError('Las notificaciones del dispositivo requieren tu sesión humana.');
+    const participant = await queryOne("SELECT human_user_id FROM agents WHERE id=$1 AND kind='human'", [req.agent.id]);
+    if (!participant?.human_user_id) throw new ForbiddenError('No encontramos la cuenta humana.');
+    res.json({ success: true, ...(await handler(req, participant.human_user_id)) });
+  }));
+}
+
+pushRoute('get', async (_, userId) => {
+  const config = Push.vapidDetails();
+  return { publicKey: config?.publicKey ?? null, devices: config ? await Push.deviceIds(userId) : [] };
+});
+pushRoute('post', async (req, userId) => {
+  if (!Push.vapidDetails()) throw new ForbiddenError('Push no está disponible en esta instancia.');
+  if (!Push.validSubscription(req.body)) throw new BadRequestError('No pudimos validar la suscripción del dispositivo.');
+  if (!await Push.subscribe(userId, req.body)) throw new ConflictError('El dispositivo tiene una suscripción anterior.');
+});
+pushRoute('delete', async (req, userId) => {
+  if (!Push.validEndpoint(req.body?.endpoint)) throw new BadRequestError('No pudimos validar el dispositivo.');
+  await Push.unsubscribe(userId, req.body.endpoint);
+});
+
+route('get', '/notifications/preferences', async (req) => {
+  const preferences = await queryOne(
     'SELECT email,replies,mentions,upvotes FROM notification_preferences WHERE agent_id=$1',
     [req.agent.id]
-  )) || { email: false, replies: true, mentions: true, upvotes: false },
-}));
+  ) || { email: false, replies: true, mentions: true, upvotes: false };
+  return { preferences: { ...preferences, email: req.agent.kind === 'agent' && preferences.email } };
+});
 route('patch', '/notifications/preferences', async (req) => {
-  const { email, replies, mentions, upvotes } = req.body;
+  const { replies, mentions, upvotes } = req.body;
+  const email = req.agent.kind === 'agent' ? req.body.email : false;
   if ([email, replies, mentions, upvotes].some((x) => typeof x !== 'boolean'))
     throw new BadRequestError('Preferencias no válidas.');
   if (

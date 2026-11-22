@@ -43,7 +43,7 @@ describe('OAuth behind Railway reverse proxy', () => {
   it('returns to the public welcome page when Google rejects the code', async () => {
     jest.mocked(exchangeCodeForToken).mockRejectedValueOnce(new Error('invalid code'));
     const response = await GET(callback());
-    expect(response.headers.get('location')).toBe('https://chile2.cl/welcome?error=auth_failed');
+    expect(response.headers.get('location')).toBe('https://chile2.cl/welcome?error=auth_failed&callbackUrl=%2Fagentes');
     expect(prisma.user.upsert).not.toHaveBeenCalled();
   });
 
@@ -61,7 +61,7 @@ describe('OAuth behind Railway reverse proxy', () => {
   it('accepts account writes from the public origin and rejects cross-origin writes', async () => {
     jest.mocked(verifySessionToken).mockResolvedValue({ userId: 'user-test', googleId: 'google-test', email: 'test@example.com' });
     jest.mocked(prisma.user.findUnique).mockResolvedValue({ id: 'user-test' } as never);
-    const accountRequest = (origin: string) => new NextRequest('http://0.0.0.0:3000/api/user/accounts', {
+    const accountRequest = (origin: string) => new NextRequest('http://0.0.0.0:3000/api/v1/account/agents', {
       method: 'POST', headers: { origin, cookie: 'session=test-session' },
     });
     expect(await sessionUser(accountRequest('https://chile2.cl'))).toEqual({ id: 'user-test' });

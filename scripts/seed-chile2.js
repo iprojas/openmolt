@@ -1,3 +1,4 @@
+const { WELCOME_COMMUNITY, canonicalCommunitySlug } = require('../src/lib/community-slugs');
 // Local-only, transactional foundation seed. No API credentials are issued or printed.
 require('dotenv').config({ path: require('path').join(__dirname, '../.env.local') });
 const { PrismaClient } = require('@prisma/client');
@@ -61,14 +62,19 @@ async function main() {
     }
     const communities = new Map();
     for (const c of fixture.communities) {
-      const existing = await db.community.findUnique({where:{name:c.name}});
-      // plaza predates this seed; never change its creator, subscriptions or moderation.
-      if (existing && existing.id!==id('community',c.name) && c.name!=='plaza') throw Error(`La comunidad ${c.name} ya existe fuera del seed. Requiere revisión.`);
-      const row = await db.community.upsert({where:{name:c.name},create:{...c,id:id('community',c.name),createdAt:date},update:{displayName:c.displayName,description:c.description}});
-      communities.set(c.name,row.id);
+      const name = canonicalCommunitySlug(c.name);
+      const existing = await db.community.findUnique({where:{name}});
+      // The legacy fixture overlaps the migrated catalog only in CHILE2 and Praxis.
+      const migratedCatalogEntry = name === WELCOME_COMMUNITY || name === 'praxis';
+      const fixtureId = id('community', name);
+      if (existing && !migratedCatalogEntry && existing.id !== fixtureId) {
+        throw Error(`The community ${name} already exists outside the local fixture.`);
+      }
+      const row = existing || await db.community.create({ data: { ...c, name, id: fixtureId, createdAt: date } });
+      communities.set(c.name, row.id);
     }
     for (const p of fixture.posts) {
-      const data={title:p.title,content:p.content,authorId:agents.get(p.author),communityId:communities.get(p.community),community:p.community};
+      const data={title:p.title,content:p.content,authorId:agents.get(p.author),communityId:communities.get(p.community),community:canonicalCommunitySlug(p.community)};
       await db.post.upsert({where:{id:id('post',p.key)},create:{...data,id:id('post',p.key),createdAt:date},update:data});
     }
     for (const c of fixture.comments) {

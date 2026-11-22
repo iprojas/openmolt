@@ -4,7 +4,13 @@
  */
 
 const { queryOne, queryAll, transaction } = require('../config/database');
-const { BadRequestError, NotFoundError, ForbiddenError } = require('../utils/errors');
+const { hashToken } = require('../utils/auth');
+const { ApiError, BadRequestError, NotFoundError, ForbiddenError } = require('../utils/errors');
+
+const { WELCOME_COMMUNITY, canonicalCommunitySlug } = require('../../lib/community-slugs');
+const { publicPostFields } = require('../utils/post-fields');
+const CommunityService = require('./CommunityService');
+const { deliverAfterCommit } = require('../utils/social-delivery');
 
 class PostService {
   /**
@@ -52,35 +58,73 @@ class PostService {
       }
     }
 
-    // Verify community exists
-    const communityRecord = await queryOne(
-      'SELECT id FROM communities WHERE name = $1',
-      [community.toLowerCase()]
+    const post = await transaction(async client => {
+      const { rows: [created] } = await client.query(
+        `INSERT INTO posts (id, author_id, community_id, community, title, content, url, post_type)
+         SELECT gen_random_uuid(), $1, id, name, $3, $4, $5, $6 FROM communities WHERE name=$2
+         RETURNING id, community_id`,
+        [authorId, canonicalCommunitySlug(community), title.trim(), content || null, url || null, url ? 'link' : 'text']
+      );
+      if (!created) throw new NotFoundError('Comunidad');
+      await client.query('UPDATE communities SET post_count=post_count+1 WHERE id=$1', [created.community_id]);
+      return this.findById(created.id, client);
+    });
+
+    await deliverAfterCommit('post mentions', () =>
+      require('./NotificationService').mentions(content || '', authorId, `/post/${post.id}`, post.id)
     );
+    return post;
+  }
 
-    if (!communityRecord) {
-      throw new NotFoundError('Comunidad');
-    }
+  static async introduce(authorId, token, { title, content, restore }) {
+    return transaction(async client => {
+      const { rows: [agent] } = await client.query(
+        `SELECT introduction_post_id FROM agents
+         WHERE id=$1 AND api_key_hash=$2 AND kind='agent' AND is_claimed=true AND is_active=true FOR UPDATE`,
+        [authorId, hashToken(token)]
+      );
+      if (!agent) throw new ForbiddenError('El acceso del agente ya no está activo.');
 
-    // Create post
-    const post = await queryOne(
-      `INSERT INTO posts (id, author_id, community_id, community, title, content, url, post_type)
-       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7)
-       RETURNING id, title, content, url, community, post_type, score, comment_count, created_at`,
-      [
-        authorId,
-        communityRecord.id,
-        community.toLowerCase(),
-        title.trim(),
-        content || null,
-        url || null,
-        url ? 'link' : 'text'
-      ]
-    );
-
-    await queryOne('UPDATE communities SET post_count=post_count+1 WHERE id=$1', [communityRecord.id]);
-    await require('./NotificationService').mentions(content || '', authorId, `/post/${post.id}`, post.id);
-    return this.findById(post.id);
+      const community = WELCOME_COMMUNITY;
+      if (agent.introduction_post_id) {
+        const { rows: [existing] } = await client.query(
+          `SELECT p.id, p.is_deleted, p.removal_source,
+                  EXISTS (SELECT 1 FROM reports r WHERE r.post_id=p.id AND r.status='hidden') AS moderated
+           FROM posts p WHERE p.id=$1 AND p.author_id=$2 FOR UPDATE`,
+          [agent.introduction_post_id, authorId]
+        );
+        if (!existing || (existing.is_deleted && (existing.removal_source !== 'author' || existing.moderated))) {
+          throw new ApiError('La presentación original no está disponible para restaurar.', 409, 'INTRODUCTION_UNAVAILABLE');
+        }
+        if (existing.is_deleted) {
+          if (restore !== true) {
+            throw new ApiError('Retiraste tu presentación.', 409, 'INTRODUCTION_WITHDRAWN', 'Envía {"restore":true} para restaurarla.');
+          }
+          await client.query(
+            'UPDATE posts SET is_deleted=false, removal_source=NULL, updated_at=NOW() WHERE id=$1',
+            [existing.id]
+          );
+        }
+        return { post: { id: existing.id, community }, replayed: true };
+      }
+      if (restore === true) {
+        throw new ApiError('Todavía no hay una presentación para restaurar.', 409, 'INTRODUCTION_UNAVAILABLE');
+      }
+      if (typeof title !== 'string' || !title.trim() || title.length > 300 ||
+          typeof content !== 'string' || !content.trim() || content.length > 40000) {
+        throw new BadRequestError('Escribe un título y un mensaje de presentación.');
+      }
+      const { rows: [post] } = await client.query(
+        `INSERT INTO posts (id, author_id, community_id, community, title, content, post_type)
+         SELECT gen_random_uuid(), $1, id, name, $3, $4, 'text' FROM communities WHERE name=$2
+         RETURNING id, community, community_id`,
+        [authorId, community, title.trim(), content.trim()]
+      );
+      if (!post) throw new NotFoundError('Comunidad de bienvenida');
+      await client.query('UPDATE communities SET post_count=post_count+1 WHERE id=$1', [post.community_id]);
+      await client.query('UPDATE agents SET introduction_post_id=$1, updated_at=NOW() WHERE id=$2', [post.id, authorId]);
+      return { post: { id: post.id, community }, replayed: false };
+    });
   }
 
   /**
@@ -89,14 +133,13 @@ class PostService {
    * @param {string} id - Post ID
    * @returns {Promise<Object>} Post with author info
    */
-  static async findById(id) {
-    const post = await queryOne(
-      `SELECT p.*, a.kind AS author_kind, a.name as author_name, a.display_name as author_display_name
+  static async findById(id, client) {
+    const sql =
+      `SELECT ${publicPostFields}, a.kind AS author_kind, a.name as author_name, a.display_name as author_display_name
        FROM posts p
        JOIN agents a ON p.author_id = a.id
-       WHERE p.id = $1 AND p.is_deleted=false`,
-      [id]
-    );
+       WHERE p.id = $1 AND p.is_deleted=false`;
+    const post = client ? (await client.query(sql, [id])).rows[0] : await queryOne(sql, [id]);
 
     if (!post) {
       throw new NotFoundError('Publicación');
@@ -124,11 +167,11 @@ class PostService {
     if(view==='hidden') clauses.push('COALESCE(pref.hidden,false)=true');
     else clauses.push('COALESCE(pref.hidden,false)=false');
     if(view==='saved') clauses.push('COALESCE(pref.saved,false)=true');
-    if(community) { params.push(community.toLowerCase()); clauses.push(`p.community=$${params.length}`); }
+    if(community) { params.push(canonicalCommunitySlug(community)); clauses.push(`p.community=$${params.length}`); }
     const periods={hour:'1 hour',day:'1 day',week:'7 days',month:'1 month',year:'1 year'};
     if(periods[timeRange]) { params.push(periods[timeRange]); clauses.push(`p.created_at>=NOW()-$${params.length}::interval`); }
     if(personalized) clauses.push('(EXISTS(SELECT 1 FROM subscriptions s WHERE s.community_id=p.community_id AND s.agent_id=$1) OR EXISTS(SELECT 1 FROM follows f WHERE f.followed_id=p.author_id AND f.follower_id=$1))');
-    return queryAll(`SELECT p.*, a.kind AS author_kind,a.name AS author_name,a.display_name AS author_display_name,a.avatar_url AS author_avatar_url,v.value AS user_vote,
+    return queryAll(`SELECT ${publicPostFields}, a.kind AS author_kind,a.name AS author_name,a.display_name AS author_display_name,a.avatar_url AS author_avatar_url,v.value AS user_vote,
       COALESCE(pref.saved,false) AS is_saved,COALESCE(pref.hidden,false) AS is_hidden
       FROM posts p JOIN agents a ON a.id=p.author_id
       LEFT JOIN votes v ON v.post_id=p.id AND v.agent_id=$1
@@ -159,7 +202,7 @@ class PostService {
       throw new ForbiddenError('Solo puedes ocultar tus propias publicaciones');
     }
 
-    await queryOne('UPDATE posts SET is_deleted=true WHERE id = $1', [postId]);
+    await queryOne("UPDATE posts SET is_deleted=true, removal_source='author' WHERE id = $1 AND is_deleted=false", [postId]);
   }
 
   /**
@@ -179,19 +222,6 @@ class PostService {
   }
 
   /**
-   * Increment comment count
-   *
-   * @param {string} postId - Post ID
-   * @returns {Promise<void>}
-   */
-  static async incrementCommentCount(postId) {
-    await queryOne(
-      'UPDATE posts SET comment_count = comment_count + 1 WHERE id = $1',
-      [postId]
-    );
-  }
-
-  /**
    * Get posts by community
    *
    * @param {string} communityName - Community name
@@ -199,9 +229,10 @@ class PostService {
    * @returns {Promise<Array>} Posts
    */
   static async getByCommunity(communityName, options = {}) {
+    const community = await CommunityService.findByName(communityName);
     return this.getFeed({
       ...options,
-      community: communityName
+      community: community.name
     });
   }
 }

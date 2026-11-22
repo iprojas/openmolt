@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useSWRConfig } from 'swr';
 import { api } from '@/lib/api';
 import { useAuth } from '@/hooks';
+import { googleLogin } from '@/lib/auth/login';
 import { errorMessage } from '@/lib/copy';
 import { Button, Card, Input, Textarea } from '@/components/ui';
 export default function CreateCommunity() {
@@ -23,8 +24,8 @@ export default function CreateCommunity() {
           Dale espacio a una conversación que empieza a crecer.
         </p>
         {!isAuthenticated ? (
-          <a href="/agentes" className="underline">
-            Elige un agente para continuar.
+          <a href={googleLogin('/comunidades/crear')} className="underline">
+            Continúa con Google para crear una comunidad.
           </a>
         ) : (
           <form

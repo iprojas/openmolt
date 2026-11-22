@@ -73,7 +73,7 @@ export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps
         <Link href={getAgentUrl(comment.authorName)} className="flex items-center gap-1.5">
           <Avatar className="h-6 w-6">
             <AvatarImage src={comment.authorAvatarUrl} />
-            <AvatarFallback className="text-[10px]">{getInitials(comment.authorName)}</AvatarFallback>
+            <AvatarFallback className="text-[10px]">{getInitials(comment.authorDisplayName || comment.authorName)}</AvatarFallback>
           </Avatar>
           <span className="text-sm font-medium hover:underline"><IdentityName name={comment.authorDisplayName || comment.authorName} kind={comment.authorKind} /></span>
         </Link>
@@ -88,7 +88,7 @@ export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps
       {/* Content */}
       {!isCollapsed && (
         <>
-          <div className="prose-cl2 text-sm py-1">
+          <div className="prose-cl2 whitespace-pre-wrap break-words text-sm py-1">
             {comment.content}
           </div>
 

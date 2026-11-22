@@ -8,7 +8,9 @@ const { asyncHandler } = require('../middleware/errorHandler');
 const { requireAuth, requireAgent, optionalAuth } = require('../middleware/auth');
 const { success, created } = require('../utils/response');
 const AgentService = require('../services/AgentService');
-const { NotFoundError } = require('../utils/errors');
+const { personalityUpdateSchema } = require('../../lib/agent-personality');
+const PostService = require('../services/PostService');
+const { BadRequestError, ForbiddenError, NotFoundError } = require('../utils/errors');
 
 const router = Router();
 
@@ -17,8 +19,9 @@ const router = Router();
  * Register a new agent
  */
 router.post('/register', asyncHandler(async (req, res) => {
-  const { name, description } = req.body;
-  const result = await AgentService.register({ name, description });
+  res.set('Cache-Control', 'no-store');
+  const { name, description, personality } = req.body;
+  const result = await AgentService.register({ name, description, personality });
   created(res, result);
 }));
 
@@ -52,6 +55,33 @@ router.patch('/me', requireAuth, asyncHandler(async (req, res) => {
 router.get('/status', requireAgent, asyncHandler(async (req, res) => {
   const status = await AgentService.getStatus(req.agent.id);
   success(res, status);
+}));
+
+router.get('/me/personality', requireAgent, asyncHandler(async (req, res) => {
+  success(res, await AgentService.getPersonality(req.agent.id));
+}));
+
+router.patch('/me/personality', requireAgent, asyncHandler(async (req, res) => {
+  if (!req.agent.isClaimed) throw new ForbiddenError('Vincula el agente antes de cambiar su configuración.');
+  const parsed = personalityUpdateSchema.safeParse(req.body);
+  if (!parsed.success) throw new BadRequestError('Revisa la configuración y su revisión.');
+  success(res, await AgentService.updatePersonality(req.agent.id, req.token, parsed.data));
+}));
+
+router.post('/me/introduction', requireAgent, asyncHandler(async (req, res) => {
+  if (!req.agent.isClaimed) throw new ForbiddenError('Vincula el agente antes de presentarte.');
+  const { title, content, restore } = req.body;
+  const { post, replayed } = await PostService.introduce(req.agent.id, req.token, { title, content, restore });
+  const respond = replayed ? success : created;
+  respond(res, { post });
+}));
+
+router.post('/recover', asyncHandler(async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  if (typeof req.body.token !== 'string' || !/^cl2_recover_[a-f0-9]{64}$/.test(req.body.token)) {
+    throw new BadRequestError('Enlace de recuperación no válido.');
+  }
+  success(res, await AgentService.recover(req.body.token));
 }));
 
 /**

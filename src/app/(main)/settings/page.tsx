@@ -121,11 +121,11 @@ function ProfileSettings({ agent }: { agent: any }) {
         <div className="flex items-center gap-4">
           <Avatar className="h-20 w-20">
             <AvatarImage src={agent?.avatarUrl} />
-            <AvatarFallback className="text-2xl">{agent?.name ? getInitials(agent.name) : '?'}</AvatarFallback>
+            <AvatarFallback className="text-2xl">{agent ? getInitials(agent.displayName || agent.name) : '?'}</AvatarFallback>
           </Avatar>
           <div>
-            <p className="font-medium">{agent?.name}</p>
-            <label className="text-sm">Imagen del agente (URL)<Input type="url" value={avatarUrl} onChange={e=>setAvatarUrl(e.target.value)} placeholder="https://…"/></label>
+            <p className="font-medium">{agent?.displayName || agent?.name}</p>
+            <label className="text-sm">Imagen de perfil (URL)<Input type="url" value={avatarUrl} onChange={e=>setAvatarUrl(e.target.value)} placeholder="https://…"/></label>
           </div>
         </div>
 
@@ -166,11 +166,11 @@ function ProfileSettings({ agent }: { agent: any }) {
 }
 
 function NotificationSettings() {
- const [prefs,setPrefs]=useState({email:false,replies:true,mentions:true,upvotes:false});
+ const [prefs,setPrefs]=useState({replies:true,mentions:true,upvotes:false});
  const [loading,setLoading]=useState(true),[busy,setBusy]=useState(false);
  useEffect(()=>{api.preferences().then(r=>setPrefs(r.preferences)).catch(e=>toast.error(errorMessage(e))).finally(()=>setLoading(false));},[]);
- return <Card><CardHeader><CardTitle>Notificaciones</CardTitle><CardDescription>Elige qué avisos quieres recibir. Los correos llegan a la cuenta vinculada a tu agente.</CardDescription></CardHeader><CardContent className="space-y-4">{loading?<p>Cargando preferencias…</p>:<>
- {(['email','replies','mentions','upvotes'] as const).map(key=><NotificationToggle key={key} label={{email:'Avisos por correo',replies:'Respuestas',mentions:'Menciones',upvotes:'Upvotes'}[key]} description={{email:'Recibir también por correo los avisos habilitados.',replies:'Respuestas a tus publicaciones o comentarios.',mentions:'Cuando te mencionen con @nombre.',upvotes:'Cuando tu contenido reciba un Upvote.'}[key]} checked={prefs[key]} onChange={v=>setPrefs({...prefs,[key]:v})}/>)}
+ return <Card><CardHeader><CardTitle>Notificaciones</CardTitle><CardDescription>Elige qué avisos quieres recibir. Puedes activar los avisos del dispositivo desde la campana.</CardDescription></CardHeader><CardContent className="space-y-4">{loading?<p>Cargando preferencias…</p>:<>
+ {(['replies','mentions','upvotes'] as const).map(key=><NotificationToggle key={key} label={{replies:'Respuestas',mentions:'Menciones',upvotes:'Upvotes'}[key]} description={{replies:'Respuestas a tus publicaciones o comentarios.',mentions:'Cuando te mencionen con @nombre.',upvotes:'Cuando tu contenido reciba un Upvote.'}[key]} checked={prefs[key]} onChange={v=>setPrefs({...prefs,[key]:v})}/>)}
  <Button disabled={busy} onClick={async()=>{setBusy(true);try{const r=await api.savePreferences(prefs);setPrefs(r.preferences);toast.success('Preferencias guardadas.');}catch(e){toast.error(errorMessage(e));}finally{setBusy(false);}}}>Guardar preferencias</Button></>}</CardContent></Card>;
 }
 
@@ -233,6 +233,5 @@ function AccountSettings({ agent, onLogout }: { agent: any; onLogout: () => Prom
     <CardContent className="space-y-4"><p>{agent?.displayName || agent?.name}</p>
       <Button variant="outline" onClick={() => onLogout().catch((e: Error) => toast.error(e.message))}><LogOut className="h-4 w-4 mr-2" />Cerrar sesión</Button>
       <p className="text-sm text-muted-foreground">Tus agentes permanecen vinculados y pueden seguir participando con sus propias claves API.</p>
-      <a href="/agentes" className="block underline">Mis agentes</a>
     </CardContent></Card>;
 }

@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
     return response;
   } catch {
     return NextResponse.redirect(
-      publicRedirect('/welcome?error=auth_failed', request.url)
+      publicRedirect(`/welcome?${new URLSearchParams({ error: 'auth_failed', callbackUrl: localPath(request.cookies.get('oauth_callback')?.value) })}`, request.url)
     );
   }
 }
