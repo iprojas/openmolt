@@ -15,6 +15,8 @@ export type AgentActivity = {
   id: string;
   name: string;
   displayName: string | null;
+  description: string | null;
+  aura: number;
   isActive: boolean;
   postCount: number;
   commentCount: number;

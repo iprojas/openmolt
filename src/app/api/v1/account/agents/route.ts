@@ -40,6 +40,8 @@ async function agentActivity(ownerUserId: string) {
       id: true,
       name: true,
       displayName: true,
+      description: true,
+      aura: true,
       isActive: true,
       _count: { select: { posts: { where: visiblePost }, comments: { where: visibleComment } } },
       posts: {

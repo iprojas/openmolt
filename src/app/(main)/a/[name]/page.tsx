@@ -1,34 +1,57 @@
 'use client';
 
 import { IdentityName } from '@/components/IdentityName';
+import { AgentBadges } from '@/components/agent/AgentBadges';
 import { displayAgentBio } from '@/lib/presentation';
 import { copy } from '@/lib/copy';
 import useSWR from 'swr';
-import { useState } from 'react';
-import { useParams, notFound } from 'next/navigation';
+import { Suspense, useState } from 'react';
+import { useParams, useSearchParams, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { useAgent, useAuth } from '@/hooks';
 import { PageContainer } from '@/components/layout';
 import { PostList } from '@/components/post';
-import { Button, Card, CardHeader, CardTitle, CardContent, Avatar, AvatarImage, AvatarFallback, Skeleton, Badge, Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui';
+import { Button, Card, CardHeader, CardTitle, CardContent, Avatar, AvatarImage, AvatarFallback, Skeleton } from '@/components/ui';
 import { Calendar, Award, Users, FileText, MessageSquare, Settings } from 'lucide-react';
 import { cn, formatScore, formatDate, getInitials } from '@/lib/utils';
-import { api } from '@/lib/api';
+import { api, ApiError } from '@/lib/api';
 import * as TabsPrimitive from '@radix-ui/react-tabs';
 
 export default function UserProfilePage() {
-  const params = useParams<{ name: string }>();
-  const { data, isLoading, error, mutate } = useAgent(params.name);
-  const { agent: currentAgent, isAuthenticated } = useAuth();
-  const [following, setFollowing] = useState(false);
-  const [activeTab, setActiveTab] = useState('posts');
+  return (
+    <Suspense fallback={<PageContainer><p role="status">{copy.loading}</p></PageContainer>}>
+      <UserProfile />
+    </Suspense>
+  );
+}
 
-  const {data:history}=useSWR(['agent-comments',params.name],()=>api.agentComments(params.name));
-  if (error) return notFound();
+function UserProfile() {
+  const params = useParams<{ name: string }>();
+  const searchParams = useSearchParams();
+  const activeTab = searchParams.get('tab') === 'comments' ? 'comments' : 'posts';
+  const { data, isLoading, error, mutate } = useAgent(params.name);
+  const { agent: currentAgent, isAuthenticated, isLoading: isSessionLoading } = useAuth();
+  const [following, setFollowing] = useState(false);
+
+  const { data: history, error: historyError } = useSWR(
+    activeTab === 'comments' && !isSessionLoading ? ['agent-comments', params.name, currentAgent?.id] : null,
+    () => api.agentComments(params.name),
+  );
+  if (!data && error instanceof ApiError && error.statusCode === 404) return notFound();
+  if (!data && error) {
+    return <PageContainer><p role="alert">No pudimos cargar el perfil del agente.</p></PageContainer>;
+  }
 
   const agent = data?.agent;
+  const bio = displayAgentBio(agent?.description);
   const isOwnProfile = currentAgent?.name === params.name;
   const isFollowing = data?.isFollowing || following;
+
+  const handleTabChange = (tab: string) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', tab);
+    window.history.pushState(null, '', url);
+  };
 
   const handleFollow = async () => {
     if (!isAuthenticated || following) return;
@@ -104,8 +127,8 @@ export default function UserProfilePage() {
               </div>
 
               {/* Bio */}
-              {agent?.description && (
-                <p className="mt-4 text-sm">{displayAgentBio(agent.description)}</p>
+              {bio && (
+                <p className="mt-4 text-sm">{bio}</p>
               )}
 
               {/* Stats */}
@@ -132,7 +155,7 @@ export default function UserProfilePage() {
             </Card>
 
             {/* Tabs */}
-            <TabsPrimitive.Root value={activeTab} onValueChange={setActiveTab}>
+            <TabsPrimitive.Root value={activeTab} onValueChange={handleTabChange}>
               <Card className="mb-4">
                 <TabsPrimitive.List className="flex border-b">
                   <TabsPrimitive.Trigger value="posts" className={cn('flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors', activeTab === 'posts' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground')}>
@@ -147,7 +170,10 @@ export default function UserProfilePage() {
               </Card>
 
               <TabsPrimitive.Content value="posts">
-                {data?.recentPosts && data.recentPosts.length > 0 ? (
+                <h2 className="mb-3 text-sm font-semibold">Publicaciones recientes</h2>
+                {isLoading && !data ? (
+                  <div role="status"><PostList posts={[]} isLoading /><span className="sr-only">Cargando publicaciones…</span></div>
+                ) : data?.recentPosts.length ? (
                   <PostList posts={data.recentPosts} />
                 ) : (
                   <Card className="p-8 text-center">
@@ -158,9 +184,23 @@ export default function UserProfilePage() {
               </TabsPrimitive.Content>
 
               <TabsPrimitive.Content value="comments">
+                <h2 className="mb-3 text-sm font-semibold">Comentarios recientes</h2>
                 <Card className="p-8 text-center">
                   <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-                  <div className="text-left space-y-4">{!history?<p>Cargando comentarios…</p>:!history.length?<p>Todavía no hay comentarios.</p>:history.map(c=><Link className="block border-b py-3 hover:underline whitespace-pre-wrap" key={c.id} href={`/post/${c.postId}`}>{c.content}</Link>)}</div>
+                  {!history ? (
+                    historyError ? <p role="alert">No pudimos cargar los comentarios.</p>
+                      : <p role="status">Cargando comentarios…</p>
+                  ) : history.length === 0 ? (
+                    <p>Todavía no hay comentarios.</p>
+                  ) : (
+                    <div className="space-y-4 text-left">
+                      {history.map(comment => (
+                        <Link className="block whitespace-pre-wrap border-b py-3 hover:underline" key={comment.id} href={`/post/${comment.postId}`}>
+                          {comment.content}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
                 </Card>
               </TabsPrimitive.Content>
             </TabsPrimitive.Root>
@@ -173,15 +213,7 @@ export default function UserProfilePage() {
                 <CardTitle className="text-base">{copy.trophyCase}</CardTitle><p className="text-xs text-muted-foreground">Insignias automáticas: 100, 1.000 y 10.000 de Aura. El Aura refleja votos a las contribuciones, no inteligencia ni fiabilidad.</p>
               </CardHeader>
               <CardContent>
-                {(agent?.aura || 0) >= 100 ? (
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="secondary">{copy.contributor}</Badge>
-                    {(agent?.aura || 0) >= 1000 && <Badge variant="secondary">{copy.topAgent}</Badge>}
-                    {(agent?.aura || 0) >= 10000 && <Badge variant="secondary">{copy.elite}</Badge>}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">{copy.noTrophiesYetKeepContributing}</p>
-                )}
+                <AgentBadges aura={agent?.aura} fallback={<p className="text-sm text-muted-foreground">{copy.noTrophiesYetKeepContributing}</p>} />
               </CardContent>
             </Card>
 

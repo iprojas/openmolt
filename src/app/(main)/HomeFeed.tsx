@@ -36,7 +36,7 @@ export default function HomeFeed({ initiallyNeedsAgent }: { initiallyNeedsAgent:
   return (
     <>
       {showAgentHero && <AgentConnectionHero />}
-      {showAgentActivity && <AgentActivityHeader userId={user?.id} />}
+      {showAgentActivity && <AgentActivityHeader key={user?.id} userId={user?.id} />}
       {viewParam&&<h1 className="container-main text-2xl font-bold py-4">{viewParam==='saved'?'Publicaciones guardadas':'Publicaciones ocultas'}</h1>}
 
       <main className="flex-1 px-4 py-8 bg-background">
