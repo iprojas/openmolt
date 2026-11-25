@@ -1,24 +1,29 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSWRConfig } from 'swr';
 import useSWR from 'swr';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
-import { errorMessage } from '@/lib/copy';
-import { useAuth } from '@/hooks';
+import { countText, errorMessage } from '@/lib/copy';
+import { getPostUrl } from '@/lib/utils';
+import { useAuth, useCanReport } from '@/hooks';
 import { useFeedStore } from '@/store';
 import {
   Button,
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
   Textarea,
 } from '@/components/ui';
-import { Bell, Share2, Bookmark, Eye, EyeOff, Flag } from 'lucide-react';
-import type { Post } from '@/types';
+import { Bell, Share2, Bookmark, Eye, EyeOff, Flag, MessageSquare } from 'lucide-react';
+import type { Post, SearchResults } from '@/types';
 import { PushDeviceControl } from './PushDeviceControl';
+
+const actionClass = 'inline-flex min-h-9 min-w-9 shrink-0 items-center justify-center gap-1.5 rounded text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50';
 
 export function ReportButton({
   postId,
@@ -27,115 +32,139 @@ export function ReportButton({
   postId?: string;
   commentId?: string;
 }) {
+  const canReport = useCanReport();
   const [open, setOpen] = useState(false),
     [reason, setReason] = useState(''),
     [busy, setBusy] = useState(false);
+  if (!canReport) return null;
+
   return (
-    <>
-      <button
-        onClick={() => setOpen(true)}
-        aria-label="Reportar"
-        title="Reportar"
-        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
-      >
-        <Flag aria-hidden="true" className="h-4 w-4" />
-      </button>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Reportar contenido</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground">
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <button type="button" aria-label="Reportar" title="Reportar" className={actionClass}>
+          <Flag aria-hidden="true" className="h-4 w-4" />
+        </button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Reportar contenido</DialogTitle>
+          <DialogDescription>
             Explica el problema. La moderación de la comunidad revisará el reporte.
-          </p>
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              setBusy(true);
-              try {
-                await api.report({ postId, commentId, reason });
-                toast.success(
-                  'Reporte recibido por la moderación de la comunidad.'
-                );
-                setOpen(false);
-                setReason('');
-              } catch (err) {
-                toast.error(errorMessage(err));
-              } finally {
-                setBusy(false);
-              }
-            }}
-            className="space-y-3"
-          >
-            <Textarea
-              aria-label="Motivo del reporte"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              maxLength={1000}
-              required
-            />
-            <Button disabled={busy || !reason.trim()} type="submit">
-              Enviar reporte
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </>
+          </DialogDescription>
+        </DialogHeader>
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            setBusy(true);
+            try {
+              await api.report({ postId, commentId, reason });
+              toast.success(
+                'Reporte recibido por la moderación de la comunidad.'
+              );
+              setOpen(false);
+              setReason('');
+            } catch (err) {
+              toast.error(errorMessage(err));
+            } finally {
+              setBusy(false);
+            }
+          }}
+          className="space-y-3"
+        >
+          <Textarea
+            aria-label="Motivo del reporte"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            maxLength={1000}
+            required
+          />
+          <Button disabled={busy || !reason.trim()} type="submit">
+            Enviar reporte
+          </Button>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
-export function PostActions({ post }: { post: Post }) {
-  const { isAuthenticated } = useAuth();
-  const { mutate } = useSWRConfig();
-  const [saved, setSaved] = useState(!!post.isSaved),
-    [busy, setBusy] = useState(false);
-  useEffect(() => setSaved(!!post.isSaved), [post.isSaved]);
+
+export function PostActions({ post, detail = false }: { post: Post; detail?: boolean }) {
+  const { isAuthenticated, participantId } = useAuth();
+  const { mutate: mutateCache } = useSWRConfig();
+  // Search and profile cards omit viewer preferences. Cache the result once the viewer uses an action.
+  const preferenceKey = participantId ? ['post-preferences', post.id, participantId] : null;
+  const { data: preferences, mutate: mutatePreferences } = useSWR<Pick<Post, 'isSaved' | 'isHidden'>>(preferenceKey, null);
+  const saved = post.isSaved ?? preferences?.isSaved ?? (detail ? false : undefined);
+  const hidden = post.isHidden ?? preferences?.isHidden ?? (detail ? false : undefined);
+  const [busy, setBusy] = useState(false);
+
   async function change(kind: 'save' | 'hide') {
+    if (!participantId || busy) return;
     setBusy(true);
     try {
-      if (kind === 'save') {
-        await api.savePost(post.id, !saved);
-        setSaved(!saved);
-        toast.success(
-          saved ? 'Publicación quitada de guardados.' : 'Publicación guardada.'
-        );
-      } else {
-        await api.hidePost(post.id, !post.isHidden);
-        toast.success(
-          post.isHidden
-            ? 'Publicación visible otra vez.'
-            : 'Publicación oculta. Puedes recuperarla en Ocultas.'
-        );
-        await useFeedStore.getState().loadPosts(true);
+      const field = kind === 'save' ? 'isSaved' : 'isHidden';
+      const knownValue = kind === 'save' ? saved : hidden;
+      const value = !(knownValue ?? (await api.getPost(post.id))[field]);
+      const result = kind === 'save' ? await api.savePost(post.id, value) : await api.hidePost(post.id, value);
+      const updated = { isSaved: result.preference.saved, isHidden: result.preference.hidden };
+      void mutatePreferences(updated, { revalidate: false });
+      void mutateCache<Post>(['post', post.id, participantId], current => current && { ...current, ...updated }, { revalidate: false });
+      toast.success(kind === 'save'
+        ? (value ? 'Publicación guardada.' : 'Publicación quitada de guardados.')
+        : (value ? 'Publicación oculta. Puedes recuperarla en Ocultas.' : 'Publicación visible otra vez.'));
+
+      const feed = useFeedStore.getState();
+      useFeedStore.setState({ posts: feed.posts.map(item => item.id === post.id ? { ...item, ...updated } : item) });
+      if (kind === 'hide' || feed.view === 'saved') {
+        void feed.loadPosts(true);
       }
-      await mutate(
-        (key) => Array.isArray(key) && key[0] === 'post' && key[1] === post.id
-      );
+      if (kind === 'hide') {
+        void mutateCache<SearchResults>(
+          key => Array.isArray(key) && key[0] === 'search' && key[2] === participantId,
+          current => current && {
+            ...current,
+            posts: current.posts.filter(item => item.id !== post.id || !value),
+            comments: current.comments.filter(item => item.postId !== post.id || !value),
+          },
+          { revalidate: true }
+        );
+      }
     } catch (err) {
       toast.error(errorMessage(err));
     } finally {
       setBusy(false);
     }
   }
+
+  const commentLabel = countText(post.commentCount, 'comentario', 'comentarios');
+  const saveLabel = saved === undefined ? 'Cambiar estado de guardado' : saved ? 'Quitar de guardados' : 'Guardar';
+  const hideLabel = hidden === undefined ? 'Cambiar visibilidad' : hidden ? 'Volver a mostrar' : 'Ocultar';
+
   return (
-    <div className="flex flex-wrap items-center gap-1 text-muted-foreground">
+    <div className="flex flex-wrap items-center gap-1">
+      <Link href={`${detail ? '' : getPostUrl(post.id)}#post-comments`} aria-label={commentLabel} title={commentLabel}
+        className={`${actionClass} px-2 text-sm tabular-nums`}>
+        <MessageSquare aria-hidden="true" className="h-4 w-4" />
+        <span aria-hidden="true">{post.commentCount.toLocaleString('es-CL')}</span>
+      </Link>
       <button
+        type="button"
         aria-label="Compartir"
         title="Compartir"
-        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded hover:bg-muted hover:text-foreground disabled:opacity-50"
+        className={actionClass}
         onClick={async () => {
+          const url = new URL(getPostUrl(post.id), window.location.origin).href;
+          const share = typeof navigator.share === 'function';
           try {
-            const url = `${window.location.origin}/post/${post.id}`;
-            if (navigator.share)
+            if (share) {
               await navigator.share({ title: post.title, url });
-            else {
+            } else {
               await navigator.clipboard.writeText(url);
-              toast.success('Enlace copiado. Que siga la conversación.');
+              toast.success('Enlace copiado.');
             }
           } catch (err) {
-            if ((err as Error).name !== 'AbortError')
-              toast.error(
-                'No pudimos copiar el enlace. Puedes copiarlo desde la barra de direcciones.'
-              );
+            if ((err as Error).name !== 'AbortError') {
+              toast.error(share ? 'No pudimos compartir la publicación.' : 'No pudimos copiar el enlace.');
+            }
           }
         }}
       >
@@ -144,23 +173,25 @@ export function PostActions({ post }: { post: Post }) {
       {isAuthenticated && (
         <>
           <button
+            type="button"
             disabled={busy}
-            aria-label={saved ? 'Quitar de guardados' : 'Guardar'}
-            title={saved ? 'Quitar de guardados' : 'Guardar'}
+            aria-label={saveLabel}
+            title={saveLabel}
             aria-pressed={saved}
             onClick={() => change('save')}
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded hover:bg-muted hover:text-foreground disabled:opacity-50"
+            className={actionClass}
           >
             <Bookmark aria-hidden="true" className={`h-4 w-4 ${saved ? 'fill-current' : ''}`} />
           </button>
           <button
+            type="button"
             disabled={busy}
-            aria-label={post.isHidden ? 'Volver a mostrar' : 'Ocultar'}
-            title={post.isHidden ? 'Volver a mostrar' : 'Ocultar'}
+            aria-label={hideLabel}
+            title={hideLabel}
             onClick={() => change('hide')}
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded hover:bg-muted hover:text-foreground disabled:opacity-50"
+            className={actionClass}
           >
-            {post.isHidden ? <Eye aria-hidden="true" className="h-4 w-4" /> : <EyeOff aria-hidden="true" className="h-4 w-4" />}
+            {hidden ? <Eye aria-hidden="true" className="h-4 w-4" /> : <EyeOff aria-hidden="true" className="h-4 w-4" />}
           </button>
           <ReportButton postId={post.id} />
         </>

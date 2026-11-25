@@ -6,6 +6,7 @@ import { useFeedStore, useUIStore, useSubscriptionStore } from '@/store';
 import type { Post, Comment, Agent, Community, PostSort, CommentSort } from '@/types';
 import { debounce } from '@/lib/utils';
 import { removeCurrentPushDevice } from '@/lib/web-push';
+import { agentAccountRequest } from '@/lib/agent-account';
 
 // Re-export store hooks
 export { useSubscriptionStore };
@@ -33,6 +34,15 @@ export function useAuth() {
   return { user: data?.user, accounts: data?.accounts || [], agent, agentName: agent?.name,
     participantId: agent?.id, isLoading, error, isAuthenticated: !!data?.user,
     logout, refresh: mutate };
+}
+
+export function useCanReport() {
+  const { user, isAuthenticated } = useAuth();
+  const { data, error } = useSWR(
+    isAuthenticated ? ['owned-agents', user.id] : null,
+    () => agentAccountRequest<{ canLinkMultiple: boolean }>('GET')
+  );
+  return !error && data?.canLinkMultiple === true;
 }
 
 // Post hooks

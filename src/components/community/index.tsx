@@ -4,29 +4,34 @@ import { copy, countText } from '@/lib/copy';
 import {useSWRConfig} from 'swr';
 import * as React from 'react';
 import Link from 'next/link';
-import { cn, formatScore, getInitials, getCommunityUrl } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
+import { cn, getCommunityUrl } from '@/lib/utils';
 import { useSubscriptionStore, useAuth } from '@/hooks';
 import { Card, Avatar, AvatarImage, AvatarFallback, Button, Skeleton, Badge } from '@/components/ui';
 import { Hash, Users, Plus, Check } from 'lucide-react';
 import { api } from '@/lib/api';
 import type { Community } from '@/types';
+import { navigateWithTechnologyTransition, TECHNOLOGY_COMMUNITY } from './technology-transition';
 
 interface CommunityCardProps {
   community: Community;
   variant?: 'default' | 'compact';
+  technologyTransition?: boolean;
 }
 
-export function CommunityCard({ community, variant = 'default' }: CommunityCardProps) {
+export function CommunityCard({ community, variant = 'default', technologyTransition }: CommunityCardProps) {
+  const router = useRouter();
   const {mutate}=useSWRConfig();
   const { isAuthenticated } = useAuth();
   const { isSubscribed, addSubscription, removeSubscription } = useSubscriptionStore();
   const [subscribing, setSubscribing] = React.useState(false);
 
   const subscribed = community.isSubscribed ?? isSubscribed(community.name);
+  const href = getCommunityUrl(community.name);
+  const title = community.displayName || community.name;
+  const transitionTitle = technologyTransition && community.name === TECHNOLOGY_COMMUNITY;
 
-  const handleSubscribe = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleSubscribe = async () => {
     if (!isAuthenticated || subscribing) return;
 
     setSubscribing(true);
@@ -49,61 +54,73 @@ export function CommunityCard({ community, variant = 'default' }: CommunityCardP
 
   if (variant === 'compact') {
     return (
-      <Link href={getCommunityUrl(community.name)} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors">
-        <Avatar className="h-8 w-8">
-          <AvatarImage src={community.iconUrl} />
-          <AvatarFallback><Hash className="h-4 w-4" /></AvatarFallback>
-        </Avatar>
-        <div className="flex-1 min-w-0">
-          <p className="font-medium text-sm truncate">{community.displayName || community.name}</p>
-          <p className="text-xs text-muted-foreground">{countText(community.subscriberCount, 'suscripción', 'suscripciones')}</p>
-        </div>
+      <div className="flex items-center gap-2">
+        <Link href={href} className="flex min-w-0 flex-1 items-center gap-3 rounded-md p-2 transition-colors hover:bg-muted">
+          <Avatar className="h-8 w-8 shrink-0">
+            <AvatarImage src={community.iconUrl} />
+            <AvatarFallback><Hash className="h-4 w-4" /></AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium">{title}</p>
+            <p className="text-xs text-muted-foreground">{countText(community.subscriberCount, 'suscripción', 'suscripciones')}</p>
+          </div>
+        </Link>
         {isAuthenticated && (
-          <Button size="sm" variant={subscribed ? 'secondary' : 'default'} onClick={handleSubscribe} disabled={subscribing} className="h-7 px-2">
-            {subscribed ? <Check className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
+          <Button type="button" size="sm" variant={subscribed ? 'secondary' : 'default'} onClick={handleSubscribe}
+            aria-label={subscribed ? `Cancelar suscripción a ${title}` : `Suscribirse a ${title}`}
+            disabled={subscribing} className="h-7 px-2">
+            {subscribed ? <Check aria-hidden="true" className="h-3 w-3" /> : <Plus aria-hidden="true" className="h-3 w-3" />}
           </Button>
         )}
-      </Link>
+      </div>
     );
   }
 
   return (
-    <Card className="p-4 hover:border-muted-foreground/20 transition-colors">
-      <Link href={getCommunityUrl(community.name)} className="block">
-        <div className="flex items-start gap-4">
-          <Avatar className="h-12 w-12">
-            <AvatarImage src={community.iconUrl} />
-            <AvatarFallback><Hash className="h-6 w-6" /></AvatarFallback>
-          </Avatar>
+    <Card className="flex flex-wrap items-start gap-3 p-4 transition-colors hover:border-muted-foreground/20 sm:flex-nowrap">
+      <Link
+        href={href}
+        className="flex min-w-0 basis-full items-start gap-4 rounded sm:flex-1"
+        onClick={transitionTitle ? event => navigateWithTechnologyTransition(event, title, () => router.push(href)) : undefined}
+      >
+        <Avatar className="h-12 w-12 shrink-0">
+          <AvatarImage src={community.iconUrl} />
+          <AvatarFallback><Hash className="h-6 w-6" /></AvatarFallback>
+        </Avatar>
 
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <h3 className="font-semibold truncate">{community.displayName || community.name}</h3>
-              {community.isNsfw && <Badge variant="destructive" className="text-xs">{copy.nSFW}</Badge>}
-            </div>
-            <p className="text-sm text-muted-foreground">/{community.name}</p>
-            {community.description && (
-              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{community.description}</p>
-            )}
-            <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-              <Users className="h-3 w-3" />
-              {countText(community.subscriberCount, 'suscripción', 'suscripciones')}
-            </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold truncate" data-technology-transition-title={transitionTitle || undefined}>{title}</h3>
+            {community.isNsfw && <Badge variant="destructive" className="text-xs">{copy.nSFW}</Badge>}
           </div>
-
-          {isAuthenticated && (
-            <Button size="sm" variant={subscribed ? 'secondary' : 'default'} onClick={handleSubscribe} disabled={subscribing}>
-              {subscribed ? copy.joined : copy.join}
-            </Button>
+          <p className="text-sm text-muted-foreground">/{community.name}</p>
+          {community.description && (
+            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{community.description}</p>
           )}
+          <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
+            <Users className="h-3 w-3" />
+            {countText(community.subscriberCount, 'suscripción', 'suscripciones')}
+          </div>
         </div>
       </Link>
+      {isAuthenticated && (
+        <Button type="button" size="sm" variant={subscribed ? 'secondary' : 'default'} onClick={handleSubscribe} disabled={subscribing}>
+          {subscribed ? copy.joined : copy.join}
+        </Button>
+      )}
     </Card>
   );
 }
 
 // Community List
-export function CommunityList({ communities, isLoading, variant = 'default' }: { communities: Community[]; isLoading?: boolean; variant?: 'default' | 'compact' }) {
+interface CommunityListProps {
+  communities: Community[];
+  isLoading?: boolean;
+  variant?: 'default' | 'compact';
+  technologyTransition?: boolean;
+}
+
+export function CommunityList({ communities, isLoading, variant = 'default', technologyTransition }: CommunityListProps) {
   if (isLoading) {
     return (
       <div className={cn('space-y-4', variant === 'compact' && 'space-y-1')}>
@@ -126,7 +143,7 @@ export function CommunityList({ communities, isLoading, variant = 'default' }: {
   return (
     <div className={cn('space-y-4', variant === 'compact' && 'space-y-1')}>
       {communities.map(community => (
-        <CommunityCard key={community.id} community={community} variant={variant} />
+        <CommunityCard key={community.id} community={community} variant={variant} technologyTransition={technologyTransition} />
       ))}
     </div>
   );

@@ -11,9 +11,9 @@ import Link from 'next/link';
 import { formatDateTime, cn, formatScore, formatRelativeTime, getInitials, getAgentUrl } from '@/lib/utils';
 import { useCommentVote, useAuth, useToggle } from '@/hooks';
 import { Button, Avatar, AvatarImage, AvatarFallback, Textarea, Skeleton } from '@/components/ui';
-import { ArrowBigUp, ArrowBigDown, MessageSquare, MoreHorizontal, ChevronDown, ChevronUp, Flag, Trash2, Edit2, Reply } from 'lucide-react';
+import { ArrowBigUp, ArrowBigDown, MessageSquare, MoreHorizontal, ChevronDown, ChevronUp, Trash2, Edit2, Reply } from 'lucide-react';
 import { api } from '@/lib/api';
-import type { Comment, CreateCommentForm } from '@/types';
+import type { Comment } from '@/types';
 
 interface CommentProps {
   comment: Comment;
@@ -35,7 +35,7 @@ export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps
 
   const isUpvoted = comment.userVote === 'up';
   const isDownvoted = comment.userVote === 'down';
-  const isAuthor = agent?.name === comment.authorName;
+  const isAuthor = agent?.id === comment.authorId;
   const hasReplies = comment.replies && comment.replies.length > 0;
 
   const handleVote = async (direction: 'up' | 'down') => {
@@ -63,19 +63,20 @@ export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps
   };
 
   return (
-    <div className={cn('comment', comment.depth > 0 && 'ml-4')} style={{ marginLeft: `${Math.min(comment.depth, 8) * 16}px` }}>
+    <div className={cn('comment', comment.depth > 0 && 'pl-2 sm:pl-3')}>
       {/* Header */}
-      <div className="flex items-center gap-2 mb-1">
-        <button aria-label={isCollapsed ? "Mostrar respuestas" : "Ocultar respuestas"} onClick={() => toggleCollapsed()} className="p-0.5 hover:bg-muted rounded">
-          {isCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+      <div className="mb-1 flex flex-wrap items-center gap-2">
+        <button type="button" aria-label={isCollapsed ? 'Mostrar comentario' : 'Contraer comentario'}
+          aria-expanded={!isCollapsed} onClick={() => toggleCollapsed()} className="rounded p-1 hover:bg-muted">
+          {isCollapsed ? <ChevronDown aria-hidden="true" className="h-4 w-4" /> : <ChevronUp aria-hidden="true" className="h-4 w-4" />}
         </button>
 
-        <Link href={getAgentUrl(comment.authorName)} className="flex items-center gap-1.5">
-          <Avatar className="h-6 w-6">
+        <Link href={getAgentUrl(comment.authorName)} className="flex min-w-0 max-w-full items-center gap-1.5 text-sm font-medium hover:underline">
+          <Avatar className="h-6 w-6 shrink-0">
             <AvatarImage src={comment.authorAvatarUrl} />
             <AvatarFallback className="text-[10px]">{getInitials(comment.authorDisplayName || comment.authorName)}</AvatarFallback>
           </Avatar>
-          <span className="text-sm font-medium hover:underline"><IdentityName name={comment.authorDisplayName || comment.authorName} kind={comment.authorKind} /></span>
+          <IdentityName name={comment.authorDisplayName || comment.authorName} kind={comment.authorKind} showKind />
         </Link>
 
         <span className="text-xs text-muted-foreground">•</span>
@@ -93,10 +94,10 @@ export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-1 mt-1">
+          <div className="mt-1 flex flex-wrap items-center gap-1">
             <div className="flex items-center gap-0.5">
               <button
-                aria-label="Upvote" onClick={() => handleVote('up')}
+                type="button" aria-label="Votar a favor" aria-pressed={isUpvoted} onClick={() => handleVote('up')}
                 disabled={isVoting || !isAuthenticated}
                 className={cn('vote-btn vote-btn-up p-0.5', isUpvoted && 'active')}
               >
@@ -106,7 +107,7 @@ export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps
                 {formatScore(comment.score)}
               </span>
               <button
-                aria-label="Downvote" onClick={() => handleVote('down')}
+                type="button" aria-label="Votar en contra" aria-pressed={isDownvoted} onClick={() => handleVote('down')}
                 disabled={isVoting || !isAuthenticated}
                 className={cn('vote-btn vote-btn-down p-0.5', isDownvoted && 'active')}
               >
@@ -115,20 +116,20 @@ export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps
             </div>
 
             {isAuthenticated && (
-              <button onClick={() => setIsReplying(!isReplying)} className="flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:bg-muted rounded">
+              <button type="button" aria-expanded={isReplying} onClick={() => setIsReplying(!isReplying)} className="flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:bg-muted rounded">
                 <Reply className="h-3.5 w-3.5" />
                 {copy.reply}
               </button>
             )}
 
-            <div className="relative">
-              <button aria-label="Más acciones" onClick={() => setShowMenu(!showMenu)} className="p-1 text-muted-foreground hover:bg-muted rounded">
+            {isAuthor && <div className="relative">
+              <button type="button" aria-label="Más acciones" aria-expanded={showMenu} onClick={() => setShowMenu(!showMenu)} className="p-1 text-muted-foreground hover:bg-muted rounded">
                 <MoreHorizontal className="h-4 w-4" />
               </button>
 
               {showMenu && (
                 <div className="absolute left-0 top-full mt-1 w-32 rounded-md border bg-popover shadow-lg z-10">
-                  {isAuthor && !comment.isDeleted && (
+                  {!comment.isDeleted && (
                     <>
                       <button onClick={()=>{setDraft(comment.content);setEditing(true);setShowMenu(false);}} className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted text-left">
                         <Edit2 className="h-3.5 w-3.5" /> {copy.edit}
@@ -138,18 +139,19 @@ export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps
                       </button>
                     </>
                   )}
-                  {isAuthor&&comment.isDeleted&&<button className="px-2 py-1 text-sm" onClick={async()=>{try{await api.restoreComment(comment.id);await mutate(key=>Array.isArray(key)&&key[0]==='comments');toast.success('Comentario restaurado.');}catch(e){toast.error(errorMessage(e));}}}>Restaurar comentario</button>}
-                  <ReportButton commentId={comment.id}/>
+                  {comment.isDeleted&&<button className="px-2 py-1 text-sm" onClick={async()=>{try{await api.restoreComment(comment.id);await mutate(key=>Array.isArray(key)&&key[0]==='comments');toast.success('Comentario restaurado.');}catch(e){toast.error(errorMessage(e));}}}>Restaurar comentario</button>}
                 </div>
               )}
-            </div>
+            </div>}
+            <ReportButton commentId={comment.id} />
           </div>
 
           {editing&&<form className="mt-3 space-y-2" onSubmit={async e=>{e.preventDefault();try{await api.editComment(comment.id,draft);await mutate(key=>Array.isArray(key)&&key[0]==='comments');setEditing(false);toast.success('Comentario actualizado.');}catch(e){toast.error(errorMessage(e));}}}><Textarea aria-label="Editar comentario" required maxLength={10000} value={draft} onChange={e=>setDraft(e.target.value)}/><Button type="submit">Guardar cambios</Button><Button type="button" variant="ghost" onClick={()=>setEditing(false)}>Cancelar</Button></form>}
           {/* Reply form */}
           {isReplying && (
-            <div className="mt-2 ml-4">
+            <div className="mt-2">
               <Textarea
+                aria-label={copy.writeAReply}
                 value={replyContent}
                 onChange={(e) => setReplyContent(e.target.value)}
                 placeholder={copy.writeAReply}
@@ -186,7 +188,12 @@ export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps
 }
 
 // Comment List
-export function CommentList({ comments, postId, isLoading }: { comments: Comment[]; postId: string; isLoading?: boolean }) {
+export function CommentList({ comments, postId, isLoading, onReply }: {
+  comments: Comment[];
+  postId: string;
+  isLoading?: boolean;
+  onReply?: () => void;
+}) {
   const [localComments, setLocalComments] = React.useState(comments);
 
   React.useEffect(() => {
@@ -206,7 +213,8 @@ export function CommentList({ comments, postId, isLoading }: { comments: Comment
         return item;
       });
     };
-    setLocalComments(addReply(localComments));
+    setLocalComments(addReply);
+    onReply?.();
   };
 
   const handleDelete = async (commentId: string) => {
@@ -263,7 +271,8 @@ export function CommentForm({ postId, parentId, onSubmit, onCancel }: { postId: 
     return (
       <div className="p-4 text-center bg-muted rounded-lg">
         <p className="text-sm text-muted-foreground">
-          <Link href="/welcome" className="text-primary hover:underline">{copy.logIn}</Link> {copy.toComment}
+          <Link href={`/welcome?${new URLSearchParams({ callbackUrl: `/post/${postId}#post-comments` })}`}
+            className="text-primary hover:underline">{copy.logIn}</Link> {copy.toComment}
         </p>
       </div>
     );
@@ -288,6 +297,7 @@ export function CommentForm({ postId, parentId, onSubmit, onCancel }: { postId: 
   return (
     <form onSubmit={handleSubmit}>
       <Textarea
+        aria-label="Escribe un comentario"
         value={content}
         onChange={(e) => setContent(e.target.value)}
         placeholder={copy.whatAreYourThoughts}
@@ -312,7 +322,7 @@ export function CommentSkeleton() {
         <Skeleton className="h-4 w-24" />
         <Skeleton className="h-3 w-16" />
       </div>
-      <Skeleton className="h-16 w-full ml-8" />
+      <Skeleton className="ml-8 h-16" />
       <div className="flex items-center gap-2 ml-8">
         <Skeleton className="h-5 w-16" />
         <Skeleton className="h-5 w-12" />
@@ -330,13 +340,13 @@ export function CommentSort({ value, onChange }: { value: string; onChange: (val
   ];
 
   return (
-    <div className="flex items-center gap-2">
+    <label className="flex items-center gap-2">
       <span className="text-sm text-muted-foreground">{copy.sortBy}</span>
       <select value={value} onChange={(e) => onChange(e.target.value)} className="text-sm bg-transparent border rounded px-2 py-1">
         {options.map(opt => (
           <option key={opt.value} value={opt.value}>{opt.label}</option>
         ))}
       </select>
-    </div>
+    </label>
   );
 }

@@ -3,12 +3,11 @@
 import { copy, identity } from '@/lib/copy';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Button, Card, CardHeader, CardContent } from '@/components/ui';
 import { LogIn, Bug } from 'lucide-react';
 
 export default function WelcomePage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const callback = searchParams.get('callbackUrl');
   const target = callback?.startsWith('/') && !callback.startsWith('//') && !callback.includes('\\') ? callback : '/';
@@ -41,8 +40,8 @@ export default function WelcomePage() {
         throw new Error(copy.devLoginFailed);
       }
 
-      // Redirect to dashboard (session cookie is set by API)
-      router.push(target);
+      // Reload with the new cookie, matching the Google callback's navigation.
+      window.location.assign(target);
     } catch (error) {
       console.error('Dev login error:', error);
       setIsLoading(false);

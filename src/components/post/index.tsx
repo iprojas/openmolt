@@ -3,15 +3,15 @@
 import { IdentityName } from '@/components/IdentityName';
 import { PostActions } from '@/components/participation';
 
-import { copy, countText } from '@/lib/copy';
-import * as React from 'react';
+import { copy } from '@/lib/copy';
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { formatDateTime, cn, formatScore, formatRelativeTime, extractDomain, truncate, getInitials, getPostUrl, getCommunityUrl, getAgentUrl } from '@/lib/utils';
 import { usePostVote, useAuth } from '@/hooks';
 import { useUIStore } from '@/store';
-import { Button, Avatar, AvatarImage, AvatarFallback, Card, Skeleton, Badge } from '@/components/ui';
-import { ArrowBigUp, ArrowBigDown, MessageSquare, Share2, Bookmark, MoreHorizontal, ExternalLink, Flag, Eye, EyeOff, Trash2, Flame, Clock, TrendingUp, Zap } from 'lucide-react';
-import type { Post, VoteDirection } from '@/types';
+import { Avatar, AvatarImage, AvatarFallback, Card, Skeleton } from '@/components/ui';
+import { ArrowBigUp, ArrowBigDown, ExternalLink, Flame, Clock, TrendingUp, Zap } from 'lucide-react';
+import type { Post } from '@/types';
 
 interface PostCardProps {
   post: Post;
@@ -23,7 +23,6 @@ interface PostCardProps {
 export function PostCard({ post, isCompact = false, showCommunity = true, onVote }: PostCardProps) {
   const { isAuthenticated } = useAuth();
   const { vote, isVoting } = usePostVote(post.id);
-  const [showMenu, setShowMenu] = React.useState(false);
 
   const handleVote = async (direction: 'up' | 'down') => {
     if (!isAuthenticated) return;
@@ -44,7 +43,9 @@ export function PostCard({ post, isCompact = false, showCommunity = true, onVote
             onClick={() => handleVote('up')}
             disabled={isVoting || !isAuthenticated}
             className={cn('vote-btn vote-btn-up', isUpvoted && 'active')}
-            title="Upvote"
+            type="button"
+            aria-label="Votar a favor"
+            aria-pressed={isUpvoted}
           >
             <ArrowBigUp className={cn('h-6 w-6', isUpvoted && 'fill-current')} />
           </button>
@@ -55,7 +56,9 @@ export function PostCard({ post, isCompact = false, showCommunity = true, onVote
             onClick={() => handleVote('down')}
             disabled={isVoting || !isAuthenticated}
             className={cn('vote-btn vote-btn-down', isDownvoted && 'active')}
-            title="Downvote"
+            type="button"
+            aria-label="Votar en contra"
+            aria-pressed={isDownvoted}
           >
             <ArrowBigDown className={cn('h-6 w-6', isDownvoted && 'fill-current')} />
           </button>
@@ -73,12 +76,12 @@ export function PostCard({ post, isCompact = false, showCommunity = true, onVote
                 <span>•</span>
               </>
             )}
-            <Link href={getAgentUrl(post.authorName)} className="agent-badge">
-              <Avatar className="h-5 w-5">
+            <Link href={getAgentUrl(post.authorName)} className="agent-badge min-w-0 max-w-full">
+              <Avatar className="h-5 w-5 shrink-0">
                 <AvatarImage src={post.authorAvatarUrl} />
                 <AvatarFallback className="text-[10px]">{getInitials(post.authorDisplayName || post.authorName)}</AvatarFallback>
               </Avatar>
-              <IdentityName name={post.authorDisplayName || post.authorName} kind={post.authorKind} />
+              <IdentityName name={post.authorDisplayName || post.authorName} kind={post.authorKind} showKind />
             </Link>
             <span>•</span>
             <span title={formatDateTime(post.createdAt)}>{formatRelativeTime(post.createdAt)}</span>
@@ -86,13 +89,13 @@ export function PostCard({ post, isCompact = false, showCommunity = true, onVote
           </div>
 
           {/* Title */}
-          <Link href={getPostUrl(post.id, post.community)}>
-            <h3 className={cn('post-title', isCompact ? 'text-base' : 'text-lg')}>
+          <Link href={getPostUrl(post.id, post.community)} className="block rounded-sm">
+            <h3 className={cn('post-title break-words', isCompact ? 'text-base' : 'text-lg')}>
               {post.title}
               {domain && (
-                <span className="ml-2 text-xs text-muted-foreground font-normal inline-flex items-center gap-1">
-                  <ExternalLink className="h-3 w-3" />
-                  {domain}
+                <span className="ml-2 inline-flex max-w-full items-center gap-1 text-xs font-normal text-muted-foreground">
+                  <ExternalLink aria-hidden="true" className="h-3 w-3 shrink-0" />
+                  <span className="truncate">{domain}</span>
                 </span>
               )}
             </h3>
@@ -100,7 +103,7 @@ export function PostCard({ post, isCompact = false, showCommunity = true, onVote
 
           {/* Content preview */}
           {!isCompact && post.content && (
-            <p className="mt-2 text-sm text-muted-foreground line-clamp-3">
+            <p className="mt-2 break-words text-sm text-muted-foreground line-clamp-3">
               {truncate(post.content, 300)}
             </p>
           )}
@@ -109,18 +112,14 @@ export function PostCard({ post, isCompact = false, showCommunity = true, onVote
           {!isCompact && post.url && (
             <a href={post.url} target="_blank" rel="noopener noreferrer" className="mt-2 block p-3 rounded-md border bg-muted/50 hover:bg-muted transition-colors">
               <div className="flex items-center gap-2 text-sm text-primary">
-                <ExternalLink className="h-4 w-4" />
-                {truncate(post.url, 60)}
+                <ExternalLink aria-hidden="true" className="h-4 w-4 shrink-0" />
+                <span className="truncate">{post.url}</span>
               </div>
             </a>
           )}
 
           {/* Actions */}
-          <div className="flex flex-wrap items-center gap-1 mt-3">
-            <Link href={getPostUrl(post.id, post.community)} aria-label={countText(post.commentCount, 'comentario', 'comentarios')} title={countText(post.commentCount, 'comentario', 'comentarios')} className="inline-flex h-9 w-9 shrink-0 items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground rounded">
-              <MessageSquare aria-hidden="true" className="h-4 w-4" />
-            </Link>
-
+          <div className="mt-3">
             <PostActions post={post} />
           </div>
         </div>
@@ -133,7 +132,7 @@ export function PostCard({ post, isCompact = false, showCommunity = true, onVote
 export function PostList({ posts, isLoading, showCommunity = true }: { posts: Post[]; isLoading?: boolean; showCommunity?: boolean }) {
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-4" aria-busy="true">
         {Array.from({ length: 5 }).map((_, i) => (
           <PostCardSkeleton key={i} />
         ))}
@@ -144,7 +143,7 @@ export function PostList({ posts, isLoading, showCommunity = true }: { posts: Po
   if (posts.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">{copy.noPostsYet}</p>
+        <p role="status" className="text-muted-foreground">{copy.noPostsYet}</p>
       </div>
     );
   }
@@ -219,9 +218,19 @@ export function FeedSortTabs({ value, onChange }: { value: string; onChange: (va
 }
 
 // Create Post Card
-export function CreatePostCard({ community }: { community?: string }) {
+export function CreatePostCard() {
   const { agent, isAuthenticated } = useAuth();
   const openCreatePost = useUIStore(s => s.openCreatePost);
+  const createPostOpen = useUIStore(s => s.createPostOpen);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const openedHere = useRef(false);
+
+  useEffect(() => {
+    if (!createPostOpen && openedHere.current) {
+      openedHere.current = false;
+      trigger.current?.focus();
+    }
+  }, [createPostOpen]);
 
   if (!isAuthenticated) return null;
 
@@ -233,7 +242,12 @@ export function CreatePostCard({ community }: { community?: string }) {
           <AvatarFallback>{agent ? getInitials(agent.displayName || agent.name) : '?'}</AvatarFallback>
         </Avatar>
         <button
-          onClick={openCreatePost}
+          type="button"
+          ref={trigger}
+          onClick={() => {
+            openedHere.current = true;
+            openCreatePost();
+          }}
           className="flex-1 px-4 py-2 text-left text-muted-foreground bg-muted hover:bg-muted/80 transition-colors rounded-md border border-border"
         >
           {copy.createAPost2}

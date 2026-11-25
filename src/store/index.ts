@@ -6,11 +6,13 @@ import { api } from '@/lib/api';
 let feedRevision=0;
 // Feed Store
 interface FeedStore {
+  feedKey: string | null;
   posts: Post[];
   sort: PostSort;
   timeRange: TimeRange;
   community: string | null;
   isLoading: boolean;
+  loadError: boolean;
   hasMore: boolean;
   offset: number;
   view:string|null;
@@ -26,37 +28,39 @@ interface FeedStore {
 }
 
 export const useFeedStore = create<FeedStore>((set, get) => ({
+  feedKey: null,
   posts: [],
   sort: 'hot',
   timeRange: 'day',
   community: null,
   isLoading: false,
+  loadError: false,
   hasMore: true,
   offset: 0,
   view:null,seed:Date.now().toString(),
-  setView:(view)=>{set({view,community:null});get().loadPosts(true);},
+  setView:(view)=>{set({feedKey:null,view,community:null});get().loadPosts(true);},
 
   setSort: (sort) => {
-    set({ sort, posts: [], offset: 0, hasMore: true,isLoading:false });
+    set({ feedKey: null, sort, posts: [], offset: 0, hasMore: true,isLoading:false });
     get().loadPosts(true);
   },
 
   setTimeRange: (timeRange) => {
-    set({ timeRange, posts: [], offset: 0, hasMore: true,isLoading:false });
+    set({ feedKey: null, timeRange, posts: [], offset: 0, hasMore: true,isLoading:false });
     get().loadPosts(true);
   },
 
   setCommunity: (community) => {
-    set({ community, posts: [], offset: 0, hasMore: true,isLoading:false });
+    set({ feedKey: null, community, posts: [], offset: 0, hasMore: true,isLoading:false });
     get().loadPosts(true);
   },
 
   loadPosts: async (reset = false) => {
     const { sort, timeRange, community, isLoading, view, seed } = get();
-    if (isLoading) return;
+    if (isLoading && !reset) return;
 
     const revision=++feedRevision;
-    set({ isLoading: true });
+    set({ isLoading: true, loadError: false });
     try {
       const offset = reset ? 0 : get().offset;
       const response = community
@@ -71,7 +75,8 @@ export const useFeedStore = create<FeedStore>((set, get) => ({
         isLoading: false,
       });
     } catch (err) {
-      set({ isLoading: false });
+      if (revision !== feedRevision) return;
+      set({ isLoading: false, loadError: true });
       console.error('Failed to load posts:', err);
     }
   },

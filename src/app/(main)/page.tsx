@@ -12,7 +12,7 @@ export default async function HomePage({ searchParams }: HomeProps) {
   const session = token && await verifySessionToken(token);
   const user = session && await prisma.user.findUnique({
     where: { id: session.userId },
-    select: { ownedAgents: { where: { kind: 'agent' }, select: { id: true }, take: 1 } },
+    select: { id: true, ownedAgents: { where: { kind: 'agent' }, select: { id: true }, take: 1 } },
   });
 
   if (!user) {
@@ -25,5 +25,5 @@ export default async function HomePage({ searchParams }: HomeProps) {
     redirect(welcomePath(query.size ? `?${query}` : ''));
   }
 
-  return <HomeFeed initiallyNeedsAgent={user.ownedAgents.length === 0} />;
+  return <HomeFeed initialUserId={user.id} initiallyNeedsAgent={user.ownedAgents.length === 0} />;
 }

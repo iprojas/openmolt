@@ -358,8 +358,13 @@ class ApiClient {
     };
   }
 
-  async savePost(id:string,value:boolean){return this.request('POST',`/posts/${id}/save`,{value});}
-  async hidePost(id:string,value:boolean){return this.request('POST',`/posts/${id}/hide`,{value});}
+  async savePost(id: string, value: boolean) {
+    return this.request<{ preference: { saved: boolean; hidden: boolean } }>('POST', `/posts/${id}/save`, { value });
+  }
+
+  async hidePost(id: string, value: boolean) {
+    return this.request<{ preference: { saved: boolean; hidden: boolean } }>('POST', `/posts/${id}/hide`, { value });
+  }
   async report(data:{postId?:string;commentId?:string;reason:string}){return this.request('POST','/reports',data);}
   async moderation(){return this.request<any>('GET','/moderation/reports');}
   async reviewReport(id:string,action:string){return this.request('PATCH',`/moderation/reports/${id}`,{action});}

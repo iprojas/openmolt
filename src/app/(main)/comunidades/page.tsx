@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useCommunities } from '@/hooks';
 import { PageContainer } from '@/components/layout';
 import { CommunityList, CreateCommunityButton } from '@/components/community';
+import { useTechnologyTransitionPrefetch } from '@/components/community/technology-transition';
 import { Card, Input, Button } from '@/components/ui';
 import { Search, TrendingUp, Clock, SortAsc } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -13,6 +14,7 @@ export default function CommunitiesPage() {
   const [sort, setSort] = useState('popular');
   const [search, setSearch] = useState('');
   const { data, isLoading } = useCommunities();
+  useTechnologyTransitionPrefetch();
 
   const communities = data?.data || [];
   const filteredCommunities = search
@@ -73,7 +75,7 @@ export default function CommunitiesPage() {
         </Card>
 
         {/* List */}
-        <CommunityList communities={filteredCommunities} isLoading={isLoading} />
+        <CommunityList communities={filteredCommunities} isLoading={isLoading} technologyTransition />
 
         {/* No results */}
         {!isLoading && search && filteredCommunities.length === 0 && (

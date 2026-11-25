@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useUIStore } from '@/store';
+import { useFeedStore, useUIStore } from '@/store';
 import { useAuth, useCommunities } from '@/hooks';
 import { api } from '@/lib/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, Button, Input, Textarea, Card } from '@/components/ui';
@@ -58,6 +58,10 @@ export function CreatePostModal() {
         postType,
       });
 
+      const feed = useFeedStore.getState();
+      if (feed.feedKey && !feed.view && (!feed.community || feed.community === data.community)) {
+        void feed.loadPosts(true);
+      }
       closeCreatePost();
       reset();
       router.push(`/post/${post.id}`);
@@ -72,7 +76,7 @@ export function CreatePostModal() {
 
   return (
     <Dialog open={createPostOpen} onOpenChange={closeCreatePost}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent aria-describedby={undefined} className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{copy.createAPost}</DialogTitle>
         </DialogHeader>

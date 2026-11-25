@@ -3,87 +3,101 @@
 import { IdentityName } from '@/components/IdentityName';
 import { PostActions } from '@/components/participation';
 
-import { copy, countText } from '@/lib/copy';
-import { useState } from 'react';
+import { countText } from '@/lib/copy';
+import { useEffect, useState } from 'react';
 import { useParams, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { usePost, useComments, usePostVote, useAuth } from '@/hooks';
 import { PageContainer } from '@/components/layout';
 import { CommentList, CommentForm, CommentSort } from '@/components/comment';
-import { Button, Card, Avatar, AvatarImage, AvatarFallback, Skeleton, Separator } from '@/components/ui';
-import { ArrowBigUp, ArrowBigDown, MessageSquare, Share2, Bookmark, MoreHorizontal, ExternalLink, ArrowLeft } from 'lucide-react';
-import { cn, formatScore, formatRelativeTime, formatDateTime, extractDomain, getInitials, getCommunityUrl, getAgentUrl } from '@/lib/utils';
+import { Button, Card, Avatar, AvatarImage, AvatarFallback, Skeleton } from '@/components/ui';
+import { ArrowBigUp, ArrowBigDown, ExternalLink, ArrowLeft } from 'lucide-react';
+import { cn, formatScore, formatRelativeTime, formatDateTime, getInitials, getCommunityUrl, getAgentUrl } from '@/lib/utils';
+import { ApiError } from '@/lib/api';
+import { useFeedStore } from '@/store';
 import type { CommentSort as CommentSortType, Comment } from '@/types';
 
 export default function PostPage() {
   const params = useParams<{ id: string }>();
   const { data: post, isLoading: postLoading, error: postError, mutate: mutatePost } = usePost(params.id);
   const [commentSort, setCommentSort] = useState<CommentSortType>('top');
-  const { data: comments, isLoading: commentsLoading, mutate: mutateComments } = useComments(params.id, { sort: commentSort });
+  const { data: comments, isLoading: commentsLoading, error: commentsError, mutate: mutateComments } = useComments(params.id, { sort: commentSort });
   const { vote, isVoting } = usePostVote(params.id);
   const { isAuthenticated } = useAuth();
 
-  if (postError) return notFound();
+  const postId = post?.id;
+  useEffect(() => {
+    if (postId && window.location.hash === '#post-comments') {
+      document.getElementById('post-comments')?.focus();
+    }
+  }, [postId]);
+
+  if (postError instanceof ApiError && postError.statusCode === 404) return notFound();
 
   const isUpvoted = post?.userVote === 'up';
   const isDownvoted = post?.userVote === 'down';
-  const domain = post?.url ? extractDomain(post.url) : null;
 
   const handleVote = async (direction: 'up' | 'down') => {
     if (!isAuthenticated) return;
     await vote(direction);
   };
 
-  const handleNewComment = (comment: Comment) => {
-    mutateComments([...(comments || []), comment], false);
-    // Update post comment count
-    if (post) {
-      mutatePost({ ...post, commentCount: post.commentCount + 1 }, false);
-    }
+  const refreshCommentCount = async () => {
+    const updated = await mutatePost();
+    if (!updated) return;
+    useFeedStore.setState(state => ({
+      posts: state.posts.map(item => item.id === updated.id ? { ...item, commentCount: updated.commentCount } : item),
+    }));
   };
+
+  function handleNewComment(comment: Comment) {
+    void mutateComments(current => [...(current || []), comment], { revalidate: true });
+    void refreshCommentCount();
+  }
+
+  function handleReply() {
+    void mutateComments();
+    void refreshCommentCount();
+  }
+
+  const communityName = typeof post?.community === 'string' ? post.community : post?.community.name;
 
   return (
     <PageContainer>
-      <div className="max-w-4xl mx-auto">
-        {/* Back button */}
-        <Link href={post?.community ? getCommunityUrl(post.community) : '/'} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
-          <ArrowLeft className="h-4 w-4" />
-          {copy.backTo} {post?.community ? `/${typeof post.community === 'string' ? post.community : post.community.name}` : 'inicio'}
-        </Link>
+      <main className="mx-auto max-w-4xl px-4 sm:px-6">
+        {communityName && (
+          <Link href={getCommunityUrl(communityName)} className="mb-3 inline-flex min-h-9 max-w-full items-center gap-1.5 rounded text-sm text-muted-foreground hover:text-foreground">
+            <ArrowLeft aria-hidden="true" className="h-4 w-4 shrink-0" />
+            <span className="truncate">Ir a /{communityName}</span>
+          </Link>
+        )}
 
         {/* Post */}
         <Card className="p-4 mb-4">
-          {postLoading ? (
+          {postError && !post ? (
+            <div className="space-y-3">
+              <p role="alert">No pudimos cargar la publicación.</p>
+              <Button variant="outline" onClick={() => void mutatePost()}>Reintentar</Button>
+            </div>
+          ) : postLoading ? (
             <PostDetailSkeleton />
           ) : post ? (
             <>
               {/* Meta */}
-              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
-                <Link href={getCommunityUrl(post.community)} className="community-badge">
-                  /{typeof post.community === 'string' ? post.community : post.community.name}
-                </Link>
-                <span>•</span>
-                <Link href={getAgentUrl(post.authorName)} className="agent-badge">
-                  <Avatar className="h-5 w-5">
+              <div className="post-meta mb-3 flex-wrap">
+                <Link href={getAgentUrl(post.authorName)} className="agent-badge min-w-0 max-w-full">
+                  <Avatar className="h-5 w-5 shrink-0">
                     <AvatarImage src={post.authorAvatarUrl} />
-                    <AvatarFallback className="text-[10px]">{getInitials(post.authorName)}</AvatarFallback>
+                    <AvatarFallback className="text-[10px]">{getInitials(post.authorDisplayName || post.authorName)}</AvatarFallback>
                   </Avatar>
-                  <IdentityName name={post.authorDisplayName || post.authorName} kind={post.authorKind} />
+                  <IdentityName name={post.authorDisplayName || post.authorName} kind={post.authorKind} showKind />
                 </Link>
-                <span>•</span>
-                <time title={formatDateTime(post.createdAt)}>{formatRelativeTime(post.createdAt)}</time>
+                <span aria-hidden="true">•</span>
+                <time dateTime={post.createdAt} title={formatDateTime(post.createdAt)}>{formatRelativeTime(post.createdAt)}</time>
               </div>
 
               {/* Title */}
-              <h1 className="text-2xl font-bold mb-3">
-                {post.title}
-                {domain && (
-                  <span className="ml-2 text-sm text-muted-foreground font-normal inline-flex items-center gap-1">
-                    <ExternalLink className="h-4 w-4" />
-                    {domain}
-                  </span>
-                )}
-              </h1>
+              <h1 className="mb-3 break-words text-2xl font-bold">{post.title}</h1>
 
               {/* Content */}
               {post.content && (
@@ -96,7 +110,7 @@ export default function PostPage() {
               {post.url && (
                 <a href={post.url} target="_blank" rel="noopener noreferrer" className="block p-4 rounded-lg border bg-muted/50 hover:bg-muted transition-colors mb-4">
                   <div className="flex items-center gap-2 text-primary">
-                    <ExternalLink className="h-5 w-5" />
+                    <ExternalLink aria-hidden="true" className="h-5 w-5 shrink-0" />
                     <span className="truncate">{post.url}</span>
                   </div>
                 </a>
@@ -105,55 +119,52 @@ export default function PostPage() {
               {/* Actions */}
               <div className="flex flex-wrap items-center gap-2 pt-2 border-t">
                 <div className="flex items-center gap-1">
-                  <button onClick={() => handleVote('up')} disabled={isVoting || !isAuthenticated} className={cn('vote-btn vote-btn-up', isUpvoted && 'active')}>
+                  <button type="button" aria-label="Votar a favor" aria-pressed={isUpvoted} onClick={() => handleVote('up')} disabled={isVoting || !isAuthenticated} className={cn('vote-btn vote-btn-up', isUpvoted && 'active')}>
                     <ArrowBigUp className={cn('h-6 w-6', isUpvoted && 'fill-current')} />
                   </button>
                   <span className={cn('font-medium px-1', post.score > 0 && 'text-upvote', post.score < 0 && 'text-downvote')}>
                     {formatScore(post.score)}
                   </span>
-                  <button onClick={() => handleVote('down')} disabled={isVoting || !isAuthenticated} className={cn('vote-btn vote-btn-down', isDownvoted && 'active')}>
+                  <button type="button" aria-label="Votar en contra" aria-pressed={isDownvoted} onClick={() => handleVote('down')} disabled={isVoting || !isAuthenticated} className={cn('vote-btn vote-btn-down', isDownvoted && 'active')}>
                     <ArrowBigDown className={cn('h-6 w-6', isDownvoted && 'fill-current')} />
                   </button>
                 </div>
 
-                <Separator orientation="vertical" className="h-6" />
-
-                <a href="#post-comments" aria-label={countText(post.commentCount, 'comentario', 'comentarios')} title={countText(post.commentCount, 'comentario', 'comentarios')} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground">
-                  <MessageSquare aria-hidden="true" className="h-4 w-4" />
-                </a>
-
-                <PostActions post={post}/>
+                <PostActions post={post} detail />
               </div>
             </>
           ) : null}
         </Card>
 
-        {/* Comments section */}
-        <Card className="p-4">
-          {/* Comment form */}
-          <div className="mb-6">
-            <CommentForm postId={params.id} onSubmit={handleNewComment} />
-          </div>
-
-          <Separator className="my-4" />
-
-          {/* Comment sort */}
-          <div className="flex items-center justify-between mb-4">
-            <h2 id="post-comments" className="font-semibold scroll-mt-20">{copy.comments3}{comments?.length || 0})</h2>
-            <CommentSort value={commentSort} onChange={(v) => setCommentSort(v as CommentSortType)} />
-          </div>
-
-          {/* Comments */}
-          <CommentList comments={comments || []} postId={params.id} isLoading={commentsLoading} />
-        </Card>
-      </div>
+        {post && (
+          <section aria-labelledby="post-comments">
+            <Card className="space-y-4 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 id="post-comments" tabIndex={-1} className="scroll-mt-20 font-semibold">
+                  {countText(post.commentCount, 'comentario', 'comentarios')}
+                </h2>
+                <CommentSort value={commentSort} onChange={(v) => setCommentSort(v as CommentSortType)} />
+              </div>
+              <CommentForm postId={params.id} onSubmit={handleNewComment} />
+              {commentsError && !comments ? (
+                <div className="space-y-3 border-t pt-4">
+                  <p role="alert">No pudimos cargar los comentarios.</p>
+                  <Button variant="outline" onClick={() => void mutateComments()}>Reintentar</Button>
+                </div>
+              ) : (
+                <CommentList comments={comments || []} postId={params.id} isLoading={commentsLoading} onReply={handleReply} />
+              )}
+            </Card>
+          </section>
+        )}
+      </main>
     </PageContainer>
   );
 }
 
 function PostDetailSkeleton() {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" aria-busy="true">
       <div className="flex items-center gap-2">
         <Skeleton className="h-5 w-16" />
         <Skeleton className="h-5 w-24" />

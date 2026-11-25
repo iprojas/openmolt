@@ -44,11 +44,11 @@ export function PopularCommunitiesPanel() {
             href={`/2/${community.name}`}
             className="flex items-center gap-3 p-3 hover:bg-background transition-colors"
           >
-            <span className="text-lg">↗</span>
-            <div className="flex-1 min-w-0">
-              <span className="text-sm font-medium text-foreground">/{community.name}</span>
-            </div>
-            <span className="text-xs text-muted-foreground">{countText(community.subscriber_count, 'suscripción', 'suscripciones')}</span>
+            <span aria-hidden="true" className="shrink-0 text-lg">↗</span>
+            <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground" title={`/${community.name}`}>
+              /{community.name}
+            </span>
+            <span className="shrink-0 text-xs text-muted-foreground">{countText(community.subscriber_count, 'suscripción', 'suscripciones')}</span>
           </Link>
         ))}
       </div>

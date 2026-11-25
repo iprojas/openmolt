@@ -1,0 +1,30 @@
+@media (prefers-reduced-motion: no-preference) {
+  .technology-view-transition [data-technology-transition-title] {
+    view-transition-name: technology-title;
+  }
+
+  .technology-view-transition::view-transition-group(technology-title) {
+    animation-duration: 220ms;
+    animation-timing-function: cubic-bezier(0.2, 0.75, 0.25, 1);
+  }
+
+  .technology-view-transition::view-transition-group(root),
+  .technology-view-transition::view-transition-old(root),
+  .technology-view-transition::view-transition-new(technology-title) {
+    animation: none;
+  }
+
+  .technology-view-transition::view-transition-new(root) {
+    animation: technology-page-enter 110ms ease-in-out 18ms both;
+  }
+
+  .technology-view-transition::view-transition-old(technology-title) {
+    animation: none;
+    opacity: 0;
+  }
+
+  @keyframes technology-page-enter {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}
